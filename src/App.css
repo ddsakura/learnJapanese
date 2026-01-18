@@ -200,6 +200,31 @@ button.ghost {
   color: #1b1a15;
 }
 
+.result-forms {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #e3dccb;
+}
+
+.result-forms-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #3f3a2f;
+}
+
+.result-forms-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  color: #5b5648;
+  font-size: 13px;
+}
+
+.result-forms-grid strong {
+  color: #1b1a15;
+  font-weight: 600;
+}
+
 .hint {
   color: #6d6451;
 }
