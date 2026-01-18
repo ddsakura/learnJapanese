@@ -676,6 +676,23 @@ function App() {
                   <span>正確答案</span>
                   <strong>{result.correctAnswer}</strong>
                 </div>
+                {question && (
+                  <div className="result-forms">
+                    <div className="result-forms-title">全部形</div>
+                    <div className="result-forms-grid">
+                      <span>辭書形</span>
+                      <strong>{question.card.dict}</strong>
+                      <span>ない形</span>
+                      <strong>{question.card.nai}</strong>
+                      <span>た形</span>
+                      <strong>{question.card.ta}</strong>
+                      <span>なかった形</span>
+                      <strong>{question.card.nakatta}</strong>
+                      <span>て形</span>
+                      <strong>{question.card.te}</strong>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="hint">輸入答案後按 Enter，或點「批改」。</div>
