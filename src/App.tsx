@@ -572,19 +572,28 @@ function App() {
     setMessage('已將題庫輸出到文字框。')
   }
 
-  function mergeBank(existing: VerbCard[], incoming: VerbCard[]) {
-    const map = new Map<string, VerbCard>()
-    existing.forEach((card) => map.set(card.dict, card))
-    incoming.forEach((card) => {
-      const current = map.get(card.dict)
+function mergeBank(existing: VerbCard[], incoming: VerbCard[]) {
+  const map = new Map<string, VerbCard>()
+  existing.forEach((card) => map.set(card.dict, card))
+  incoming.forEach((card) => {
+    const current = map.get(card.dict)
       if (current?.zh && !card.zh) {
         map.set(card.dict, { ...card, zh: current.zh })
         return
       }
       map.set(card.dict, card)
-    })
-    return Array.from(map.values())
-  }
+  })
+  return Array.from(map.values())
+}
+
+function pruneSrs(srs: Record<string, SrsState>, bank: VerbCard[]) {
+  const allowed = new Set(bank.map((card) => card.dict))
+  const next: Record<string, SrsState> = {}
+  Object.entries(srs).forEach(([dict, state]) => {
+    if (allowed.has(dict)) next[dict] = state
+  })
+  return next
+}
 
   async function handleImport() {
     setMessage('')
@@ -598,13 +607,12 @@ function App() {
       }
       setMessage('正在查詢中文翻譯...')
       const enriched = await enrichTranslations(normalized.bank, bank)
-      setBank((prev) => mergeBank(prev, enriched))
-      setSrs({})
-      setStats(defaultStats())
-      setQuestion(makeQuestion())
+      const merged = mergeBank(bank, enriched)
+      setBank(merged)
+      setSrs((prev) => pruneSrs(prev, merged))
       setAnswer('')
       setResult(null)
-      setMessage('匯入成功，已合併題庫並清空學習紀錄。')
+      setMessage('匯入成功，已合併題庫。')
     } catch {
       setMessage('匯入失敗：JSON 解析錯誤。')
     } finally {
@@ -631,14 +639,13 @@ function App() {
     try {
       setMessage('正在查詢中文翻譯...')
       const enriched = await enrichTranslations(normalized.bank, bank)
-      setBank((prev) => mergeBank(prev, enriched))
-      setSrs({})
-      setStats(defaultStats())
-      setQuestion(makeQuestion())
-      setAnswer('')
-      setResult(null)
-      setQuickInput('')
-      setMessage('匯入成功，已合併題庫並清空學習紀錄。')
+    const merged = mergeBank(bank, enriched)
+    setBank(merged)
+    setSrs((prev) => pruneSrs(prev, merged))
+    setAnswer('')
+    setResult(null)
+    setQuickInput('')
+    setMessage('匯入成功，已合併題庫。')
     } finally {
       setIsImporting(false)
     }
@@ -871,7 +878,7 @@ function App() {
           <summary>題庫管理</summary>
           <div className="bank-body">
             <div className="bank-guide">
-              <p>匯入會覆蓋題庫並清空學習紀錄。匯出可直接複製。</p>
+              <p>匯入會合併題庫並保留學習紀錄。匯出可直接複製。</p>
               <div className="steps">
                 <div className="step">
                   <span>1.</span> 點「匯出題庫」可取得目前 JSON。
