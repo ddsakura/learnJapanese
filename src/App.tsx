@@ -639,13 +639,13 @@ function pruneSrs(srs: Record<string, SrsState>, bank: VerbCard[]) {
     try {
       setMessage('正在查詢中文翻譯...')
       const enriched = await enrichTranslations(normalized.bank, bank)
-    const merged = mergeBank(bank, enriched)
-    setBank(merged)
-    setSrs((prev) => pruneSrs(prev, merged))
-    setAnswer('')
-    setResult(null)
-    setQuickInput('')
-    setMessage('匯入成功，已合併題庫。')
+      const merged = mergeBank(bank, enriched)
+      setBank(merged)
+      setSrs((prev) => pruneSrs(prev, merged))
+      setAnswer('')
+      setResult(null)
+      setQuickInput('')
+      setMessage('匯入成功，已合併題庫。')
     } finally {
       setIsImporting(false)
     }
