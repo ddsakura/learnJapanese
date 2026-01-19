@@ -447,6 +447,8 @@ function App() {
   const [bankText, setBankText] = useState('')
   const [quickInput, setQuickInput] = useState('')
   const [isImporting, setIsImporting] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const canSpeak = typeof window !== 'undefined' && 'speechSynthesis' in window
 
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.bank, bank)
@@ -473,6 +475,13 @@ function App() {
     setAnswer('')
     setResult(null)
   }, [scope, questionType, bank])
+
+  useEffect(() => {
+    if (canSpeak) {
+      window.speechSynthesis.cancel()
+      setIsSpeaking(false)
+    }
+  }, [canSpeak, question])
 
   const pool = useMemo(() => getPool(bank, scope), [bank, scope])
 
@@ -545,6 +554,17 @@ function App() {
     setQuestion(makeQuestion())
     setAnswer('')
     setResult(null)
+  }
+
+  function handleSpeak() {
+    if (!question || !canSpeak) return
+    const utterance = new SpeechSynthesisUtterance(question.card.dict)
+    utterance.lang = 'ja-JP'
+    utterance.onend = () => setIsSpeaking(false)
+    utterance.onerror = () => setIsSpeaking(false)
+    window.speechSynthesis.cancel()
+    setIsSpeaking(true)
+    window.speechSynthesis.speak(utterance)
   }
 
   function handleExport() {
@@ -687,6 +707,17 @@ function App() {
               <div className="empty">目前題庫沒有可用題目</div>
             )}
           </div>
+          {question && (
+            <div className="pronunciation">
+              <div className="pronunciation-header">
+                <span>發音</span>
+                <button type="button" className="ghost" onClick={handleSpeak} disabled={isSpeaking || !canSpeak}>
+                  {isSpeaking ? '播放中…' : '播放'}
+                </button>
+              </div>
+              {!canSpeak && <div className="pronunciation-note">此瀏覽器不支援語音播放。</div>}
+            </div>
+          )}
           {question && (
             <div className="dictionary-link">
               <a
