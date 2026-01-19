@@ -10,6 +10,7 @@ type VerbCard = {
   nakatta: string
   te: string
   group: VerbGroup
+  zh?: string
 }
 
 type QuestionType = 'nai' | 'ta' | 'nakatta' | 'te' | 'mixed'
@@ -367,11 +368,53 @@ function normalizeImport(data: unknown): { ok: true; bank: VerbCard[] } | { ok: 
     if (typeof record.nakatta === 'string' && record.nakatta.trim())
       overrides.nakatta = record.nakatta.trim()
     if (typeof record.te === 'string' && record.te.trim()) overrides.te = record.te.trim()
+    if (typeof record.zh === 'string' && record.zh.trim()) overrides.zh = record.zh.trim()
 
     bank.push({ ...generated, ...overrides, group })
   }
 
   return { ok: true, bank }
+}
+
+const translationCache = new Map<string, string>()
+
+async function fetchZhTranslation(dict: string) {
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(dict)}&langpair=ja|zh-TW`
+  try {
+    const response = await fetch(url)
+    if (!response.ok) return null
+    const data = (await response.json()) as { responseData?: { translatedText?: string } }
+    const text = data.responseData?.translatedText?.trim()
+    if (!text || text === dict) return null
+    return text
+  } catch {
+    return null
+  }
+}
+
+async function enrichTranslations(cards: VerbCard[], existing: VerbCard[]) {
+  const existingMap = new Map<string, string>()
+  existing.forEach((card) => {
+    if (card.zh?.trim()) existingMap.set(card.dict, card.zh.trim())
+  })
+
+  const enriched: VerbCard[] = []
+  for (const card of cards) {
+    const current = card.zh?.trim()
+    if (current) {
+      enriched.push(card)
+      continue
+    }
+    const cached = translationCache.get(card.dict) ?? existingMap.get(card.dict)
+    if (cached) {
+      enriched.push({ ...card, zh: cached })
+      continue
+    }
+    const fetched = await fetchZhTranslation(card.dict)
+    if (fetched) translationCache.set(card.dict, fetched)
+    enriched.push(fetched ? { ...card, zh: fetched } : card)
+  }
+  return enriched
 }
 
 function App() {
@@ -403,6 +446,7 @@ function App() {
   const [message, setMessage] = useState<string>('')
   const [bankText, setBankText] = useState('')
   const [quickInput, setQuickInput] = useState('')
+  const [isImporting, setIsImporting] = useState(false)
 
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.bank, bank)
@@ -511,12 +555,20 @@ function App() {
   function mergeBank(existing: VerbCard[], incoming: VerbCard[]) {
     const map = new Map<string, VerbCard>()
     existing.forEach((card) => map.set(card.dict, card))
-    incoming.forEach((card) => map.set(card.dict, card))
+    incoming.forEach((card) => {
+      const current = map.get(card.dict)
+      if (current?.zh && !card.zh) {
+        map.set(card.dict, { ...card, zh: current.zh })
+        return
+      }
+      map.set(card.dict, card)
+    })
     return Array.from(map.values())
   }
 
-  function handleImport() {
+  async function handleImport() {
     setMessage('')
+    setIsImporting(true)
     try {
       const parsed = JSON.parse(bankText)
       const normalized = normalizeImport(parsed)
@@ -524,7 +576,9 @@ function App() {
         setMessage(`匯入失敗：${normalized.error}`)
         return
       }
-      setBank((prev) => mergeBank(prev, normalized.bank))
+      setMessage('正在查詢中文翻譯...')
+      const enriched = await enrichTranslations(normalized.bank, bank)
+      setBank((prev) => mergeBank(prev, enriched))
       setSrs({})
       setStats(defaultStats())
       setQuestion(makeQuestion())
@@ -533,10 +587,12 @@ function App() {
       setMessage('匯入成功，已合併題庫並清空學習紀錄。')
     } catch {
       setMessage('匯入失敗：JSON 解析錯誤。')
+    } finally {
+      setIsImporting(false)
     }
   }
 
-  function handleQuickImport() {
+  async function handleQuickImport() {
     setMessage('')
     const entries = quickInput
       .split(/[\s,]+/)
@@ -551,14 +607,21 @@ function App() {
       setMessage(`匯入失敗：${normalized.error}`)
       return
     }
-    setBank((prev) => mergeBank(prev, normalized.bank))
-    setSrs({})
-    setStats(defaultStats())
-    setQuestion(makeQuestion())
-    setAnswer('')
-    setResult(null)
-    setQuickInput('')
-    setMessage('匯入成功，已合併題庫並清空學習紀錄。')
+    setIsImporting(true)
+    try {
+      setMessage('正在查詢中文翻譯...')
+      const enriched = await enrichTranslations(normalized.bank, bank)
+      setBank((prev) => mergeBank(prev, enriched))
+      setSrs({})
+      setStats(defaultStats())
+      setQuestion(makeQuestion())
+      setAnswer('')
+      setResult(null)
+      setQuickInput('')
+      setMessage('匯入成功，已合併題庫並清空學習紀錄。')
+    } finally {
+      setIsImporting(false)
+    }
   }
 
   function handleResetBank() {
@@ -677,6 +740,12 @@ function App() {
                   <strong>{result.correctAnswer}</strong>
                 </div>
                 {question && (
+                  <div className="result-row">
+                    <span>中文</span>
+                    <strong>{question.card.zh?.trim() || '（未取得）'}</strong>
+                  </div>
+                )}
+                {question && (
                   <div className="result-forms">
                     <div className="result-forms-title">全部形</div>
                     <div className="result-forms-grid">
@@ -784,14 +853,14 @@ function App() {
                 </div>
               </div>
               <div className="group-hint">
-                group 代碼：godan = 五段、ichidan = 二段、irregular = 不規則
+                group 代碼：godan = 五段、ichidan = 二段、irregular = 不規則；可選 zh 欄位放中文翻譯
               </div>
               <pre className="example">
 {`[
   "行く",
   "見る",
   { "dict": "帰る", "group": "godan" },
-  { "dict": "勉強する", "group": "irregular" }
+  { "dict": "勉強する", "group": "irregular", "zh": "念書" }
 ]`}
               </pre>
             </div>
@@ -800,6 +869,7 @@ function App() {
               onChange={(event) => setBankText(event.target.value)}
               placeholder="在此貼上題庫 JSON 或按下匯出填入"
               rows={10}
+              disabled={isImporting}
             />
             <div className="bank-quick">
               <input
@@ -807,22 +877,23 @@ function App() {
                 value={quickInput}
                 onChange={(event) => setQuickInput(event.target.value)}
                 placeholder="直接輸入動詞（可用空白或逗號分隔）"
+                disabled={isImporting}
               />
-              <button type="button" onClick={handleQuickImport} className="secondary">
+              <button type="button" onClick={handleQuickImport} className="secondary" disabled={isImporting}>
                 直接匯入動詞
               </button>
             </div>
             <div className="bank-actions">
-              <button type="button" onClick={handleExport}>
+              <button type="button" onClick={handleExport} disabled={isImporting}>
                 匯出題庫
               </button>
-              <button type="button" onClick={handleImport} className="secondary">
+              <button type="button" onClick={handleImport} className="secondary" disabled={isImporting}>
                 匯入題庫
               </button>
-              <button type="button" onClick={handleResetBank} className="ghost">
+              <button type="button" onClick={handleResetBank} className="ghost" disabled={isImporting}>
                 重置題庫
               </button>
-              <button type="button" onClick={handleClearProgress} className="ghost">
+              <button type="button" onClick={handleClearProgress} className="ghost" disabled={isImporting}>
                 清空學習紀錄
               </button>
             </div>
