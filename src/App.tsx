@@ -577,11 +577,11 @@ function mergeBank(existing: VerbCard[], incoming: VerbCard[]) {
   existing.forEach((card) => map.set(card.dict, card))
   incoming.forEach((card) => {
     const current = map.get(card.dict)
-      if (current?.zh && !card.zh) {
-        map.set(card.dict, { ...card, zh: current.zh })
-        return
-      }
-      map.set(card.dict, card)
+    if (current?.zh && !card.zh) {
+      map.set(card.dict, { ...card, zh: current.zh })
+      return
+    }
+    map.set(card.dict, card)
   })
   return Array.from(map.values())
 }
