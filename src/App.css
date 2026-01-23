@@ -276,6 +276,15 @@ button.ghost {
   margin-top: 6px;
 }
 
+.review-card {
+  display: grid;
+  gap: 10px;
+}
+
+.review-card button {
+  width: 100%;
+}
+
 .rules {
   background: #fff;
   border-radius: 16px;

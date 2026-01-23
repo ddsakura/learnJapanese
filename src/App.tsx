@@ -33,6 +33,16 @@ type Stats = {
   lastDate: string
 }
 
+type WrongEntry = {
+  dict: string
+  type: Exclude<QuestionType, 'mixed'>
+}
+
+type WrongToday = {
+  date: string
+  items: WrongEntry[]
+}
+
 type Question = {
   card: VerbCard
   type: Exclude<QuestionType, 'mixed'>
@@ -43,6 +53,7 @@ const STORAGE_KEYS = {
   srs: 'jlpt-n4-verb-srs',
   stats: 'jlpt-n4-verb-stats',
   settings: 'jlpt-n4-verb-settings',
+  wrong: 'jlpt-n4-verb-wrong-today',
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -110,6 +121,11 @@ const defaultStats = (): Stats => ({
   lastDate: getTodayKey(),
 })
 
+const defaultWrongToday = (): WrongToday => ({
+  date: getTodayKey(),
+  items: [],
+})
+
 const defaultSettings = (): Settings => ({
   scope: 'all',
   type: 'mixed',
@@ -163,6 +179,14 @@ function normalizeStats(stats: Stats) {
     return { ...stats, todayCount: 0, lastDate: today }
   }
   return stats
+}
+
+function normalizeWrongToday(data: WrongToday) {
+  const today = getTodayKey()
+  if (data.date !== today) {
+    return { date: today, items: [] }
+  }
+  return data
 }
 
 function pickRandom<T>(items: T[]) {
@@ -427,6 +451,9 @@ function App() {
   const [stats, setStats] = useState<Stats>(() =>
     normalizeStats(loadFromStorage(STORAGE_KEYS.stats, defaultStats()))
   )
+  const [wrongToday, setWrongToday] = useState<WrongToday>(() =>
+    normalizeWrongToday(loadFromStorage(STORAGE_KEYS.wrong, defaultWrongToday()))
+  )
   const [scope, setScope] = useState<Scope>(() => {
     const saved = loadFromStorage<Settings>(STORAGE_KEYS.settings, defaultSettings())
     return saved.scope
@@ -443,6 +470,7 @@ function App() {
     userAnswer: string
     type: Exclude<QuestionType, 'mixed'>
   } | null>(null)
+  const [mode, setMode] = useState<'normal' | 'reviewWrong'>('normal')
   const [message, setMessage] = useState<string>('')
   const [bankText, setBankText] = useState('')
   const [quickInput, setQuickInput] = useState('')
@@ -463,18 +491,23 @@ function App() {
   }, [stats])
 
   useEffect(() => {
+    saveToStorage(STORAGE_KEYS.wrong, wrongToday)
+  }, [wrongToday])
+
+  useEffect(() => {
     saveToStorage(STORAGE_KEYS.settings, { scope, type: questionType })
   }, [scope, questionType])
 
   useEffect(() => {
     setStats((prev) => normalizeStats(prev))
+    setWrongToday((prev) => normalizeWrongToday(prev))
   }, [])
 
   useEffect(() => {
     setQuestion(makeQuestion())
     setAnswer('')
     setResult(null)
-  }, [scope, questionType, bank])
+  }, [scope, questionType, bank, mode])
 
   useEffect(() => {
     if (canSpeak) {
@@ -484,13 +517,27 @@ function App() {
   }, [canSpeak, question])
 
   const pool = useMemo(() => getPool(bank, scope), [bank, scope])
+  const reviewPool = useMemo(() => {
+    const bankMap = new Map(bank.map((card) => [card.dict, card]))
+    return wrongToday.items
+      .map((entry) => {
+        const card = bankMap.get(entry.dict)
+        return card ? { card, type: entry.type } : null
+      })
+      .filter((entry): entry is Question => Boolean(entry))
+  }, [bank, wrongToday])
 
   const dueCount = useMemo(() => {
     const now = Date.now()
     return pool.filter((card) => (srs[card.dict]?.due ?? 0) <= now).length
   }, [pool, srs])
+  const wrongCount = wrongToday.items.length
+  const emptyMessage = mode === 'reviewWrong' ? '今天沒有答錯的題目' : '目前題庫沒有可用題目'
 
   function makeQuestion(): Question | null {
+    if (mode === 'reviewWrong') {
+      return reviewPool.length > 0 ? pickRandom(reviewPool) : null
+    }
     const candidatePool = getPool(bank, scope)
     if (candidatePool.length === 0) return null
     const now = Date.now()
@@ -529,8 +576,26 @@ function App() {
     const correctAnswer = getAnswer(question.card, question.type)
     const trimmed = submitted.trim()
     const isCorrect = !forcedIncorrect && trimmed === correctAnswer
+    const entry = { dict: question.card.dict, type: question.type }
     applySrs(question.card, isCorrect)
     updateStats(isCorrect)
+    if (isCorrect) {
+      if (mode === 'reviewWrong') {
+        setWrongToday((prev) => ({
+          ...prev,
+          items: prev.items.filter(
+            (item) => !(item.dict === entry.dict && item.type === entry.type)
+          ),
+        }))
+      }
+    } else {
+      setWrongToday((prev) => {
+        if (prev.items.some((item) => item.dict === entry.dict && item.type === entry.type)) {
+          return prev
+        }
+        return { ...prev, items: [...prev.items, entry] }
+      })
+    }
     setResult({
       correct: isCorrect,
       correctAnswer,
@@ -551,6 +616,20 @@ function App() {
   }
 
   function handleNext() {
+    setQuestion(makeQuestion())
+    setAnswer('')
+    setResult(null)
+  }
+
+  function handleStartReview() {
+    setMode('reviewWrong')
+    setQuestion(makeQuestion())
+    setAnswer('')
+    setResult(null)
+  }
+
+  function handleExitReview() {
+    setMode('normal')
     setQuestion(makeQuestion())
     setAnswer('')
     setResult(null)
@@ -711,7 +790,7 @@ function pruneSrs(srs: Record<string, SrsState>, bank: VerbCard[]) {
                 <div className="target">{QUESTION_LABELS[question.type]}</div>
               </>
             ) : (
-              <div className="empty">目前題庫沒有可用題目</div>
+              <div className="empty">{emptyMessage}</div>
             )}
           </div>
           {question && (
@@ -834,6 +913,19 @@ function pruneSrs(srs: Record<string, SrsState>, bank: VerbCard[]) {
           <div>
             <div className="label">目前範圍</div>
             <div className="value">{SCOPE_LABELS[scope]}</div>
+          </div>
+          <div className="review-card">
+            <div className="label">今日答錯</div>
+            <div className="value">{wrongCount}</div>
+            {mode === 'reviewWrong' ? (
+              <button type="button" className="secondary" onClick={handleExitReview}>
+                回到正常題庫
+              </button>
+            ) : (
+              <button type="button" onClick={handleStartReview} disabled={wrongCount === 0}>
+                複習今日答錯
+              </button>
+            )}
           </div>
         </section>
 
