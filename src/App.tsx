@@ -777,6 +777,17 @@ function pruneSrs(srs: Record<string, SrsState>, bank: VerbCard[]) {
                   <span>正確答案</span>
                   <strong>{result.correctAnswer}</strong>
                 </div>
+                <div className="dictionary-link">
+                  <a
+                    href={`https://mazii.net/zh-TW/search/word/jatw/${encodeURIComponent(
+                      result.correctAnswer
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    查字典：{result.correctAnswer}
+                  </a>
+                </div>
                 {question && (
                   <div className="result-row">
                     <span>中文</span>
