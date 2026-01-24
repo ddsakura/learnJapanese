@@ -349,6 +349,16 @@ button.ghost {
   color: #5b5648;
 }
 
+.bank-count {
+  font-size: 13px;
+  color: #6d6451;
+  background: #f7f2e7;
+  border: 1px solid #e4dfd1;
+  border-radius: 999px;
+  padding: 6px 12px;
+  width: fit-content;
+}
+
 .steps {
   display: grid;
   gap: 6px;
