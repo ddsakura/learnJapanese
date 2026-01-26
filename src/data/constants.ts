@@ -1,17 +1,34 @@
-import type { QuestionType, Scope, VerbCard } from '../types'
+import type {
+  AdjectiveScope,
+  QuestionType,
+  VerbScope,
+  Card,
+} from '../types'
 
 export const STORAGE_KEYS = {
-  bank: 'jlpt-n4-verb-bank',
-  srs: 'jlpt-n4-verb-srs',
-  stats: 'jlpt-n4-verb-stats',
-  settings: 'jlpt-n4-verb-settings',
-  wrong: 'jlpt-n4-verb-wrong-today',
+  bank: {
+    verb: 'jlpt-n4-verb-bank',
+    adjective: 'jlpt-n4-adjective-bank',
+  },
+  srs: {
+    verb: 'jlpt-n4-verb-srs',
+    adjective: 'jlpt-n4-adjective-srs',
+  },
+  stats: {
+    verb: 'jlpt-n4-verb-stats',
+    adjective: 'jlpt-n4-adjective-stats',
+  },
+  settings: 'jlpt-n4-practice-settings',
+  wrong: {
+    verb: 'jlpt-n4-verb-wrong-today',
+    adjective: 'jlpt-n4-adjective-wrong-today',
+  },
 }
 
 export const DAY_MS = 24 * 60 * 60 * 1000
 export const INCORRECT_DELAY_MS = 2 * 60 * 1000
 
-export const DEFAULT_BANK: VerbCard[] = [
+export const DEFAULT_VERB_BANK: Card[] = [
   { dict: '行く', nai: '行かない', ta: '行った', nakatta: '行かなかった', te: '行って', group: 'godan' },
   { dict: '書く', nai: '書かない', ta: '書いた', nakatta: '書かなかった', te: '書いて', group: 'godan' },
   { dict: '泳ぐ', nai: '泳がない', ta: '泳いだ', nakatta: '泳がなかった', te: '泳いで', group: 'godan' },
@@ -43,6 +60,21 @@ export const DEFAULT_BANK: VerbCard[] = [
   { dict: 'くる', nai: 'こない', ta: 'きた', nakatta: 'こなかった', te: 'きて', group: 'irregular' },
 ]
 
+export const DEFAULT_ADJECTIVE_BANK: Card[] = [
+  { dict: '新しい', nai: '新しくない', ta: '新しかった', nakatta: '新しくなかった', te: '新しくて', group: 'i' },
+  { dict: '面白い', nai: '面白くない', ta: '面白かった', nakatta: '面白くなかった', te: '面白くて', group: 'i' },
+  { dict: '高い', nai: '高くない', ta: '高かった', nakatta: '高くなかった', te: '高くて', group: 'i' },
+  { dict: '安い', nai: '安くない', ta: '安かった', nakatta: '安くなかった', te: '安くて', group: 'i' },
+  { dict: '暑い', nai: '暑くない', ta: '暑かった', nakatta: '暑くなかった', te: '暑くて', group: 'i' },
+  { dict: '寒い', nai: '寒くない', ta: '寒かった', nakatta: '寒くなかった', te: '寒くて', group: 'i' },
+  { dict: '忙しい', nai: '忙しくない', ta: '忙しかった', nakatta: '忙しくなかった', te: '忙しくて', group: 'i' },
+  { dict: '元気', nai: '元気じゃない', ta: '元気だった', nakatta: '元気じゃなかった', te: '元気で', group: 'na' },
+  { dict: '静か', nai: '静かじゃない', ta: '静かだった', nakatta: '静かじゃなかった', te: '静かで', group: 'na' },
+  { dict: '便利', nai: '便利じゃない', ta: '便利だった', nakatta: '便利じゃなかった', te: '便利で', group: 'na' },
+  { dict: '有名', nai: '有名じゃない', ta: '有名だった', nakatta: '有名じゃなかった', te: '有名で', group: 'na' },
+  { dict: 'きれい', nai: 'きれいじゃない', ta: 'きれいだった', nakatta: 'きれいじゃなかった', te: 'きれいで', group: 'na' },
+]
+
 export const QUESTION_LABELS: Record<Exclude<QuestionType, 'mixed'>, string> = {
   nai: 'ない形',
   ta: 'た形',
@@ -50,11 +82,17 @@ export const QUESTION_LABELS: Record<Exclude<QuestionType, 'mixed'>, string> = {
   te: 'て形',
 }
 
-export const SCOPE_LABELS: Record<Scope, string> = {
+export const VERB_SCOPE_LABELS: Record<VerbScope, string> = {
   all: '全部',
   godan: '五段',
   ichidan: '二段',
   irregular: '不規則',
+}
+
+export const ADJECTIVE_SCOPE_LABELS: Record<AdjectiveScope, string> = {
+  all: '全部',
+  i: 'い形',
+  na: 'な形',
 }
 
 export const TYPE_OPTIONS: { value: QuestionType; label: string }[] = [
@@ -79,4 +117,10 @@ export const GODAN_RU_EXCEPTIONS = new Set([
   '減る',
   '焦る',
   '限る',
+])
+
+export const NA_ADJECTIVE_I_EXCEPTIONS = new Set([
+  'きれい',
+  '嫌い',
+  'きらい',
 ])
