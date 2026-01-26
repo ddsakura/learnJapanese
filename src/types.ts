@@ -1,27 +1,39 @@
-export type VerbGroup = 'godan' | 'ichidan' | 'irregular'
+export type PracticeKind = 'verb' | 'adjective'
 
-export type VerbCard = {
+export type VerbGroup = 'godan' | 'ichidan' | 'irregular'
+export type AdjectiveGroup = 'i' | 'na'
+export type Group = VerbGroup | AdjectiveGroup
+
+export type Card = {
   dict: string
   nai: string
   ta: string
   nakatta: string
   te: string
-  group: VerbGroup
+  group: Group
   zh?: string
 }
 
 export type QuestionType = 'nai' | 'ta' | 'nakatta' | 'te' | 'mixed'
 
-export type Scope = 'all' | VerbGroup
+export type VerbScope = 'all' | VerbGroup
+export type AdjectiveScope = 'all' | AdjectiveGroup
+export type Scope = VerbScope | AdjectiveScope
 
 export type SrsState = {
   intervalDays: number
   due: number
 }
 
-export type Settings = {
-  scope: Scope
+export type PracticeSettings<TScope extends Scope> = {
+  scope: TScope
   type: QuestionType
+}
+
+export type Settings = {
+  practice: PracticeKind
+  verb: PracticeSettings<VerbScope>
+  adjective: PracticeSettings<AdjectiveScope>
 }
 
 export type Stats = {
@@ -41,6 +53,6 @@ export type WrongToday = {
 }
 
 export type Question = {
-  card: VerbCard
+  card: Card
   type: Exclude<QuestionType, 'mixed'>
 }
