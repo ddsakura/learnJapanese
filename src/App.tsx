@@ -53,12 +53,18 @@ type LegacySettings = {
 }
 
 function normalizeSettings(value: Settings | LegacySettings): Settings {
-  if ('practice' in value) return value
-  return {
-    practice: 'verb',
-    verb: { scope: value.scope as 'all' | VerbGroup, type: value.type },
-    adjective: { scope: 'all', type: 'mixed' },
+  const normalized: Settings =
+    'practice' in value
+      ? value
+      : {
+          practice: 'verb',
+          verb: { scope: value.scope as 'all' | VerbGroup, type: value.type },
+          adjective: { scope: 'all', type: 'mixed' },
+        }
+  if (normalized.adjective.type === 'potential') {
+    return { ...normalized, adjective: { ...normalized.adjective, type: 'mixed' } }
   }
+  return normalized
 }
 
 function loadSettings() {
@@ -123,6 +129,7 @@ function getPool(bank: Card[], scope: Scope) {
 }
 
 function getAnswer(card: Card, type: Exclude<QuestionType, 'mixed'>) {
+  if (type === 'potential') return card.potential ?? ''
   return card[type]
 }
 
@@ -131,7 +138,10 @@ function validateBank(data: unknown, practice: PracticeKind): data is Card[] {
   return data.every((item) => {
     if (typeof item !== 'object' || item === null) return false
     const record = item as Record<string, unknown>
-    const requiredKeys = ['dict', 'nai', 'ta', 'nakatta', 'te', 'group']
+    const requiredKeys =
+      practice === 'verb'
+        ? ['dict', 'nai', 'ta', 'nakatta', 'te', 'potential', 'group']
+        : ['dict', 'nai', 'ta', 'nakatta', 'te', 'group']
     if (!requiredKeys.every((key) => typeof record[key] === 'string')) return false
     const group = record.group as string
     if (practice === 'verb') {
@@ -186,18 +196,21 @@ function conjugateVerb(dict: string, group: VerbGroup): Card | null {
         ta: `${base}した`,
         nakatta: `${base}しなかった`,
         te: `${base}して`,
+        potential: `${base}できる`,
         group,
       }
     }
     if (dict.endsWith('くる') || dict.endsWith('来る')) {
       const base = dict.endsWith('くる') ? dict.slice(0, -2) : dict.slice(0, -1)
       const nai = `${base}こない`
+      const potential = dict.endsWith('くる') ? `${base}こられる` : `${base}られる`
       return {
         dict,
         nai,
         ta: `${base}きた`,
         nakatta: `${base}こなかった`,
         te: `${base}きて`,
+        potential,
         group,
       }
     }
@@ -214,6 +227,7 @@ function conjugateVerb(dict: string, group: VerbGroup): Card | null {
       ta: `${stem}た`,
       nakatta: `${stem}なかった`,
       te: `${stem}て`,
+      potential: `${stem}られる`,
       group,
     }
   }
@@ -223,37 +237,44 @@ function conjugateVerb(dict: string, group: VerbGroup): Card | null {
   let nai = ''
   let ta = ''
   let te = ''
+  let potential = ''
 
   switch (last) {
     case 'う':
       nai = `${stem}わない`
       ta = `${stem}った`
       te = `${stem}って`
+      potential = `${stem}える`
       break
     case 'つ':
       nai = `${stem}たない`
       ta = `${stem}った`
       te = `${stem}って`
+      potential = `${stem}てる`
       break
     case 'る':
       nai = `${stem}らない`
       ta = `${stem}った`
       te = `${stem}って`
+      potential = `${stem}れる`
       break
     case 'ぶ':
       nai = `${stem}ばない`
       ta = `${stem}んだ`
       te = `${stem}んで`
+      potential = `${stem}べる`
       break
     case 'む':
       nai = `${stem}まない`
       ta = `${stem}んだ`
       te = `${stem}んで`
+      potential = `${stem}める`
       break
     case 'ぬ':
       nai = `${stem}なない`
       ta = `${stem}んだ`
       te = `${stem}んで`
+      potential = `${stem}ねる`
       break
     case 'く':
       nai = `${stem}かない`
@@ -264,16 +285,19 @@ function conjugateVerb(dict: string, group: VerbGroup): Card | null {
         ta = `${stem}いた`
         te = `${stem}いて`
       }
+      potential = `${stem}ける`
       break
     case 'ぐ':
       nai = `${stem}がない`
       ta = `${stem}いだ`
       te = `${stem}いで`
+      potential = `${stem}げる`
       break
     case 'す':
       nai = `${stem}さない`
       ta = `${stem}した`
       te = `${stem}して`
+      potential = `${stem}せる`
       break
     default:
       return null
@@ -285,6 +309,7 @@ function conjugateVerb(dict: string, group: VerbGroup): Card | null {
     ta,
     nakatta: buildNakatta(nai),
     te,
+    potential,
     group,
   }
 }
@@ -324,6 +349,18 @@ function conjugateAdjective(dict: string, group: AdjectiveGroup): Card | null {
     te: `${base}で`,
     group,
   }
+}
+
+function normalizeVerbBank(bank: Card[]) {
+  return bank.map((card) => {
+    if (card.group !== 'godan' && card.group !== 'ichidan' && card.group !== 'irregular') {
+      return card
+    }
+    if (card.potential?.trim()) return card
+    const generated = conjugateVerb(card.dict, card.group)
+    if (!generated?.potential) return card
+    return { ...card, potential: generated.potential }
+  })
 }
 
 function normalizeImport(
@@ -380,6 +417,8 @@ function normalizeImport(
       if (typeof record.nakatta === 'string' && record.nakatta.trim())
         overrides.nakatta = record.nakatta.trim()
       if (typeof record.te === 'string' && record.te.trim()) overrides.te = record.te.trim()
+      if (typeof record.potential === 'string' && record.potential.trim())
+        overrides.potential = record.potential.trim()
       if (typeof record.zh === 'string' && record.zh.trim()) overrides.zh = record.zh.trim()
 
       bank.push({ ...generated, ...overrides, group })
@@ -457,7 +496,7 @@ function App() {
     return loadSettings().practice
   })
   const [banks, setBanks] = useState<Record<PracticeKind, Card[]>>(() => ({
-    verb: loadFromStorage(STORAGE_KEYS.bank.verb, DEFAULT_VERB_BANK),
+    verb: normalizeVerbBank(loadFromStorage(STORAGE_KEYS.bank.verb, DEFAULT_VERB_BANK)),
     adjective: loadFromStorage(STORAGE_KEYS.bank.adjective, DEFAULT_ADJECTIVE_BANK),
   }))
   const [srs, setSrs] = useState<Record<PracticeKind, Record<string, SrsState>>>(() => ({
@@ -510,7 +549,17 @@ function App() {
     : ADJECTIVE_SCOPE_LABELS) as Record<Scope, string>
   const practiceLabel = practice === 'verb' ? '動詞' : '形容詞'
   const dictLabel = practice === 'verb' ? '辭書形' : '原形'
-  const ruleSummary = practice === 'verb' ? 'た形・て形 變形規則' : '形容詞變化規則'
+  const typeOptions =
+    practice === 'verb'
+      ? TYPE_OPTIONS
+      : TYPE_OPTIONS.filter((option) => option.value !== 'potential')
+  const typeKeys =
+    practice === 'verb' ? TYPE_KEYS : TYPE_KEYS.filter((type) => type !== 'potential')
+  const summaryLine =
+    practice === 'verb'
+      ? 'ない形／た形／なかった形／て形／可能形・快速刷題 + 簡易 SRS'
+      : 'ない形／た形／なかった形／て形・快速刷題 + 簡易 SRS'
+  const ruleSummary = practice === 'verb' ? 'た形・て形・可能形 變形規則' : '形容詞變化規則'
   const bankExample =
     practice === 'verb'
       ? `[
@@ -626,8 +675,12 @@ function App() {
     const now = Date.now()
     const dueCards = candidatePool.filter((card) => (activeSrs[card.dict]?.due ?? 0) <= now)
     const card = dueCards.length > 0 ? pickRandom(dueCards) : pickRandom(candidatePool)
+    const sanitizedType =
+      practice === 'adjective' && questionType === 'potential' ? 'mixed' : questionType
     const actualType =
-      questionType === 'mixed' ? pickRandom(TYPE_KEYS) : (questionType as Exclude<QuestionType, 'mixed'>)
+      sanitizedType === 'mixed'
+        ? pickRandom(typeKeys)
+        : (sanitizedType as Exclude<QuestionType, 'mixed'>)
     return { card, type: actualType }
   }
 
@@ -787,8 +840,9 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
       setMessage('正在查詢中文翻譯...')
       const enriched = await enrichTranslations(normalized.bank, bank)
       const merged = mergeBank(bank, enriched)
-      setBanks((prev) => ({ ...prev, [practice]: merged }))
-      setSrs((prev) => ({ ...prev, [practice]: pruneSrs(prev[practice], merged) }))
+      const nextBank = practice === 'verb' ? normalizeVerbBank(merged) : merged
+      setBanks((prev) => ({ ...prev, [practice]: nextBank }))
+      setSrs((prev) => ({ ...prev, [practice]: pruneSrs(prev[practice], nextBank) }))
       setAnswer('')
       setResult(null)
       setMessage('匯入成功，已合併題庫。')
@@ -819,8 +873,9 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
       setMessage('正在查詢中文翻譯...')
       const enriched = await enrichTranslations(normalized.bank, bank)
       const merged = mergeBank(bank, enriched)
-      setBanks((prev) => ({ ...prev, [practice]: merged }))
-      setSrs((prev) => ({ ...prev, [practice]: pruneSrs(prev[practice], merged) }))
+      const nextBank = practice === 'verb' ? normalizeVerbBank(merged) : merged
+      setBanks((prev) => ({ ...prev, [practice]: nextBank }))
+      setSrs((prev) => ({ ...prev, [practice]: pruneSrs(prev[practice], nextBank) }))
       setAnswer('')
       setResult(null)
       setQuickInput('')
@@ -832,7 +887,8 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
 
   function handleResetBank() {
     const nextBank = practice === 'verb' ? DEFAULT_VERB_BANK : DEFAULT_ADJECTIVE_BANK
-    setBanks((prev) => ({ ...prev, [practice]: nextBank }))
+    const normalizedBank = practice === 'verb' ? normalizeVerbBank(nextBank) : nextBank
+    setBanks((prev) => ({ ...prev, [practice]: normalizedBank }))
     setSrs((prev) => ({ ...prev, [practice]: {} }))
     setStats((prev) => ({ ...prev, [practice]: defaultStats() }))
     setQuestion(makeQuestion())
@@ -852,7 +908,7 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
       <header className="header">
         <div>
           <h1>JLPT N4 普通形{practiceLabel}變化練習</h1>
-          <p>ない形／た形／なかった形／て形・快速刷題 + 簡易 SRS</p>
+          <p>{summaryLine}</p>
         </div>
         <div className="controls">
           <label>
@@ -875,7 +931,7 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
                   : setAdjectiveQuestionType(event.target.value as QuestionType)
               }
             >
-              {TYPE_OPTIONS.map((option) => (
+              {typeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -1009,6 +1065,12 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
                       <strong>{question.card.nakatta}</strong>
                       <span>て形</span>
                       <strong>{question.card.te}</strong>
+                      {practice === 'verb' && (
+                        <>
+                          <span>可能形</span>
+                          <strong>{question.card.potential || '（未提供）'}</strong>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1092,9 +1154,18 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
                   <div className="rule-line">て形：語幹＋て</div>
                 </div>
                 <div className="rule-card">
+                  <div className="rule-title">五段動詞（可能形）</div>
+                  <div className="rule-line">語尾改 e 段＋る</div>
+                </div>
+                <div className="rule-card">
+                  <div className="rule-title">二段動詞（可能形）</div>
+                  <div className="rule-line">語幹＋られる</div>
+                </div>
+                <div className="rule-card">
                   <div className="rule-title">する／くる</div>
                   <div className="rule-line">た形：した／きた</div>
                   <div className="rule-line">て形：して／きて</div>
+                  <div className="rule-line">可能形：できる／こられる</div>
                 </div>
               </div>
             </div>
