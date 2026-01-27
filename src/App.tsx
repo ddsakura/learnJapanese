@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import './App.css'
+import { useEffect, useMemo, useState } from "react";
+import "./App.css";
 import {
   DAY_MS,
   DEFAULT_ADJECTIVE_BANK,
@@ -16,7 +16,7 @@ import {
   TYPE_KEYS,
   TYPE_OPTIONS,
   VERB_SCOPE_LABELS,
-} from './data/constants'
+} from "./data/constants";
 import type {
   AdjectiveGroup,
   AdjectiveScope,
@@ -31,236 +31,261 @@ import type {
   VerbGroup,
   VerbScope,
   WrongToday,
-} from './types'
+} from "./types";
 
 const defaultStats = (): Stats => ({
   streak: 0,
   todayCount: 0,
   lastDate: getTodayKey(),
-})
+});
 
 const defaultWrongToday = (): WrongToday => ({
   date: getTodayKey(),
   items: [],
-})
+});
 
 const defaultSettings = (): Settings => ({
-  practice: 'verb',
-  verb: { scope: 'all', type: 'mixed' },
-  adjective: { scope: 'all', type: 'mixed' },
-})
+  practice: "verb",
+  verb: { scope: "all", type: "mixed" },
+  adjective: { scope: "all", type: "mixed" },
+});
 
 type LegacySettings = {
-  scope: Scope
-  type: QuestionType
-}
+  scope: Scope;
+  type: QuestionType;
+};
 
 type ExampleEntry = {
-  jp: string
-  reading: string
-  romaji: string
-  zh: string
-  grammar: string
-}
+  jp: string;
+  reading: string;
+  romaji: string;
+  zh: string;
+  grammar: string;
+};
 
-const OLLAMA_GENERATE_ENDPOINT = import.meta.env.DEV ? DEV_OLLAMA_ENDPOINT : OLLAMA_ENDPOINT
+const OLLAMA_GENERATE_ENDPOINT = import.meta.env.DEV
+  ? DEV_OLLAMA_ENDPOINT
+  : OLLAMA_ENDPOINT;
 
 function normalizeSettings(value: Settings | LegacySettings): Settings {
   const normalized: Settings =
-    'practice' in value
+    "practice" in value
       ? value
       : {
-          practice: 'verb',
-          verb: { scope: value.scope as 'all' | VerbGroup, type: value.type },
-          adjective: { scope: 'all', type: 'mixed' },
-        }
-  if (normalized.adjective.type === 'potential') {
-    return { ...normalized, adjective: { ...normalized.adjective, type: 'mixed' } }
+          practice: "verb",
+          verb: { scope: value.scope as "all" | VerbGroup, type: value.type },
+          adjective: { scope: "all", type: "mixed" },
+        };
+  if (normalized.adjective.type === "potential") {
+    return {
+      ...normalized,
+      adjective: { ...normalized.adjective, type: "mixed" },
+    };
   }
-  return normalized
+  return normalized;
 }
 
 function loadSettings() {
-  const stored = loadFromStorage<Settings | LegacySettings | null>(STORAGE_KEYS.settings, null)
-  if (stored) return normalizeSettings(stored)
-  const legacy = loadFromStorage<LegacySettings | null>('jlpt-n4-verb-settings', null)
-  if (legacy) return normalizeSettings(legacy)
-  return defaultSettings()
+  const stored = loadFromStorage<Settings | LegacySettings | null>(
+    STORAGE_KEYS.settings,
+    null,
+  );
+  if (stored) return normalizeSettings(stored);
+  const legacy = loadFromStorage<LegacySettings | null>(
+    "jlpt-n4-verb-settings",
+    null,
+  );
+  if (legacy) return normalizeSettings(legacy);
+  return defaultSettings();
 }
 
 function getTodayKey() {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function loadFromStorage<T>(key: string, fallback: T): T {
-  if (typeof window === 'undefined') {
-    return fallback
+  if (typeof window === "undefined") {
+    return fallback;
   }
   try {
-    const raw = window.localStorage.getItem(key)
-    if (!raw) return fallback
-    return JSON.parse(raw) as T
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw) as T;
   } catch {
-    return fallback
+    return fallback;
   }
 }
 
 function saveToStorage<T>(key: string, value: T) {
-  if (typeof window === 'undefined') {
-    return
+  if (typeof window === "undefined") {
+    return;
   }
-  window.localStorage.setItem(key, JSON.stringify(value))
+  window.localStorage.setItem(key, JSON.stringify(value));
 }
 
 function loadExampleCache() {
-  return loadFromStorage<Record<string, ExampleEntry>>(STORAGE_KEYS.examples, {})
+  return loadFromStorage<Record<string, ExampleEntry>>(
+    STORAGE_KEYS.examples,
+    {},
+  );
 }
 
 function saveExampleCache(next: Record<string, ExampleEntry>) {
-  saveToStorage(STORAGE_KEYS.examples, next)
+  saveToStorage(STORAGE_KEYS.examples, next);
 }
 
 function normalizeStats(stats: Stats) {
-  const today = getTodayKey()
+  const today = getTodayKey();
   if (stats.lastDate !== today) {
-    return { ...stats, todayCount: 0, lastDate: today }
+    return { ...stats, todayCount: 0, lastDate: today };
   }
-  return stats
+  return stats;
 }
 
 function normalizeWrongToday(data: WrongToday) {
-  const today = getTodayKey()
+  const today = getTodayKey();
   if (data.date !== today) {
-    return { date: today, items: [] }
+    return { date: today, items: [] };
   }
-  return data
+  return data;
 }
 
 function pickRandom<T>(items: T[]) {
-  return items[Math.floor(Math.random() * items.length)]
+  return items[Math.floor(Math.random() * items.length)];
 }
 
 function getPool(bank: Card[], scope: Scope) {
-  if (scope === 'all') return bank
-  return bank.filter((card) => card.group === scope)
+  if (scope === "all") return bank;
+  return bank.filter((card) => card.group === scope);
 }
 
-function getAnswer(card: Card, type: Exclude<QuestionType, 'mixed'>) {
-  if (type === 'potential') return card.potential ?? ''
-  return card[type]
+function getAnswer(card: Card, type: Exclude<QuestionType, "mixed">) {
+  if (type === "potential") return card.potential ?? "";
+  return card[type];
 }
 
 function validateBank(data: unknown, practice: PracticeKind): data is Card[] {
-  if (!Array.isArray(data)) return false
+  if (!Array.isArray(data)) return false;
   return data.every((item) => {
-    if (typeof item !== 'object' || item === null) return false
-    const record = item as Record<string, unknown>
+    if (typeof item !== "object" || item === null) return false;
+    const record = item as Record<string, unknown>;
     const requiredKeys =
-      practice === 'verb'
-        ? ['dict', 'nai', 'ta', 'nakatta', 'te', 'potential', 'group']
-        : ['dict', 'nai', 'ta', 'nakatta', 'te', 'group']
-    if (!requiredKeys.every((key) => typeof record[key] === 'string')) return false
-    const group = record.group as string
-    if (practice === 'verb') {
-      return group === 'godan' || group === 'ichidan' || group === 'irregular'
+      practice === "verb"
+        ? ["dict", "nai", "ta", "nakatta", "te", "potential", "group"]
+        : ["dict", "nai", "ta", "nakatta", "te", "group"];
+    if (!requiredKeys.every((key) => typeof record[key] === "string"))
+      return false;
+    const group = record.group as string;
+    if (practice === "verb") {
+      return group === "godan" || group === "ichidan" || group === "irregular";
     }
-    return group === 'i' || group === 'na'
-  })
+    return group === "i" || group === "na";
+  });
 }
 
 function isKana(char: string) {
-  return /[ぁ-ゖァ-ヺ]/.test(char)
+  return /[ぁ-ゖァ-ヺ]/.test(char);
 }
 
 function isIchidan(dict: string) {
-  if (!dict.endsWith('る')) return false
-  if (GODAN_RU_EXCEPTIONS.has(dict)) return false
-  const before = dict.slice(-2, -1)
-  if (!before) return false
-  if (!isKana(before)) return false
-  return /[いきぎしじちぢにひびぴみりえけげせぜてでねへべぺめれ]/.test(before)
+  if (!dict.endsWith("る")) return false;
+  if (GODAN_RU_EXCEPTIONS.has(dict)) return false;
+  const before = dict.slice(-2, -1);
+  if (!before) return false;
+  if (!isKana(before)) return false;
+  return /[いきぎしじちぢにひびぴみりえけげせぜてでねへべぺめれ]/.test(before);
 }
 
 function inferVerbGroup(dict: string): VerbGroup {
-  if (dict.endsWith('する')) return 'irregular'
-  if (dict.endsWith('くる') || dict.endsWith('来る')) return 'irregular'
-  if (isIchidan(dict)) return 'ichidan'
-  return 'godan'
+  if (dict.endsWith("する")) return "irregular";
+  if (dict.endsWith("くる") || dict.endsWith("来る")) return "irregular";
+  if (isIchidan(dict)) return "ichidan";
+  return "godan";
 }
 
 function normalizeAdjectiveDict(dict: string) {
-  return dict.endsWith('だ') ? dict.slice(0, -1) : dict
+  return dict.endsWith("だ") ? dict.slice(0, -1) : dict;
 }
 
 function inferAdjectiveGroup(dict: string): AdjectiveGroup {
-  const normalized = normalizeAdjectiveDict(dict)
-  if (normalized.endsWith('い') && !NA_ADJECTIVE_I_EXCEPTIONS.has(normalized)) return 'i'
-  return 'na'
+  const normalized = normalizeAdjectiveDict(dict);
+  if (normalized.endsWith("い") && !NA_ADJECTIVE_I_EXCEPTIONS.has(normalized))
+    return "i";
+  return "na";
 }
 
 function buildNakatta(nai: string) {
-  return nai.endsWith('ない') ? `${nai.slice(0, -2)}なかった` : `${nai}なかった`
+  return nai.endsWith("ない")
+    ? `${nai.slice(0, -2)}なかった`
+    : `${nai}なかった`;
 }
 
-function buildExamplePrompt(term: string) {
-  return `系統設定： 你是一位專業的日語老師，擅長將複雜的文法用簡單易懂的方式解釋給 N4 程度的學生。 任務： 請用單字『${term}』造一個 N4 程度的日文句子。  輸出格式要求（嚴格執行）： JP: [日文句子] Reading: [全平假名] / [Romaji] ZH: [繁體中文翻譯] Grammar: [簡短說明該單字在此處的用法與形態變化]`
+function buildExamplePrompt(term: string, typeLabel: string) {
+  return `系統設定： 你是一位專業的日語老師，擅長將複雜的文法用簡單易懂的方式解釋給 N4 程度的學生。 任務： 請用單字『${term}』（形態：${typeLabel}）造一個 N4 程度的日文句子。  輸出格式要求（嚴格執行）： JP: [日文句子] Reading: [全平假名] Romaji: [羅馬字] ZH: [繁體中文翻譯] Grammar: [簡短說明該單字在此處的用法與形態變化，需點出${typeLabel}]`;
 }
 
 function parseExampleResponse(text: string): ExampleEntry | null {
-  const normalized = text.replace(/\\n/g, '\n').trim()
+  const normalized = text.replace(/\\n/g, "\n").trim();
   const getLineValue = (label: string) => {
-    const match = normalized.match(new RegExp(`${label}:\\s*([^\\n]+)`, 'i'))
-    return match ? match[1].trim() : ''
-  }
+    const match = normalized.match(new RegExp(`${label}:\\s*([^\\n]+)`, "i"));
+    return match ? match[1].trim() : "";
+  };
   const getBlockValue = (label: string) => {
-    const match = normalized.match(new RegExp(`${label}:\\s*([\\s\\S]+)`, 'i'))
-    return match ? match[1].trim() : ''
-  }
-  const jp = getLineValue('JP')
-  const readingRaw = getLineValue('Reading')
-  const romajiLine = getLineValue('Romaji')
-  const zh = getLineValue('ZH')
-  const grammar = getBlockValue('Grammar')
+    const match = normalized.match(new RegExp(`${label}:\\s*([\\s\\S]+)`, "i"));
+    return match ? match[1].trim() : "";
+  };
+  const jp = getLineValue("JP");
+  const readingRaw = getLineValue("Reading");
+  const romajiLine = getLineValue("Romaji");
+  const zh = getLineValue("ZH");
+  const grammar = getBlockValue("Grammar");
 
-  let reading = ''
-  let romaji = ''
+  let reading = "";
+  let romaji = "";
   if (readingRaw) {
-    const parts = readingRaw.split('/').map((part) => part.trim()).filter(Boolean)
-    reading = parts[0] ?? ''
-    romaji = parts[1] ?? ''
+    const parts = readingRaw
+      .split("/")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    reading = parts[0] ?? "";
+    romaji = parts[1] ?? "";
   }
-  if (!romaji && romajiLine) romaji = romajiLine
+  if (!romaji && romajiLine) romaji = romajiLine;
 
-  if (jp && reading && romaji && zh && grammar) return { jp, reading, romaji, zh, grammar }
-  return null
+  if (jp && reading && romaji && zh && grammar)
+    return { jp, reading, romaji, zh, grammar };
+  return null;
 }
 
-async function generateExample(term: string) {
+async function generateExample(term: string, typeLabel: string) {
   const response = await fetch(OLLAMA_GENERATE_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model: DEFAULT_OLLAMA_MODEL,
-      prompt: buildExamplePrompt(term),
+      prompt: buildExamplePrompt(term, typeLabel),
+      options: {
+        num_predict: 1000,
+      },
       stream: false,
     }),
-  })
-  if (!response.ok) return null
-  const data = (await response.json()) as { response?: string }
-  const raw = data.response?.trim()
-  if (!raw) return null
-  return parseExampleResponse(raw)
+  });
+  if (!response.ok) return null;
+  const data = (await response.json()) as { response?: string };
+  const raw = data.response?.trim();
+  if (!raw) return null;
+  return parseExampleResponse(raw);
 }
 
 function conjugateVerb(dict: string, group: VerbGroup): Card | null {
-  if (group === 'irregular') {
-    if (dict.endsWith('する')) {
-      const base = dict.slice(0, -2)
-      const nai = `${base}しない`
+  if (group === "irregular") {
+    if (dict.endsWith("する")) {
+      const base = dict.slice(0, -2);
+      const nai = `${base}しない`;
       return {
         dict,
         nai,
@@ -269,12 +294,16 @@ function conjugateVerb(dict: string, group: VerbGroup): Card | null {
         te: `${base}して`,
         potential: `${base}できる`,
         group,
-      }
+      };
     }
-    if (dict.endsWith('くる') || dict.endsWith('来る')) {
-      const base = dict.endsWith('くる') ? dict.slice(0, -2) : dict.slice(0, -1)
-      const nai = `${base}こない`
-      const potential = dict.endsWith('くる') ? `${base}こられる` : `${base}られる`
+    if (dict.endsWith("くる") || dict.endsWith("来る")) {
+      const base = dict.endsWith("くる")
+        ? dict.slice(0, -2)
+        : dict.slice(0, -1);
+      const nai = `${base}こない`;
+      const potential = dict.endsWith("くる")
+        ? `${base}こられる`
+        : `${base}られる`;
       return {
         dict,
         nai,
@@ -283,15 +312,15 @@ function conjugateVerb(dict: string, group: VerbGroup): Card | null {
         te: `${base}きて`,
         potential,
         group,
-      }
+      };
     }
-    return null
+    return null;
   }
 
-  if (group === 'ichidan') {
-    if (!dict.endsWith('る')) return null
-    const stem = dict.slice(0, -1)
-    const nai = `${stem}ない`
+  if (group === "ichidan") {
+    if (!dict.endsWith("る")) return null;
+    const stem = dict.slice(0, -1);
+    const nai = `${stem}ない`;
     return {
       dict,
       nai,
@@ -300,78 +329,78 @@ function conjugateVerb(dict: string, group: VerbGroup): Card | null {
       te: `${stem}て`,
       potential: `${stem}られる`,
       group,
-    }
+    };
   }
 
-  const last = dict.slice(-1)
-  const stem = dict.slice(0, -1)
-  let nai = ''
-  let ta = ''
-  let te = ''
-  let potential = ''
+  const last = dict.slice(-1);
+  const stem = dict.slice(0, -1);
+  let nai = "";
+  let ta = "";
+  let te = "";
+  let potential = "";
 
   switch (last) {
-    case 'う':
-      nai = `${stem}わない`
-      ta = `${stem}った`
-      te = `${stem}って`
-      potential = `${stem}える`
-      break
-    case 'つ':
-      nai = `${stem}たない`
-      ta = `${stem}った`
-      te = `${stem}って`
-      potential = `${stem}てる`
-      break
-    case 'る':
-      nai = `${stem}らない`
-      ta = `${stem}った`
-      te = `${stem}って`
-      potential = `${stem}れる`
-      break
-    case 'ぶ':
-      nai = `${stem}ばない`
-      ta = `${stem}んだ`
-      te = `${stem}んで`
-      potential = `${stem}べる`
-      break
-    case 'む':
-      nai = `${stem}まない`
-      ta = `${stem}んだ`
-      te = `${stem}んで`
-      potential = `${stem}める`
-      break
-    case 'ぬ':
-      nai = `${stem}なない`
-      ta = `${stem}んだ`
-      te = `${stem}んで`
-      potential = `${stem}ねる`
-      break
-    case 'く':
-      nai = `${stem}かない`
-      if (dict.endsWith('行く')) {
-        ta = `${stem}った`
-        te = `${stem}って`
+    case "う":
+      nai = `${stem}わない`;
+      ta = `${stem}った`;
+      te = `${stem}って`;
+      potential = `${stem}える`;
+      break;
+    case "つ":
+      nai = `${stem}たない`;
+      ta = `${stem}った`;
+      te = `${stem}って`;
+      potential = `${stem}てる`;
+      break;
+    case "る":
+      nai = `${stem}らない`;
+      ta = `${stem}った`;
+      te = `${stem}って`;
+      potential = `${stem}れる`;
+      break;
+    case "ぶ":
+      nai = `${stem}ばない`;
+      ta = `${stem}んだ`;
+      te = `${stem}んで`;
+      potential = `${stem}べる`;
+      break;
+    case "む":
+      nai = `${stem}まない`;
+      ta = `${stem}んだ`;
+      te = `${stem}んで`;
+      potential = `${stem}める`;
+      break;
+    case "ぬ":
+      nai = `${stem}なない`;
+      ta = `${stem}んだ`;
+      te = `${stem}んで`;
+      potential = `${stem}ねる`;
+      break;
+    case "く":
+      nai = `${stem}かない`;
+      if (dict.endsWith("行く")) {
+        ta = `${stem}った`;
+        te = `${stem}って`;
       } else {
-        ta = `${stem}いた`
-        te = `${stem}いて`
+        ta = `${stem}いた`;
+        te = `${stem}いて`;
       }
-      potential = `${stem}ける`
-      break
-    case 'ぐ':
-      nai = `${stem}がない`
-      ta = `${stem}いだ`
-      te = `${stem}いで`
-      potential = `${stem}げる`
-      break
-    case 'す':
-      nai = `${stem}さない`
-      ta = `${stem}した`
-      te = `${stem}して`
-      potential = `${stem}せる`
-      break
+      potential = `${stem}ける`;
+      break;
+    case "ぐ":
+      nai = `${stem}がない`;
+      ta = `${stem}いだ`;
+      te = `${stem}いで`;
+      potential = `${stem}げる`;
+      break;
+    case "す":
+      nai = `${stem}さない`;
+      ta = `${stem}した`;
+      te = `${stem}して`;
+      potential = `${stem}せる`;
+      break;
     default:
-      return null
+      return null;
   }
 
   return {
@@ -382,25 +411,25 @@ function conjugateVerb(dict: string, group: VerbGroup): Card | null {
     te,
     potential,
     group,
-  }
+  };
 }
 
 function conjugateAdjective(dict: string, group: AdjectiveGroup): Card | null {
-  const normalized = normalizeAdjectiveDict(dict)
-  if (!normalized) return null
-  if (group === 'i') {
-    if (normalized === 'いい') {
+  const normalized = normalizeAdjectiveDict(dict);
+  if (!normalized) return null;
+  if (group === "i") {
+    if (normalized === "いい") {
       return {
         dict: normalized,
-        nai: 'よくない',
-        ta: 'よかった',
-        nakatta: 'よくなかった',
-        te: 'よくて',
+        nai: "よくない",
+        ta: "よかった",
+        nakatta: "よくなかった",
+        te: "よくて",
         group,
-      }
+      };
     }
-    if (!normalized.endsWith('い')) return null
-    const stem = normalized.slice(0, -1)
+    if (!normalized.endsWith("い")) return null;
+    const stem = normalized.slice(0, -1);
     return {
       dict: normalized,
       nai: `${stem}くない`,
@@ -408,10 +437,10 @@ function conjugateAdjective(dict: string, group: AdjectiveGroup): Card | null {
       nakatta: `${stem}くなかった`,
       te: `${stem}くて`,
       group,
-    }
+    };
   }
 
-  const base = normalized
+  const base = normalized;
   return {
     dict: base,
     nai: `${base}じゃない`,
@@ -419,223 +448,268 @@ function conjugateAdjective(dict: string, group: AdjectiveGroup): Card | null {
     nakatta: `${base}じゃなかった`,
     te: `${base}で`,
     group,
-  }
+  };
 }
 
 function normalizeVerbBank(bank: Card[]) {
   return bank.map((card) => {
-    if (card.group !== 'godan' && card.group !== 'ichidan' && card.group !== 'irregular') {
-      return card
+    if (
+      card.group !== "godan" &&
+      card.group !== "ichidan" &&
+      card.group !== "irregular"
+    ) {
+      return card;
     }
-    if (card.potential?.trim()) return card
-    const generated = conjugateVerb(card.dict, card.group)
-    if (!generated?.potential) return card
-    return { ...card, potential: generated.potential }
-  })
+    if (card.potential?.trim()) return card;
+    const generated = conjugateVerb(card.dict, card.group);
+    if (!generated?.potential) return card;
+    return { ...card, potential: generated.potential };
+  });
 }
 
 function normalizeImport(
   data: unknown,
-  practice: PracticeKind
+  practice: PracticeKind,
 ): { ok: true; bank: Card[] } | { ok: false; error: string } {
   if (!Array.isArray(data)) {
-    return { ok: false, error: 'JSON 必須為陣列。' }
+    return { ok: false, error: "JSON 必須為陣列。" };
   }
 
-  const bank: Card[] = []
+  const bank: Card[] = [];
   for (const item of data) {
-    if (typeof item === 'string') {
-      const dict = item.trim()
-      if (!dict) return { ok: false, error: '存在空的項目。' }
-      if (practice === 'verb') {
-        const group = inferVerbGroup(dict)
-        const generated = conjugateVerb(dict, group)
-        if (!generated) return { ok: false, error: `無法推導：${dict}` }
-        bank.push(generated)
-        continue
+    if (typeof item === "string") {
+      const dict = item.trim();
+      if (!dict) return { ok: false, error: "存在空的項目。" };
+      if (practice === "verb") {
+        const group = inferVerbGroup(dict);
+        const generated = conjugateVerb(dict, group);
+        if (!generated) return { ok: false, error: `無法推導：${dict}` };
+        bank.push(generated);
+        continue;
       }
-      const group = inferAdjectiveGroup(dict)
-      const generated = conjugateAdjective(dict, group)
-      if (!generated) return { ok: false, error: `無法推導：${dict}` }
-      bank.push(generated)
-      continue
+      const group = inferAdjectiveGroup(dict);
+      const generated = conjugateAdjective(dict, group);
+      if (!generated) return { ok: false, error: `無法推導：${dict}` };
+      bank.push(generated);
+      continue;
     }
 
-    if (typeof item !== 'object' || item === null) {
-      return { ok: false, error: '題庫項目格式錯誤。' }
+    if (typeof item !== "object" || item === null) {
+      return { ok: false, error: "題庫項目格式錯誤。" };
     }
 
-    const record = item as Record<string, unknown>
-    const dict = typeof record.dict === 'string' ? record.dict.trim() : ''
-    if (!dict) return { ok: false, error: '每筆資料需包含 dict。' }
-    if (practice === 'verb') {
-      const groupValue = typeof record.group === 'string' ? record.group : undefined
+    const record = item as Record<string, unknown>;
+    const dict = typeof record.dict === "string" ? record.dict.trim() : "";
+    if (!dict) return { ok: false, error: "每筆資料需包含 dict。" };
+    if (practice === "verb") {
+      const groupValue =
+        typeof record.group === "string" ? record.group : undefined;
       const group =
-        groupValue === 'godan' || groupValue === 'ichidan' || groupValue === 'irregular'
+        groupValue === "godan" ||
+        groupValue === "ichidan" ||
+        groupValue === "irregular"
           ? groupValue
-          : inferVerbGroup(dict)
+          : inferVerbGroup(dict);
 
       if (validateBank([record as Card], practice)) {
-        bank.push(record as Card)
-        continue
+        bank.push(record as Card);
+        continue;
       }
 
-      const generated = conjugateVerb(dict, group)
-      if (!generated) return { ok: false, error: `無法推導：${dict}` }
-      const overrides: Partial<Card> = {}
-      if (typeof record.nai === 'string' && record.nai.trim()) overrides.nai = record.nai.trim()
-      if (typeof record.ta === 'string' && record.ta.trim()) overrides.ta = record.ta.trim()
-      if (typeof record.nakatta === 'string' && record.nakatta.trim())
-        overrides.nakatta = record.nakatta.trim()
-      if (typeof record.te === 'string' && record.te.trim()) overrides.te = record.te.trim()
-      if (typeof record.potential === 'string' && record.potential.trim())
-        overrides.potential = record.potential.trim()
-      if (typeof record.zh === 'string' && record.zh.trim()) overrides.zh = record.zh.trim()
+      const generated = conjugateVerb(dict, group);
+      if (!generated) return { ok: false, error: `無法推導：${dict}` };
+      const overrides: Partial<Card> = {};
+      if (typeof record.nai === "string" && record.nai.trim())
+        overrides.nai = record.nai.trim();
+      if (typeof record.ta === "string" && record.ta.trim())
+        overrides.ta = record.ta.trim();
+      if (typeof record.nakatta === "string" && record.nakatta.trim())
+        overrides.nakatta = record.nakatta.trim();
+      if (typeof record.te === "string" && record.te.trim())
+        overrides.te = record.te.trim();
+      if (typeof record.potential === "string" && record.potential.trim())
+        overrides.potential = record.potential.trim();
+      if (typeof record.zh === "string" && record.zh.trim())
+        overrides.zh = record.zh.trim();
 
-      bank.push({ ...generated, ...overrides, group })
-      continue
+      bank.push({ ...generated, ...overrides, group });
+      continue;
     }
 
-    const groupValue = typeof record.group === 'string' ? record.group : undefined
+    const groupValue =
+      typeof record.group === "string" ? record.group : undefined;
     const group =
-      groupValue === 'i' || groupValue === 'na' ? groupValue : inferAdjectiveGroup(dict)
+      groupValue === "i" || groupValue === "na"
+        ? groupValue
+        : inferAdjectiveGroup(dict);
 
     if (validateBank([record as Card], practice)) {
-      bank.push(record as Card)
-      continue
+      bank.push(record as Card);
+      continue;
     }
 
-    const generated = conjugateAdjective(dict, group)
-    if (!generated) return { ok: false, error: `無法推導：${dict}` }
-    const overrides: Partial<Card> = {}
-    if (typeof record.nai === 'string' && record.nai.trim()) overrides.nai = record.nai.trim()
-    if (typeof record.ta === 'string' && record.ta.trim()) overrides.ta = record.ta.trim()
-    if (typeof record.nakatta === 'string' && record.nakatta.trim())
-      overrides.nakatta = record.nakatta.trim()
-    if (typeof record.te === 'string' && record.te.trim()) overrides.te = record.te.trim()
-    if (typeof record.zh === 'string' && record.zh.trim()) overrides.zh = record.zh.trim()
+    const generated = conjugateAdjective(dict, group);
+    if (!generated) return { ok: false, error: `無法推導：${dict}` };
+    const overrides: Partial<Card> = {};
+    if (typeof record.nai === "string" && record.nai.trim())
+      overrides.nai = record.nai.trim();
+    if (typeof record.ta === "string" && record.ta.trim())
+      overrides.ta = record.ta.trim();
+    if (typeof record.nakatta === "string" && record.nakatta.trim())
+      overrides.nakatta = record.nakatta.trim();
+    if (typeof record.te === "string" && record.te.trim())
+      overrides.te = record.te.trim();
+    if (typeof record.zh === "string" && record.zh.trim())
+      overrides.zh = record.zh.trim();
 
-    bank.push({ ...generated, ...overrides, group })
+    bank.push({ ...generated, ...overrides, group });
   }
 
-  return { ok: true, bank }
+  return { ok: true, bank };
 }
 
-const translationCache = new Map<string, string>()
+const translationCache = new Map<string, string>();
 
 async function fetchZhTranslation(dict: string) {
-  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(dict)}&langpair=ja|zh-TW`
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(dict)}&langpair=ja|zh-TW`;
   try {
-    const response = await fetch(url)
-    if (!response.ok) return null
-    const data = (await response.json()) as { responseData?: { translatedText?: string } }
-    const text = data.responseData?.translatedText?.trim()
-    if (!text || text === dict) return null
-    return text
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const data = (await response.json()) as {
+      responseData?: { translatedText?: string };
+    };
+    const text = data.responseData?.translatedText?.trim();
+    if (!text || text === dict) return null;
+    return text;
   } catch {
-    return null
+    return null;
   }
 }
 
 async function enrichTranslations(cards: Card[], existing: Card[]) {
-  const existingMap = new Map<string, string>()
+  const existingMap = new Map<string, string>();
   existing.forEach((card) => {
-    if (card.zh?.trim()) existingMap.set(card.dict, card.zh.trim())
-  })
+    if (card.zh?.trim()) existingMap.set(card.dict, card.zh.trim());
+  });
 
-  const enriched: Card[] = []
+  const enriched: Card[] = [];
   for (const card of cards) {
-    const current = card.zh?.trim()
+    const current = card.zh?.trim();
     if (current) {
-      enriched.push(card)
-      continue
+      enriched.push(card);
+      continue;
     }
-    const cached = translationCache.get(card.dict) ?? existingMap.get(card.dict)
+    const cached =
+      translationCache.get(card.dict) ?? existingMap.get(card.dict);
     if (cached) {
-      enriched.push({ ...card, zh: cached })
-      continue
+      enriched.push({ ...card, zh: cached });
+      continue;
     }
-    const fetched = await fetchZhTranslation(card.dict)
-    if (fetched) translationCache.set(card.dict, fetched)
-    enriched.push(fetched ? { ...card, zh: fetched } : card)
+    const fetched = await fetchZhTranslation(card.dict);
+    if (fetched) translationCache.set(card.dict, fetched);
+    enriched.push(fetched ? { ...card, zh: fetched } : card);
   }
-  return enriched
+  return enriched;
 }
 
 function App() {
   const [practice, setPractice] = useState<PracticeKind>(() => {
-    return loadSettings().practice
-  })
+    return loadSettings().practice;
+  });
   const [banks, setBanks] = useState<Record<PracticeKind, Card[]>>(() => ({
-    verb: normalizeVerbBank(loadFromStorage(STORAGE_KEYS.bank.verb, DEFAULT_VERB_BANK)),
-    adjective: loadFromStorage(STORAGE_KEYS.bank.adjective, DEFAULT_ADJECTIVE_BANK),
-  }))
-  const [srs, setSrs] = useState<Record<PracticeKind, Record<string, SrsState>>>(() => ({
+    verb: normalizeVerbBank(
+      loadFromStorage(STORAGE_KEYS.bank.verb, DEFAULT_VERB_BANK),
+    ),
+    adjective: loadFromStorage(
+      STORAGE_KEYS.bank.adjective,
+      DEFAULT_ADJECTIVE_BANK,
+    ),
+  }));
+  const [srs, setSrs] = useState<
+    Record<PracticeKind, Record<string, SrsState>>
+  >(() => ({
     verb: loadFromStorage(STORAGE_KEYS.srs.verb, {}),
     adjective: loadFromStorage(STORAGE_KEYS.srs.adjective, {}),
-  }))
+  }));
   const [stats, setStats] = useState<Record<PracticeKind, Stats>>(() => ({
-    verb: normalizeStats(loadFromStorage(STORAGE_KEYS.stats.verb, defaultStats())),
-    adjective: normalizeStats(loadFromStorage(STORAGE_KEYS.stats.adjective, defaultStats())),
-  }))
-  const [wrongToday, setWrongToday] = useState<Record<PracticeKind, WrongToday>>(() => ({
-    verb: normalizeWrongToday(loadFromStorage(STORAGE_KEYS.wrong.verb, defaultWrongToday())),
-    adjective: normalizeWrongToday(loadFromStorage(STORAGE_KEYS.wrong.adjective, defaultWrongToday())),
-  }))
+    verb: normalizeStats(
+      loadFromStorage(STORAGE_KEYS.stats.verb, defaultStats()),
+    ),
+    adjective: normalizeStats(
+      loadFromStorage(STORAGE_KEYS.stats.adjective, defaultStats()),
+    ),
+  }));
+  const [wrongToday, setWrongToday] = useState<
+    Record<PracticeKind, WrongToday>
+  >(() => ({
+    verb: normalizeWrongToday(
+      loadFromStorage(STORAGE_KEYS.wrong.verb, defaultWrongToday()),
+    ),
+    adjective: normalizeWrongToday(
+      loadFromStorage(STORAGE_KEYS.wrong.adjective, defaultWrongToday()),
+    ),
+  }));
   const [verbScope, setVerbScope] = useState<VerbScope>(() => {
-    return loadSettings().verb.scope
-  })
+    return loadSettings().verb.scope;
+  });
   const [adjectiveScope, setAdjectiveScope] = useState<AdjectiveScope>(() => {
-    return loadSettings().adjective.scope
-  })
+    return loadSettings().adjective.scope;
+  });
   const [verbQuestionType, setVerbQuestionType] = useState<QuestionType>(() => {
-    return loadSettings().verb.type
-  })
-  const [adjectiveQuestionType, setAdjectiveQuestionType] = useState<QuestionType>(() => {
-    return loadSettings().adjective.type
-  })
-  const [question, setQuestion] = useState<Question | null>(null)
-  const [answer, setAnswer] = useState('')
+    return loadSettings().verb.type;
+  });
+  const [adjectiveQuestionType, setAdjectiveQuestionType] =
+    useState<QuestionType>(() => {
+      return loadSettings().adjective.type;
+    });
+  const [question, setQuestion] = useState<Question | null>(null);
+  const [answer, setAnswer] = useState("");
   const [result, setResult] = useState<{
-    correct: boolean
-    correctAnswer: string
-    userAnswer: string
-    type: Exclude<QuestionType, 'mixed'>
-  } | null>(null)
-  const [example, setExample] = useState<ExampleEntry | null>(null)
-  const [exampleStatus, setExampleStatus] = useState<'idle' | 'loading' | 'error'>('idle')
-  const [exampleMessage, setExampleMessage] = useState('')
-  const [mode, setMode] = useState<'normal' | 'reviewWrong'>('normal')
-  const [message, setMessage] = useState<string>('')
-  const [bankText, setBankText] = useState('')
-  const [quickInput, setQuickInput] = useState('')
-  const [isImporting, setIsImporting] = useState(false)
-  const [isSpeaking, setIsSpeaking] = useState(false)
-  const canSpeak = typeof window !== 'undefined' && 'speechSynthesis' in window
-  const scope: Scope = practice === 'verb' ? verbScope : adjectiveScope
-  const questionType = practice === 'verb' ? verbQuestionType : adjectiveQuestionType
-  const bank = banks[practice]
-  const activeSrs = srs[practice]
-  const activeStats = stats[practice]
-  const activeWrongToday = wrongToday[practice]
-  const scopeLabels = (practice === 'verb'
-    ? VERB_SCOPE_LABELS
-    : ADJECTIVE_SCOPE_LABELS) as Record<Scope, string>
-  const practiceLabel = practice === 'verb' ? '動詞' : '形容詞'
-  const dictLabel = practice === 'verb' ? '辭書形' : '原形'
+    correct: boolean;
+    correctAnswer: string;
+    userAnswer: string;
+    type: Exclude<QuestionType, "mixed">;
+  } | null>(null);
+  const [example, setExample] = useState<ExampleEntry | null>(null);
+  const [exampleStatus, setExampleStatus] = useState<
+    "idle" | "loading" | "error"
+  >("idle");
+  const [exampleMessage, setExampleMessage] = useState("");
+  const [mode, setMode] = useState<"normal" | "reviewWrong">("normal");
+  const [message, setMessage] = useState<string>("");
+  const [bankText, setBankText] = useState("");
+  const [quickInput, setQuickInput] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const canSpeak = typeof window !== "undefined" && "speechSynthesis" in window;
+  const scope: Scope = practice === "verb" ? verbScope : adjectiveScope;
+  const questionType =
+    practice === "verb" ? verbQuestionType : adjectiveQuestionType;
+  const bank = banks[practice];
+  const activeSrs = srs[practice];
+  const activeStats = stats[practice];
+  const activeWrongToday = wrongToday[practice];
+  const scopeLabels = (
+    practice === "verb" ? VERB_SCOPE_LABELS : ADJECTIVE_SCOPE_LABELS
+  ) as Record<Scope, string>;
+  const practiceLabel = practice === "verb" ? "動詞" : "形容詞";
+  const dictLabel = practice === "verb" ? "辭書形" : "原形";
   const typeOptions =
-    practice === 'verb'
+    practice === "verb"
       ? TYPE_OPTIONS
-      : TYPE_OPTIONS.filter((option) => option.value !== 'potential')
+      : TYPE_OPTIONS.filter((option) => option.value !== "potential");
   const typeKeys =
-    practice === 'verb' ? TYPE_KEYS : TYPE_KEYS.filter((type) => type !== 'potential')
+    practice === "verb"
+      ? TYPE_KEYS
+      : TYPE_KEYS.filter((type) => type !== "potential");
   const summaryLine =
-    practice === 'verb'
-      ? 'ない形／た形／なかった形／て形／可能形・快速刷題 + 簡易 SRS'
-      : 'ない形／た形／なかった形／て形・快速刷題 + 簡易 SRS'
-  const ruleSummary = practice === 'verb' ? 'た形・て形・可能形 變形規則' : '形容詞變化規則'
+    practice === "verb"
+      ? "ない形／た形／なかった形／て形／可能形・快速刷題 + 簡易 SRS"
+      : "ない形／た形／なかった形／て形・快速刷題 + 簡易 SRS";
+  const ruleSummary =
+    practice === "verb" ? "た形・て形・可能形 變形規則" : "形容詞變化規則";
   const bankExample =
-    practice === 'verb'
+    practice === "verb"
       ? `[
   "行く",
   "見る",
@@ -647,177 +721,199 @@ function App() {
   "便利",
   { "dict": "静か", "group": "na" },
   { "dict": "面白い", "group": "i", "zh": "有趣" }
-]`
+]`;
   const groupHint =
-    practice === 'verb'
-      ? 'group 代碼：godan = 五段、ichidan = 二段、irregular = 不規則；可選 zh 欄位放中文翻譯'
-      : 'group 代碼：i = い形、na = な形；可選 zh 欄位放中文翻譯'
+    practice === "verb"
+      ? "group 代碼：godan = 五段、ichidan = 二段、irregular = 不規則；可選 zh 欄位放中文翻譯"
+      : "group 代碼：i = い形、na = な形；可選 zh 欄位放中文翻譯";
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.bank.verb, banks.verb)
-  }, [banks.verb])
+    saveToStorage(STORAGE_KEYS.bank.verb, banks.verb);
+  }, [banks.verb]);
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.bank.adjective, banks.adjective)
-  }, [banks.adjective])
+    saveToStorage(STORAGE_KEYS.bank.adjective, banks.adjective);
+  }, [banks.adjective]);
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.srs.verb, srs.verb)
-  }, [srs.verb])
+    saveToStorage(STORAGE_KEYS.srs.verb, srs.verb);
+  }, [srs.verb]);
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.srs.adjective, srs.adjective)
-  }, [srs.adjective])
+    saveToStorage(STORAGE_KEYS.srs.adjective, srs.adjective);
+  }, [srs.adjective]);
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.stats.verb, stats.verb)
-  }, [stats.verb])
+    saveToStorage(STORAGE_KEYS.stats.verb, stats.verb);
+  }, [stats.verb]);
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.stats.adjective, stats.adjective)
-  }, [stats.adjective])
+    saveToStorage(STORAGE_KEYS.stats.adjective, stats.adjective);
+  }, [stats.adjective]);
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.wrong.verb, wrongToday.verb)
-  }, [wrongToday.verb])
+    saveToStorage(STORAGE_KEYS.wrong.verb, wrongToday.verb);
+  }, [wrongToday.verb]);
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.wrong.adjective, wrongToday.adjective)
-  }, [wrongToday.adjective])
+    saveToStorage(STORAGE_KEYS.wrong.adjective, wrongToday.adjective);
+  }, [wrongToday.adjective]);
 
   useEffect(() => {
     const nextSettings: Settings = {
       practice,
       verb: { scope: verbScope, type: verbQuestionType },
       adjective: { scope: adjectiveScope, type: adjectiveQuestionType },
-    }
-    saveToStorage(STORAGE_KEYS.settings, nextSettings)
-  }, [practice, verbScope, verbQuestionType, adjectiveScope, adjectiveQuestionType])
+    };
+    saveToStorage(STORAGE_KEYS.settings, nextSettings);
+  }, [
+    practice,
+    verbScope,
+    verbQuestionType,
+    adjectiveScope,
+    adjectiveQuestionType,
+  ]);
 
   useEffect(() => {
     setStats((prev) => ({
       verb: normalizeStats(prev.verb),
       adjective: normalizeStats(prev.adjective),
-    }))
+    }));
     setWrongToday((prev) => ({
       verb: normalizeWrongToday(prev.verb),
       adjective: normalizeWrongToday(prev.adjective),
-    }))
-  }, [])
+    }));
+  }, []);
 
   useEffect(() => {
-    setQuestion(makeQuestion())
-    setAnswer('')
-    setResult(null)
-    setExample(null)
-    setExampleStatus('idle')
-    setExampleMessage('')
-  }, [scope, questionType, bank, mode])
+    setQuestion(makeQuestion());
+    setAnswer("");
+    setResult(null);
+    setExample(null);
+    setExampleStatus("idle");
+    setExampleMessage("");
+  }, [scope, questionType, bank, mode]);
 
   useEffect(() => {
-    setMode('normal')
-  }, [practice])
+    setMode("normal");
+  }, [practice]);
 
   useEffect(() => {
-    setExample(null)
-    setExampleStatus('idle')
-    setExampleMessage('')
-    if (!result || !question) return
-    const term = result.correctAnswer
-    const cacheKey = `${practice}:${term}`
-    const cache = loadExampleCache()
-    const cached = cache[cacheKey]
+    setExample(null);
+    setExampleStatus("idle");
+    setExampleMessage("");
+    if (!result || !question) return;
+    const term = result.correctAnswer;
+    const typeLabel = QUESTION_LABELS[result.type];
+    const cacheKey = `${practice}:${result.type}:${term}`;
+    const cache = loadExampleCache();
+    const cached = cache[cacheKey];
     if (cached) {
-      setExample(cached)
-      return
+      setExample(cached);
+      return;
     }
-    let cancelled = false
-    setExampleStatus('loading')
-    generateExample(term)
+    let cancelled = false;
+    setExampleStatus("loading");
+    generateExample(term, typeLabel)
       .then((entry) => {
-        if (cancelled) return
+        if (cancelled) return;
         if (!entry) {
-          setExampleStatus('error')
-          setExampleMessage('例句產生失敗，請確認 Ollama 已啟動且模型可用（必要時設定 CORS）。')
-          return
+          setExampleStatus("error");
+          setExampleMessage(
+            "例句產生失敗，請確認 Ollama 已啟動且模型可用（必要時設定 CORS）。",
+          );
+          return;
         }
-        setExample(entry)
-        setExampleStatus('idle')
-        const next = { ...cache, [cacheKey]: entry }
-        saveExampleCache(next)
+        setExample(entry);
+        setExampleStatus("idle");
+        const next = { ...cache, [cacheKey]: entry };
+        saveExampleCache(next);
       })
       .catch(() => {
-        if (cancelled) return
-        setExampleStatus('error')
-        setExampleMessage('例句產生失敗，請確認 Ollama 已啟動且模型可用（必要時設定 CORS）。')
-      })
+        if (cancelled) return;
+        setExampleStatus("error");
+        setExampleMessage(
+          "例句產生失敗，請確認 Ollama 已啟動且模型可用（必要時設定 CORS）。",
+        );
+      });
     return () => {
-      cancelled = true
-    }
-  }, [practice, question, result])
+      cancelled = true;
+    };
+  }, [practice, question, result]);
 
   useEffect(() => {
     if (canSpeak) {
-      window.speechSynthesis.cancel()
-      setIsSpeaking(false)
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
     }
-  }, [canSpeak, question])
+  }, [canSpeak, question]);
 
-  const pool = useMemo(() => getPool(bank, scope), [bank, scope])
+  const pool = useMemo(() => getPool(bank, scope), [bank, scope]);
   const reviewPool = useMemo(() => {
-    const bankMap = new Map(bank.map((card) => [card.dict, card]))
+    const bankMap = new Map(bank.map((card) => [card.dict, card]));
     return activeWrongToday.items
       .map((entry) => {
-        const card = bankMap.get(entry.dict)
-        return card ? { card, type: entry.type } : null
+        const card = bankMap.get(entry.dict);
+        return card ? { card, type: entry.type } : null;
       })
-      .filter((entry): entry is Question => Boolean(entry))
-  }, [bank, activeWrongToday])
+      .filter((entry): entry is Question => Boolean(entry));
+  }, [bank, activeWrongToday]);
 
   const dueCount = useMemo(() => {
-    const now = Date.now()
-    return pool.filter((card) => (activeSrs[card.dict]?.due ?? 0) <= now).length
-  }, [pool, activeSrs])
-  const wrongCount = activeWrongToday.items.length
-  const emptyMessage = mode === 'reviewWrong' ? '今天沒有答錯的題目' : '目前題庫沒有可用題目'
+    const now = Date.now();
+    return pool.filter((card) => (activeSrs[card.dict]?.due ?? 0) <= now)
+      .length;
+  }, [pool, activeSrs]);
+  const wrongCount = activeWrongToday.items.length;
+  const emptyMessage =
+    mode === "reviewWrong" ? "今天沒有答錯的題目" : "目前題庫沒有可用題目";
 
   function makeQuestion(): Question | null {
-    if (mode === 'reviewWrong') {
-      return reviewPool.length > 0 ? pickRandom(reviewPool) : null
+    if (mode === "reviewWrong") {
+      return reviewPool.length > 0 ? pickRandom(reviewPool) : null;
     }
-    const candidatePool = getPool(bank, scope)
-    if (candidatePool.length === 0) return null
-    const now = Date.now()
-    const dueCards = candidatePool.filter((card) => (activeSrs[card.dict]?.due ?? 0) <= now)
-    const card = dueCards.length > 0 ? pickRandom(dueCards) : pickRandom(candidatePool)
+    const candidatePool = getPool(bank, scope);
+    if (candidatePool.length === 0) return null;
+    const now = Date.now();
+    const dueCards = candidatePool.filter(
+      (card) => (activeSrs[card.dict]?.due ?? 0) <= now,
+    );
+    const card =
+      dueCards.length > 0 ? pickRandom(dueCards) : pickRandom(candidatePool);
     const sanitizedType =
-      practice === 'adjective' && questionType === 'potential' ? 'mixed' : questionType
+      practice === "adjective" && questionType === "potential"
+        ? "mixed"
+        : questionType;
     const actualType =
-      sanitizedType === 'mixed'
+      sanitizedType === "mixed"
         ? pickRandom(typeKeys)
-        : (sanitizedType as Exclude<QuestionType, 'mixed'>)
-    return { card, type: actualType }
+        : (sanitizedType as Exclude<QuestionType, "mixed">);
+    return { card, type: actualType };
   }
 
   function applySrs(card: Card, isCorrect: boolean) {
     setSrs((prev) => {
-      const currentPractice = prev[practice]
-      const current = currentPractice[card.dict]
-      const intervalDays = isCorrect ? Math.max(1, (current?.intervalDays ?? 0) * 2 || 1) : 0
-      const due = isCorrect ? Date.now() + intervalDays * DAY_MS : Date.now() + INCORRECT_DELAY_MS
+      const currentPractice = prev[practice];
+      const current = currentPractice[card.dict];
+      const intervalDays = isCorrect
+        ? Math.max(1, (current?.intervalDays ?? 0) * 2 || 1)
+        : 0;
+      const due = isCorrect
+        ? Date.now() + intervalDays * DAY_MS
+        : Date.now() + INCORRECT_DELAY_MS;
       return {
         ...prev,
         [practice]: {
           ...currentPractice,
           [card.dict]: { intervalDays, due },
         },
-      }
-    })
+      };
+    });
   }
 
   function updateStats(isCorrect: boolean) {
     setStats((prev) => {
-      const normalized = normalizeStats(prev[practice])
+      const normalized = normalizeStats(prev[practice]);
       return {
         ...prev,
         [practice]: {
@@ -825,197 +921,210 @@ function App() {
           todayCount: normalized.todayCount + 1,
           streak: isCorrect ? normalized.streak + 1 : 0,
         },
-      }
-    })
+      };
+    });
   }
 
   function checkAnswer(submitted: string, forcedIncorrect = false) {
-    if (!question) return
-    const correctAnswer = getAnswer(question.card, question.type)
-    const trimmed = submitted.trim()
-    const isCorrect = !forcedIncorrect && trimmed === correctAnswer
-    const entry = { dict: question.card.dict, type: question.type }
-    applySrs(question.card, isCorrect)
-    updateStats(isCorrect)
+    if (!question) return;
+    const correctAnswer = getAnswer(question.card, question.type);
+    const trimmed = submitted.trim();
+    const isCorrect = !forcedIncorrect && trimmed === correctAnswer;
+    const entry = { dict: question.card.dict, type: question.type };
+    applySrs(question.card, isCorrect);
+    updateStats(isCorrect);
     if (isCorrect) {
-      if (mode === 'reviewWrong') {
+      if (mode === "reviewWrong") {
         setWrongToday((prev) => {
-          const current = prev[practice]
+          const current = prev[practice];
           return {
             ...prev,
             [practice]: {
               ...current,
               items: current.items.filter(
-                (item) => !(item.dict === entry.dict && item.type === entry.type)
+                (item) =>
+                  !(item.dict === entry.dict && item.type === entry.type),
               ),
             },
-          }
-        })
+          };
+        });
       }
     } else {
       setWrongToday((prev) => {
-        const current = prev[practice]
-        if (current.items.some((item) => item.dict === entry.dict && item.type === entry.type)) {
-          return prev
+        const current = prev[practice];
+        if (
+          current.items.some(
+            (item) => item.dict === entry.dict && item.type === entry.type,
+          )
+        ) {
+          return prev;
         }
         return {
           ...prev,
           [practice]: { ...current, items: [...current.items, entry] },
-        }
-      })
+        };
+      });
     }
     setResult({
       correct: isCorrect,
       correctAnswer,
       userAnswer: trimmed,
       type: question.type,
-    })
+    });
   }
 
   function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    if (result || !question) return
-    checkAnswer(answer)
+    event.preventDefault();
+    if (result || !question) return;
+    checkAnswer(answer);
   }
 
   function handleSkip() {
-    if (!question || result) return
-    checkAnswer('', true)
+    if (!question || result) return;
+    checkAnswer("", true);
   }
 
   function handleNext() {
-    setQuestion(makeQuestion())
-    setAnswer('')
-    setResult(null)
+    setQuestion(makeQuestion());
+    setAnswer("");
+    setResult(null);
   }
 
   function handleStartReview() {
-    setMode('reviewWrong')
-    setQuestion(makeQuestion())
-    setAnswer('')
-    setResult(null)
+    setMode("reviewWrong");
+    setQuestion(makeQuestion());
+    setAnswer("");
+    setResult(null);
   }
 
   function handleExitReview() {
-    setMode('normal')
-    setQuestion(makeQuestion())
-    setAnswer('')
-    setResult(null)
+    setMode("normal");
+    setQuestion(makeQuestion());
+    setAnswer("");
+    setResult(null);
   }
 
   function handleSpeak() {
-    if (!question || !canSpeak) return
-    const utterance = new SpeechSynthesisUtterance(question.card.dict)
-    utterance.lang = 'ja-JP'
-    utterance.onend = () => setIsSpeaking(false)
-    utterance.onerror = () => setIsSpeaking(false)
-    window.speechSynthesis.cancel()
-    setIsSpeaking(true)
-    window.speechSynthesis.speak(utterance)
+    if (!question || !canSpeak) return;
+    const utterance = new SpeechSynthesisUtterance(question.card.dict);
+    utterance.lang = "ja-JP";
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.cancel();
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utterance);
   }
 
   function handleExport() {
-    setBankText(JSON.stringify(bank, null, 2))
-    setMessage('已將題庫輸出到文字框。')
+    setBankText(JSON.stringify(bank, null, 2));
+    setMessage("已將題庫輸出到文字框。");
   }
 
-function mergeBank(existing: Card[], incoming: Card[]) {
-  const map = new Map<string, Card>()
-  existing.forEach((card) => map.set(card.dict, card))
-  incoming.forEach((card) => {
-    const current = map.get(card.dict)
-    if (current?.zh && !card.zh) {
-      map.set(card.dict, { ...card, zh: current.zh })
-      return
-    }
-    map.set(card.dict, card)
-  })
-  return Array.from(map.values())
-}
+  function mergeBank(existing: Card[], incoming: Card[]) {
+    const map = new Map<string, Card>();
+    existing.forEach((card) => map.set(card.dict, card));
+    incoming.forEach((card) => {
+      const current = map.get(card.dict);
+      if (current?.zh && !card.zh) {
+        map.set(card.dict, { ...card, zh: current.zh });
+        return;
+      }
+      map.set(card.dict, card);
+    });
+    return Array.from(map.values());
+  }
 
-function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
-  const allowed = new Set(bank.map((card) => card.dict))
-  const next: Record<string, SrsState> = {}
-  Object.entries(srs).forEach(([dict, state]) => {
-    if (allowed.has(dict)) next[dict] = state
-  })
-  return next
-}
+  function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
+    const allowed = new Set(bank.map((card) => card.dict));
+    const next: Record<string, SrsState> = {};
+    Object.entries(srs).forEach(([dict, state]) => {
+      if (allowed.has(dict)) next[dict] = state;
+    });
+    return next;
+  }
 
   async function handleImport() {
-    setMessage('')
-    setIsImporting(true)
+    setMessage("");
+    setIsImporting(true);
     try {
-      const parsed = JSON.parse(bankText)
-      const normalized = normalizeImport(parsed, practice)
+      const parsed = JSON.parse(bankText);
+      const normalized = normalizeImport(parsed, practice);
       if (!normalized.ok) {
-        setMessage(`匯入失敗：${normalized.error}`)
-        return
+        setMessage(`匯入失敗：${normalized.error}`);
+        return;
       }
-      setMessage('正在查詢中文翻譯...')
-      const enriched = await enrichTranslations(normalized.bank, bank)
-      const merged = mergeBank(bank, enriched)
-      const nextBank = practice === 'verb' ? normalizeVerbBank(merged) : merged
-      setBanks((prev) => ({ ...prev, [practice]: nextBank }))
-      setSrs((prev) => ({ ...prev, [practice]: pruneSrs(prev[practice], nextBank) }))
-      setAnswer('')
-      setResult(null)
-      setMessage('匯入成功，已合併題庫。')
+      setMessage("正在查詢中文翻譯...");
+      const enriched = await enrichTranslations(normalized.bank, bank);
+      const merged = mergeBank(bank, enriched);
+      const nextBank = practice === "verb" ? normalizeVerbBank(merged) : merged;
+      setBanks((prev) => ({ ...prev, [practice]: nextBank }));
+      setSrs((prev) => ({
+        ...prev,
+        [practice]: pruneSrs(prev[practice], nextBank),
+      }));
+      setAnswer("");
+      setResult(null);
+      setMessage("匯入成功，已合併題庫。");
     } catch {
-      setMessage('匯入失敗：JSON 解析錯誤。')
+      setMessage("匯入失敗：JSON 解析錯誤。");
     } finally {
-      setIsImporting(false)
+      setIsImporting(false);
     }
   }
 
   async function handleQuickImport() {
-    setMessage('')
+    setMessage("");
     const entries = quickInput
       .split(/[\s,]+/)
       .map((value) => value.trim())
-      .filter(Boolean)
+      .filter(Boolean);
     if (entries.length === 0) {
-      setMessage(practice === 'verb' ? '請先輸入動詞。' : '請先輸入形容詞。')
-      return
+      setMessage(practice === "verb" ? "請先輸入動詞。" : "請先輸入形容詞。");
+      return;
     }
-    const normalized = normalizeImport(entries, practice)
+    const normalized = normalizeImport(entries, practice);
     if (!normalized.ok) {
-      setMessage(`匯入失敗：${normalized.error}`)
-      return
+      setMessage(`匯入失敗：${normalized.error}`);
+      return;
     }
-    setIsImporting(true)
+    setIsImporting(true);
     try {
-      setMessage('正在查詢中文翻譯...')
-      const enriched = await enrichTranslations(normalized.bank, bank)
-      const merged = mergeBank(bank, enriched)
-      const nextBank = practice === 'verb' ? normalizeVerbBank(merged) : merged
-      setBanks((prev) => ({ ...prev, [practice]: nextBank }))
-      setSrs((prev) => ({ ...prev, [practice]: pruneSrs(prev[practice], nextBank) }))
-      setAnswer('')
-      setResult(null)
-      setQuickInput('')
-      setMessage('匯入成功，已合併題庫。')
+      setMessage("正在查詢中文翻譯...");
+      const enriched = await enrichTranslations(normalized.bank, bank);
+      const merged = mergeBank(bank, enriched);
+      const nextBank = practice === "verb" ? normalizeVerbBank(merged) : merged;
+      setBanks((prev) => ({ ...prev, [practice]: nextBank }));
+      setSrs((prev) => ({
+        ...prev,
+        [practice]: pruneSrs(prev[practice], nextBank),
+      }));
+      setAnswer("");
+      setResult(null);
+      setQuickInput("");
+      setMessage("匯入成功，已合併題庫。");
     } finally {
-      setIsImporting(false)
+      setIsImporting(false);
     }
   }
 
   function handleResetBank() {
-    const nextBank = practice === 'verb' ? DEFAULT_VERB_BANK : DEFAULT_ADJECTIVE_BANK
-    const normalizedBank = practice === 'verb' ? normalizeVerbBank(nextBank) : nextBank
-    setBanks((prev) => ({ ...prev, [practice]: normalizedBank }))
-    setSrs((prev) => ({ ...prev, [practice]: {} }))
-    setStats((prev) => ({ ...prev, [practice]: defaultStats() }))
-    setQuestion(makeQuestion())
-    setAnswer('')
-    setResult(null)
-    setMessage('已重置為內建題庫。')
+    const nextBank =
+      practice === "verb" ? DEFAULT_VERB_BANK : DEFAULT_ADJECTIVE_BANK;
+    const normalizedBank =
+      practice === "verb" ? normalizeVerbBank(nextBank) : nextBank;
+    setBanks((prev) => ({ ...prev, [practice]: normalizedBank }));
+    setSrs((prev) => ({ ...prev, [practice]: {} }));
+    setStats((prev) => ({ ...prev, [practice]: defaultStats() }));
+    setQuestion(makeQuestion());
+    setAnswer("");
+    setResult(null);
+    setMessage("已重置為內建題庫。");
   }
 
   function handleClearProgress() {
-    setSrs((prev) => ({ ...prev, [practice]: {} }))
-    setStats((prev) => ({ ...prev, [practice]: defaultStats() }))
-    setMessage('已清空學習紀錄。')
+    setSrs((prev) => ({ ...prev, [practice]: {} }));
+    setStats((prev) => ({ ...prev, [practice]: defaultStats() }));
+    setMessage("已清空學習紀錄。");
   }
 
   return (
@@ -1030,7 +1139,9 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
             類型
             <select
               value={practice}
-              onChange={(event) => setPractice(event.target.value as PracticeKind)}
+              onChange={(event) =>
+                setPractice(event.target.value as PracticeKind)
+              }
             >
               <option value="verb">動詞</option>
               <option value="adjective">形容詞</option>
@@ -1041,7 +1152,7 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
             <select
               value={questionType}
               onChange={(event) =>
-                practice === 'verb'
+                practice === "verb"
                   ? setVerbQuestionType(event.target.value as QuestionType)
                   : setAdjectiveQuestionType(event.target.value as QuestionType)
               }
@@ -1058,7 +1169,7 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
             <select
               value={scope}
               onChange={(event) =>
-                practice === 'verb'
+                practice === "verb"
                   ? setVerbScope(event.target.value as VerbScope)
                   : setAdjectiveScope(event.target.value as AdjectiveScope)
               }
@@ -1090,18 +1201,27 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
             <div className="pronunciation">
               <div className="pronunciation-header">
                 <span>發音</span>
-                <button type="button" className="ghost" onClick={handleSpeak} disabled={isSpeaking || !canSpeak}>
-                  {isSpeaking ? '播放中…' : '播放'}
+                <button
+                  type="button"
+                  className="ghost"
+                  onClick={handleSpeak}
+                  disabled={isSpeaking || !canSpeak}
+                >
+                  {isSpeaking ? "播放中…" : "播放"}
                 </button>
               </div>
-              {!canSpeak && <div className="pronunciation-note">此瀏覽器不支援語音播放。</div>}
+              {!canSpeak && (
+                <div className="pronunciation-note">
+                  此瀏覽器不支援語音播放。
+                </div>
+              )}
             </div>
           )}
           {question && (
             <div className="dictionary-link">
               <a
                 href={`https://mazii.net/zh-TW/search/word/jatw/${encodeURIComponent(
-                  question.card.dict
+                  question.card.dict,
                 )}`}
                 target="_blank"
                 rel="noreferrer"
@@ -1124,10 +1244,20 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
               <button type="submit" disabled={!question || Boolean(result)}>
                 批改
               </button>
-              <button type="button" className="ghost" onClick={handleSkip} disabled={!question || Boolean(result)}>
+              <button
+                type="button"
+                className="ghost"
+                onClick={handleSkip}
+                disabled={!question || Boolean(result)}
+              >
                 略過
               </button>
-              <button type="button" className="secondary" onClick={handleNext} disabled={!question || !result}>
+              <button
+                type="button"
+                className="secondary"
+                onClick={handleNext}
+                disabled={!question || !result}
+              >
                 下一題
               </button>
             </div>
@@ -1135,15 +1265,17 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
 
           <div className="result">
             {result ? (
-              <div className={result.correct ? 'correct' : 'wrong'}>
-                <div className="badge">{result.correct ? '✅ 正確' : '❌ 錯誤 / 略過'}</div>
+              <div className={result.correct ? "correct" : "wrong"}>
+                <div className="badge">
+                  {result.correct ? "✅ 正確" : "❌ 錯誤 / 略過"}
+                </div>
                 <div className="result-row">
                   <span>題型</span>
                   <strong>{QUESTION_LABELS[result.type]}</strong>
                 </div>
                 <div className="result-row">
                   <span>我的答案</span>
-                  <strong>{result.userAnswer || '（空白）'}</strong>
+                  <strong>{result.userAnswer || "（空白）"}</strong>
                 </div>
                 <div className="result-row">
                   <span>正確答案</span>
@@ -1152,7 +1284,7 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
                 <div className="dictionary-link">
                   <a
                     href={`https://mazii.net/zh-TW/search/word/jatw/${encodeURIComponent(
-                      result.correctAnswer
+                      result.correctAnswer,
                     )}`}
                     target="_blank"
                     rel="noreferrer"
@@ -1163,17 +1295,19 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
                 {question && (
                   <div className="result-row">
                     <span>中文</span>
-                    <strong>{question.card.zh?.trim() || '（未取得）'}</strong>
+                    <strong>{question.card.zh?.trim() || "（未取得）"}</strong>
                   </div>
                 )}
                 {result && (
                   <div className="result-example">
                     <div className="result-example-title">例句</div>
-                    {exampleStatus === 'loading' && (
+                    {exampleStatus === "loading" && (
                       <div className="result-example-line">例句產生中…</div>
                     )}
-                    {exampleStatus === 'error' && (
-                      <div className="result-example-line error">{exampleMessage}</div>
+                    {exampleStatus === "error" && (
+                      <div className="result-example-line error">
+                        {exampleMessage}
+                      </div>
                     )}
                     {example && (
                       <>
@@ -1181,8 +1315,12 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
                         <div className="result-example-line reading">
                           {example.reading} / {example.romaji}
                         </div>
-                        <div className="result-example-line zh">{example.zh}</div>
-                        <div className="result-example-line grammar">{example.grammar}</div>
+                        <div className="result-example-line zh">
+                          {example.zh}
+                        </div>
+                        <div className="result-example-line grammar">
+                          {example.grammar}
+                        </div>
                       </>
                     )}
                   </div>
@@ -1201,10 +1339,12 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
                       <strong>{question.card.nakatta}</strong>
                       <span>て形</span>
                       <strong>{question.card.te}</strong>
-                      {practice === 'verb' && (
+                      {practice === "verb" && (
                         <>
                           <span>可能形</span>
-                          <strong>{question.card.potential || '（未提供）'}</strong>
+                          <strong>
+                            {question.card.potential || "（未提供）"}
+                          </strong>
                         </>
                       )}
                     </div>
@@ -1237,19 +1377,27 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
           <div className="review-card">
             <div className="label">今日答錯</div>
             <div className="value">{wrongCount}</div>
-            {mode === 'reviewWrong' ? (
-              <button type="button" className="secondary" onClick={handleExitReview}>
+            {mode === "reviewWrong" ? (
+              <button
+                type="button"
+                className="secondary"
+                onClick={handleExitReview}
+              >
                 回到正常題庫
               </button>
             ) : (
-              <button type="button" onClick={handleStartReview} disabled={wrongCount === 0}>
+              <button
+                type="button"
+                onClick={handleStartReview}
+                disabled={wrongCount === 0}
+              >
                 複習今日答錯
               </button>
             )}
           </div>
         </section>
 
-        {practice === 'verb' ? (
+        {practice === "verb" ? (
           <details className="rules">
             <summary>{ruleSummary}</summary>
             <div className="rules-body">
@@ -1322,7 +1470,9 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
                   <div className="rule-title">な形容詞</div>
                   <div className="rule-line">ない形：語幹＋じゃない</div>
                   <div className="rule-line">た形：語幹＋だった</div>
-                  <div className="rule-line">なかった形：語幹＋じゃなかった</div>
+                  <div className="rule-line">
+                    なかった形：語幹＋じゃなかった
+                  </div>
                   <div className="rule-line">て形：語幹＋で</div>
                 </div>
                 <div className="rule-card">
@@ -1351,14 +1501,12 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
                   <span>3.</span> 點「匯入題庫」立即生效。
                 </div>
               </div>
-              <div className="group-hint">
-                {groupHint}
-              </div>
-              <pre className="example">
-{bankExample}
-              </pre>
+              <div className="group-hint">{groupHint}</div>
+              <pre className="example">{bankExample}</pre>
             </div>
-            <div className="bank-count">目前題庫共有 {bank.length} 個單字。</div>
+            <div className="bank-count">
+              目前題庫共有 {bank.length} 個單字。
+            </div>
             <textarea
               value={bankText}
               onChange={(event) => setBankText(event.target.value)}
@@ -1374,21 +1522,45 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
                 placeholder={`直接輸入${practiceLabel}（可用空白或逗號分隔）`}
                 disabled={isImporting}
               />
-              <button type="button" onClick={handleQuickImport} className="secondary" disabled={isImporting}>
+              <button
+                type="button"
+                onClick={handleQuickImport}
+                className="secondary"
+                disabled={isImporting}
+              >
                 直接匯入{practiceLabel}
               </button>
             </div>
             <div className="bank-actions">
-              <button type="button" onClick={handleExport} disabled={isImporting}>
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={isImporting}
+              >
                 匯出題庫
               </button>
-              <button type="button" onClick={handleImport} className="secondary" disabled={isImporting}>
+              <button
+                type="button"
+                onClick={handleImport}
+                className="secondary"
+                disabled={isImporting}
+              >
                 匯入題庫
               </button>
-              <button type="button" onClick={handleResetBank} className="ghost" disabled={isImporting}>
+              <button
+                type="button"
+                onClick={handleResetBank}
+                className="ghost"
+                disabled={isImporting}
+              >
                 重置題庫
               </button>
-              <button type="button" onClick={handleClearProgress} className="ghost" disabled={isImporting}>
+              <button
+                type="button"
+                onClick={handleClearProgress}
+                className="ghost"
+                disabled={isImporting}
+              >
                 清空學習紀錄
               </button>
             </div>
@@ -1397,7 +1569,7 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
         </details>
       </main>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
