@@ -23,10 +23,14 @@ export const STORAGE_KEYS = {
     verb: 'jlpt-n4-verb-wrong-today',
     adjective: 'jlpt-n4-adjective-wrong-today',
   },
+  examples: 'jlpt-n4-example-cache',
 }
 
 export const DAY_MS = 24 * 60 * 60 * 1000
 export const INCORRECT_DELAY_MS = 2 * 60 * 1000
+export const OLLAMA_ENDPOINT = 'http://127.0.0.1:11434/api/generate'
+export const DEV_OLLAMA_ENDPOINT = '/ollama/api/generate'
+export const DEFAULT_OLLAMA_MODEL = 'translategemma:12b'
 
 export const DEFAULT_VERB_BANK: Card[] = [
   { dict: '行く', nai: '行かない', ta: '行った', nakatta: '行かなかった', te: '行って', potential: '行ける', group: 'godan' },

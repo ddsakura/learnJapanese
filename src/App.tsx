@@ -9,6 +9,9 @@ import {
   NA_ADJECTIVE_I_EXCEPTIONS,
   QUESTION_LABELS,
   ADJECTIVE_SCOPE_LABELS,
+  DEFAULT_OLLAMA_MODEL,
+  DEV_OLLAMA_ENDPOINT,
+  OLLAMA_ENDPOINT,
   STORAGE_KEYS,
   TYPE_KEYS,
   TYPE_OPTIONS,
@@ -51,6 +54,16 @@ type LegacySettings = {
   scope: Scope
   type: QuestionType
 }
+
+type ExampleEntry = {
+  jp: string
+  reading: string
+  romaji: string
+  zh: string
+  grammar: string
+}
+
+const OLLAMA_GENERATE_ENDPOINT = import.meta.env.DEV ? DEV_OLLAMA_ENDPOINT : OLLAMA_ENDPOINT
 
 function normalizeSettings(value: Settings | LegacySettings): Settings {
   const normalized: Settings =
@@ -101,6 +114,14 @@ function saveToStorage<T>(key: string, value: T) {
     return
   }
   window.localStorage.setItem(key, JSON.stringify(value))
+}
+
+function loadExampleCache() {
+  return loadFromStorage<Record<string, ExampleEntry>>(STORAGE_KEYS.examples, {})
+}
+
+function saveExampleCache(next: Record<string, ExampleEntry>) {
+  saveToStorage(STORAGE_KEYS.examples, next)
 }
 
 function normalizeStats(stats: Stats) {
@@ -183,6 +204,56 @@ function inferAdjectiveGroup(dict: string): AdjectiveGroup {
 
 function buildNakatta(nai: string) {
   return nai.endsWith('ない') ? `${nai.slice(0, -2)}なかった` : `${nai}なかった`
+}
+
+function buildExamplePrompt(term: string) {
+  return `系統設定： 你是一位專業的日語老師，擅長將複雜的文法用簡單易懂的方式解釋給 N4 程度的學生。 任務： 請用單字『${term}』造一個 N4 程度的日文句子。  輸出格式要求（嚴格執行）： JP: [日文句子] Reading: [全平假名] / [Romaji] ZH: [繁體中文翻譯] Grammar: [簡短說明該單字在此處的用法與形態變化]`
+}
+
+function parseExampleResponse(text: string): ExampleEntry | null {
+  const normalized = text.replace(/\\n/g, '\n').trim()
+  const getLineValue = (label: string) => {
+    const match = normalized.match(new RegExp(`${label}:\\s*([^\\n]+)`, 'i'))
+    return match ? match[1].trim() : ''
+  }
+  const getBlockValue = (label: string) => {
+    const match = normalized.match(new RegExp(`${label}:\\s*([\\s\\S]+)`, 'i'))
+    return match ? match[1].trim() : ''
+  }
+  const jp = getLineValue('JP')
+  const readingRaw = getLineValue('Reading')
+  const romajiLine = getLineValue('Romaji')
+  const zh = getLineValue('ZH')
+  const grammar = getBlockValue('Grammar')
+
+  let reading = ''
+  let romaji = ''
+  if (readingRaw) {
+    const parts = readingRaw.split('/').map((part) => part.trim()).filter(Boolean)
+    reading = parts[0] ?? ''
+    romaji = parts[1] ?? ''
+  }
+  if (!romaji && romajiLine) romaji = romajiLine
+
+  if (jp && reading && romaji && zh && grammar) return { jp, reading, romaji, zh, grammar }
+  return null
+}
+
+async function generateExample(term: string) {
+  const response = await fetch(OLLAMA_GENERATE_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: DEFAULT_OLLAMA_MODEL,
+      prompt: buildExamplePrompt(term),
+      stream: false,
+    }),
+  })
+  if (!response.ok) return null
+  const data = (await response.json()) as { response?: string }
+  const raw = data.response?.trim()
+  if (!raw) return null
+  return parseExampleResponse(raw)
 }
 
 function conjugateVerb(dict: string, group: VerbGroup): Card | null {
@@ -531,6 +602,9 @@ function App() {
     userAnswer: string
     type: Exclude<QuestionType, 'mixed'>
   } | null>(null)
+  const [example, setExample] = useState<ExampleEntry | null>(null)
+  const [exampleStatus, setExampleStatus] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [exampleMessage, setExampleMessage] = useState('')
   const [mode, setMode] = useState<'normal' | 'reviewWrong'>('normal')
   const [message, setMessage] = useState<string>('')
   const [bankText, setBankText] = useState('')
@@ -635,11 +709,52 @@ function App() {
     setQuestion(makeQuestion())
     setAnswer('')
     setResult(null)
+    setExample(null)
+    setExampleStatus('idle')
+    setExampleMessage('')
   }, [scope, questionType, bank, mode])
 
   useEffect(() => {
     setMode('normal')
   }, [practice])
+
+  useEffect(() => {
+    setExample(null)
+    setExampleStatus('idle')
+    setExampleMessage('')
+    if (!result || !question) return
+    const term = result.correctAnswer
+    const cacheKey = `${practice}:${term}`
+    const cache = loadExampleCache()
+    const cached = cache[cacheKey]
+    if (cached) {
+      setExample(cached)
+      return
+    }
+    let cancelled = false
+    setExampleStatus('loading')
+    generateExample(term)
+      .then((entry) => {
+        if (cancelled) return
+        if (!entry) {
+          setExampleStatus('error')
+          setExampleMessage('例句產生失敗，請確認 Ollama 已啟動且模型可用（必要時設定 CORS）。')
+          return
+        }
+        setExample(entry)
+        setExampleStatus('idle')
+        const next = { ...cache, [cacheKey]: entry }
+        saveExampleCache(next)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setExampleStatus('error')
+        setExampleMessage('例句產生失敗，請確認 Ollama 已啟動且模型可用（必要時設定 CORS）。')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [practice, question, result])
 
   useEffect(() => {
     if (canSpeak) {
@@ -1049,6 +1164,27 @@ function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
                   <div className="result-row">
                     <span>中文</span>
                     <strong>{question.card.zh?.trim() || '（未取得）'}</strong>
+                  </div>
+                )}
+                {result && (
+                  <div className="result-example">
+                    <div className="result-example-title">例句</div>
+                    {exampleStatus === 'loading' && (
+                      <div className="result-example-line">例句產生中…</div>
+                    )}
+                    {exampleStatus === 'error' && (
+                      <div className="result-example-line error">{exampleMessage}</div>
+                    )}
+                    {example && (
+                      <>
+                        <div className="result-example-line">{example.jp}</div>
+                        <div className="result-example-line reading">
+                          {example.reading} / {example.romaji}
+                        </div>
+                        <div className="result-example-line zh">{example.zh}</div>
+                        <div className="result-example-line grammar">{example.grammar}</div>
+                      </>
+                    )}
                   </div>
                 )}
                 {question && (

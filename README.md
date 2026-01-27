@@ -21,9 +21,10 @@ npm run build
 1. 打開頁面即可開始刷題。
 2. 選擇類型（動詞／形容詞）、題型（混合／單一）與出題範圍（動詞：全部／五段／二段／不規則；形容詞：全部／い形／な形）。
 3. 輸入答案後按 Enter 或點「批改」，答案區會列出該單字的所有形方便複習（動詞包含可能形）。
-4. 可用「略過」快速看答案（視為答錯）。
-5. 依據簡易 SRS 記錄到 `localStorage`，答對延後出現、答錯兩分鐘內再出現（動詞與形容詞各自獨立）。
-6. 題庫管理可貼上 JSON 或直接輸入字詞（空白／逗號分隔）匯入；匯入時會自動查詢中文翻譯並在答案區顯示。
+4. 答案區會顯示由本機 Ollama 產生的例句（以當題正確答案生成），內容包含：日文句子、平假名/羅馬字、繁體中文翻譯、文法說明。
+5. 可用「略過」快速看答案（視為答錯）。
+6. 依據簡易 SRS 記錄到 `localStorage`，答對延後出現、答錯兩分鐘內再出現（動詞與形容詞各自獨立）。
+7. 題庫管理可貼上 JSON 或直接輸入字詞（空白／逗號分隔）匯入；匯入時會自動查詢中文翻譯並在答案區顯示。
 
 ## 題庫 JSON 格式
 
@@ -76,6 +77,28 @@ npm run build
 
 費用：MyMemory 有免費使用額度與速率限制，日後若大量使用或需要更高配額，可能需要付費方案。詳細限制以官方說明為準。
 
+## 例句（本機 Ollama）
+
+答案區會透過本機 Ollama 產生簡短 N4 程度例句（以當題正確答案生成），不使用外部 API。輸出欄位包含：日文句子、平假名/羅馬字、繁體中文翻譯、文法說明。預設模型為 `translategemma:12b`，請先確認：
+
+```bash
+ollama serve
+ollama pull translategemma:12b
+```
+
+Vite 開發模式已設定本機代理（`/ollama` → `127.0.0.1:11434`）避免 CORS 問題，因此 **`npm run dev` 不需要設定** `OLLAMA_ORIGINS`。
+
+若使用建置後的靜態頁面（`npm run preview` 預設 `http://localhost:4173`，或其他自架網域），需要讓 Ollama 允許該來源。步驟如下：
+
+1. 設定環境變數 `OLLAMA_ORIGINS`（可用逗號分隔多個來源）。
+2. 重新啟動 Ollama。
+
+例如：
+
+```bash
+OLLAMA_ORIGINS="http://localhost:4173,http://localhost:5173" ollama serve
+```
+
 ## localStorage Keys
 
 - `jlpt-n4-verb-bank`：動詞題庫資料
@@ -87,3 +110,4 @@ npm run build
 - `jlpt-n4-practice-settings`：練習類型、題型與範圍
 - `jlpt-n4-verb-wrong-today`：動詞今日答錯
 - `jlpt-n4-adjective-wrong-today`：形容詞今日答錯
+- `jlpt-n4-example-cache`：本機例句快取
