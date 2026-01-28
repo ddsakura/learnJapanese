@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 import {
   DAY_MS,
@@ -660,6 +660,7 @@ function App() {
   >("idle");
   const [exampleMessage, setExampleMessage] = useState("");
   const [isExampleSpeaking, setIsExampleSpeaking] = useState(false);
+  const makeQuestionRef = useRef<() => Question | null>(() => null);
   const [mode, setMode] = useState<"normal" | "reviewWrong">("normal");
   const [message, setMessage] = useState<string>("");
   const [bankText, setBankText] = useState("");
@@ -679,20 +680,30 @@ function App() {
   ) as Record<Scope, string>;
   const practiceLabel = practice === "verb" ? "動詞" : "形容詞";
   const dictLabel = practice === "verb" ? "辭書形" : "原形";
-  const typeOptions =
-    practice === "verb"
-      ? TYPE_OPTIONS
-      : TYPE_OPTIONS.filter((option) => option.value !== "potential");
-  const typeKeys =
-    practice === "verb"
-      ? TYPE_KEYS
-      : TYPE_KEYS.filter((type) => type !== "potential");
+  const typeOptions = useMemo(
+    () =>
+      practice === "verb"
+        ? TYPE_OPTIONS
+        : TYPE_OPTIONS.filter((option) => option.value !== "potential"),
+    [practice],
+  );
+  const typeKeys = useMemo(
+    () =>
+      practice === "verb"
+        ? TYPE_KEYS
+        : TYPE_KEYS.filter((type) => type !== "potential"),
+    [practice],
+  );
   const summaryLine =
     practice === "verb"
       ? "ない形／た形／なかった形／て形／可能形・快速刷題 + 簡易 SRS"
       : "ない形／た形／なかった形／て形・快速刷題 + 簡易 SRS";
   const ruleSummary =
     practice === "verb" ? "た形・て形・可能形 變形規則" : "形容詞變化規則";
+  const currentCard = useMemo(() => {
+    if (!question) return null;
+    return bank.find((card) => card.dict === question.card.dict) ?? question.card;
+  }, [bank, question]);
   const bankExample =
     practice === "verb"
       ? `[
@@ -770,14 +781,71 @@ function App() {
     }));
   }, []);
 
+  const pool = useMemo(() => getPool(bank, scope), [bank, scope]);
+  const reviewPool = useMemo(() => {
+    const bankMap = new Map(bank.map((card) => [card.dict, card]));
+    return activeWrongToday.items
+      .map((entry) => {
+        const card = bankMap.get(entry.dict);
+        return card ? { card, type: entry.type } : null;
+      })
+      .filter((entry): entry is Question => Boolean(entry));
+  }, [bank, activeWrongToday]);
+
+  const dueCount = useMemo(() => {
+    const now = Date.now();
+    return pool.filter((card) => (activeSrs[card.dict]?.due ?? 0) <= now)
+      .length;
+  }, [pool, activeSrs]);
+  const wrongCount = activeWrongToday.items.length;
+  const emptyMessage =
+    mode === "reviewWrong" ? "今天沒有答錯的題目" : "目前題庫沒有可用題目";
+
+  const makeQuestion = useCallback((): Question | null => {
+    if (mode === "reviewWrong") {
+      return reviewPool.length > 0 ? pickRandom(reviewPool) : null;
+    }
+    const candidatePool = getPool(bank, scope);
+    if (candidatePool.length === 0) return null;
+    const now = Date.now();
+    const dueCards = candidatePool.filter(
+      (card) => (activeSrs[card.dict]?.due ?? 0) <= now,
+    );
+    const card =
+      dueCards.length > 0 ? pickRandom(dueCards) : pickRandom(candidatePool);
+    const sanitizedType =
+      practice === "adjective" && questionType === "potential"
+        ? "mixed"
+        : questionType;
+    const actualType =
+      sanitizedType === "mixed"
+        ? pickRandom(typeKeys)
+        : (sanitizedType as Exclude<QuestionType, "mixed">);
+    return { card, type: actualType };
+  }, [
+    activeSrs,
+    bank,
+    mode,
+    practice,
+    questionType,
+    reviewPool,
+    scope,
+    typeKeys,
+  ]);
+
   useEffect(() => {
-    setQuestion(makeQuestion());
+    makeQuestionRef.current = makeQuestion;
+  }, [makeQuestion]);
+
+  useEffect(() => {
+    if (result) return;
+    setQuestion(makeQuestionRef.current());
     setAnswer("");
     setResult(null);
     setExample(null);
     setExampleStatus("idle");
     setExampleMessage("");
-  }, [scope, questionType, bank, mode]);
+  }, [scope, questionType, bank, mode, result]);
 
   useEffect(() => {
     setMode("normal");
@@ -827,55 +895,45 @@ function App() {
   }, [practice, question, result]);
 
   useEffect(() => {
+    if (!result || !question) return;
+    const dict = question.card.dict;
+    const currentZh = question.card.zh?.trim();
+    if (currentZh) return;
+    let cancelled = false;
+    const cached = translationCache.get(dict);
+    if (cached) {
+      setBanks((prev) => {
+        const currentBank = prev[practice];
+        const nextBank = currentBank.map((card) =>
+          card.dict === dict ? { ...card, zh: cached } : card,
+        );
+        return { ...prev, [practice]: nextBank };
+      });
+      return;
+    }
+    fetchZhTranslation(dict).then((zh) => {
+      if (cancelled || !zh) return;
+      translationCache.set(dict, zh);
+      setBanks((prev) => {
+        const currentBank = prev[practice];
+        const nextBank = currentBank.map((card) =>
+          card.dict === dict ? { ...card, zh } : card,
+        );
+        return { ...prev, [practice]: nextBank };
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [practice, question, result]);
+
+  useEffect(() => {
     if (canSpeak) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
       setIsExampleSpeaking(false);
     }
   }, [canSpeak, question]);
-
-  const pool = useMemo(() => getPool(bank, scope), [bank, scope]);
-  const reviewPool = useMemo(() => {
-    const bankMap = new Map(bank.map((card) => [card.dict, card]));
-    return activeWrongToday.items
-      .map((entry) => {
-        const card = bankMap.get(entry.dict);
-        return card ? { card, type: entry.type } : null;
-      })
-      .filter((entry): entry is Question => Boolean(entry));
-  }, [bank, activeWrongToday]);
-
-  const dueCount = useMemo(() => {
-    const now = Date.now();
-    return pool.filter((card) => (activeSrs[card.dict]?.due ?? 0) <= now)
-      .length;
-  }, [pool, activeSrs]);
-  const wrongCount = activeWrongToday.items.length;
-  const emptyMessage =
-    mode === "reviewWrong" ? "今天沒有答錯的題目" : "目前題庫沒有可用題目";
-
-  function makeQuestion(): Question | null {
-    if (mode === "reviewWrong") {
-      return reviewPool.length > 0 ? pickRandom(reviewPool) : null;
-    }
-    const candidatePool = getPool(bank, scope);
-    if (candidatePool.length === 0) return null;
-    const now = Date.now();
-    const dueCards = candidatePool.filter(
-      (card) => (activeSrs[card.dict]?.due ?? 0) <= now,
-    );
-    const card =
-      dueCards.length > 0 ? pickRandom(dueCards) : pickRandom(candidatePool);
-    const sanitizedType =
-      practice === "adjective" && questionType === "potential"
-        ? "mixed"
-        : questionType;
-    const actualType =
-      sanitizedType === "mixed"
-        ? pickRandom(typeKeys)
-        : (sanitizedType as Exclude<QuestionType, "mixed">);
-    return { card, type: actualType };
-  }
 
   function applySrs(card: Card, isCorrect: boolean) {
     setSrs((prev) => {
@@ -1292,7 +1350,7 @@ function App() {
                 {question && (
                   <div className="result-row">
                     <span>中文</span>
-                    <strong>{question.card.zh?.trim() || "（未取得）"}</strong>
+                    <strong>{currentCard?.zh?.trim() || "（未取得）"}</strong>
                   </div>
                 )}
                 {result && (
