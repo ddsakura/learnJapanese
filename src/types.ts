@@ -10,11 +10,12 @@ export type Card = {
   ta: string
   nakatta: string
   te: string
+  potential?: string
   group: Group
   zh?: string
 }
 
-export type QuestionType = 'nai' | 'ta' | 'nakatta' | 'te' | 'mixed'
+export type QuestionType = 'nai' | 'ta' | 'nakatta' | 'te' | 'potential' | 'mixed'
 
 export type VerbScope = 'all' | VerbGroup
 export type AdjectiveScope = 'all' | AdjectiveGroup

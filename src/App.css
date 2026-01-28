@@ -248,6 +248,46 @@ button.ghost {
   font-weight: 600;
 }
 
+.result-example {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #e3dccb;
+  color: #4e493c;
+  display: grid;
+  gap: 6px;
+}
+
+.result-example-title {
+  font-weight: 600;
+  color: #3f3a2f;
+}
+
+.result-example-line {
+  font-size: 14px;
+}
+
+.result-example-line.reading {
+  color: #5b5648;
+  font-size: 13px;
+}
+
+.result-example-line.zh {
+  color: #5b5648;
+}
+
+.result-example-line.grammar {
+  font-size: 13px;
+  color: #3f3a2f;
+}
+
+.result-example-actions {
+  margin-top: 6px;
+}
+
+.result-example-line.error {
+  color: #b9462f;
+}
+
 .hint {
   color: #6d6451;
 }
