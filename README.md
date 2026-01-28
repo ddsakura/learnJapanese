@@ -9,6 +9,8 @@ npm install
 npm run dev
 ```
 
+macOS：`npm run dev` 會在背景自動啟動 `ollama serve`（若未啟動），log 會寫到 `/tmp/ollama.log`。
+
 建置：
 
 ```bash

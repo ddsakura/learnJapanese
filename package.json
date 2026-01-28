@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "sh -c \"pgrep -f 'ollama serve' >/dev/null || (ollama serve >/tmp/ollama.log 2>&1 &); vite\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
