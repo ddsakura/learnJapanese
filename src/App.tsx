@@ -58,7 +58,6 @@ type LegacySettings = {
 type ExampleEntry = {
   jp: string;
   reading: string;
-  romaji: string;
   zh: string;
   grammar: string;
 };
@@ -225,7 +224,7 @@ function buildNakatta(nai: string) {
 }
 
 function buildExamplePrompt(term: string, typeLabel: string) {
-  return `系統設定： 你是一位專業的日語老師，擅長將複雜的文法用簡單易懂的方式解釋給 N4 程度的學生。 任務： 請用單字『${term}』（形態：${typeLabel}）造一個 N4 程度的日文句子。  輸出格式要求（嚴格執行）： JP: [日文句子] Reading: [全平假名] Romaji: [羅馬字] ZH: [繁體中文翻譯] Grammar: [簡短說明該單字在此處的用法與形態變化，需點出${typeLabel}]`;
+  return `系統設定： 你是一位專業的日語老師，擅長將複雜的文法用簡單易懂的方式解釋給 N4 程度的學生。 任務： 請用單字『${term}』（形態：${typeLabel}）造一個 N4 程度的日文句子。  輸出格式要求（嚴格執行）： JP: [日文句子] Reading: [全平假名] ZH: [繁體中文翻譯] Grammar: [簡短說明該單字在此處的用法與形態變化，需點出${typeLabel}]`;
 }
 
 function parseExampleResponse(text: string): ExampleEntry | null {
@@ -240,24 +239,12 @@ function parseExampleResponse(text: string): ExampleEntry | null {
   };
   const jp = getLineValue("JP");
   const readingRaw = getLineValue("Reading");
-  const romajiLine = getLineValue("Romaji");
   const zh = getLineValue("ZH");
   const grammar = getBlockValue("Grammar");
 
-  let reading = "";
-  let romaji = "";
-  if (readingRaw) {
-    const parts = readingRaw
-      .split("/")
-      .map((part) => part.trim())
-      .filter(Boolean);
-    reading = parts[0] ?? "";
-    romaji = parts[1] ?? "";
-  }
-  if (!romaji && romajiLine) romaji = romajiLine;
+  const reading = readingRaw;
 
-  if (jp && reading && romaji && zh && grammar)
-    return { jp, reading, romaji, zh, grammar };
+  if (jp && reading && zh && grammar) return { jp, reading, zh, grammar };
   return null;
 }
 
@@ -268,9 +255,6 @@ async function generateExample(term: string, typeLabel: string) {
     body: JSON.stringify({
       model: DEFAULT_OLLAMA_MODEL,
       prompt: buildExamplePrompt(term, typeLabel),
-      options: {
-        num_predict: 1000,
-      },
       stream: false,
     }),
   });
@@ -675,6 +659,7 @@ function App() {
     "idle" | "loading" | "error"
   >("idle");
   const [exampleMessage, setExampleMessage] = useState("");
+  const [isExampleSpeaking, setIsExampleSpeaking] = useState(false);
   const [mode, setMode] = useState<"normal" | "reviewWrong">("normal");
   const [message, setMessage] = useState<string>("");
   const [bankText, setBankText] = useState("");
@@ -845,6 +830,7 @@ function App() {
     if (canSpeak) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
+      setIsExampleSpeaking(false);
     }
   }, [canSpeak, question]);
 
@@ -1012,6 +998,17 @@ function App() {
     utterance.onerror = () => setIsSpeaking(false);
     window.speechSynthesis.cancel();
     setIsSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function handleExampleSpeak() {
+    if (!example || !canSpeak) return;
+    const utterance = new SpeechSynthesisUtterance(example.jp);
+    utterance.lang = "ja-JP";
+    utterance.onend = () => setIsExampleSpeaking(false);
+    utterance.onerror = () => setIsExampleSpeaking(false);
+    window.speechSynthesis.cancel();
+    setIsExampleSpeaking(true);
     window.speechSynthesis.speak(utterance);
   }
 
@@ -1313,13 +1310,23 @@ function App() {
                       <>
                         <div className="result-example-line">{example.jp}</div>
                         <div className="result-example-line reading">
-                          {example.reading} / {example.romaji}
+                          {example.reading}
                         </div>
                         <div className="result-example-line zh">
                           {example.zh}
                         </div>
                         <div className="result-example-line grammar">
                           {example.grammar}
+                        </div>
+                        <div className="result-example-actions">
+                          <button
+                            type="button"
+                            className="ghost"
+                            onClick={handleExampleSpeak}
+                            disabled={isExampleSpeaking || !canSpeak}
+                          >
+                            {isExampleSpeaking ? "播放中…" : "朗讀例句"}
+                          </button>
                         </div>
                       </>
                     )}

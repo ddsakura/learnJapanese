@@ -280,6 +280,10 @@ button.ghost {
   color: #3f3a2f;
 }
 
+.result-example-actions {
+  margin-top: 6px;
+}
+
 .result-example-line.error {
   color: #b9462f;
 }
