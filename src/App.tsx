@@ -554,15 +554,44 @@ function normalizeImport(
 
 const translationCache = new Map<string, string>();
 
+function buildTranslationPrompt(dict: string) {
+  return `請把以下日文翻譯成繁體中文，只輸出翻譯結果，不要加標點或解釋。\n日文：${dict}`;
+}
+
+function normalizeTranslation(raw: string) {
+  const normalized = raw.replace(/\\n/g, "\n").trim();
+  const firstLine = normalized
+    .split("\n")
+    .map((line) => line.trim())
+    .find(Boolean);
+  if (!firstLine) return null;
+  const withoutLabel = firstLine
+    .replace(/^zh[:：]\s*/i, "")
+    .replace(/^translation[:：]\s*/i, "")
+    .trim();
+  const withoutQuotes = withoutLabel.replace(
+    /^["'「『](.*)["'」』]$/,
+    "$1",
+  );
+  return withoutQuotes.trim() || null;
+}
+
 async function fetchZhTranslation(dict: string) {
-  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(dict)}&langpair=ja|zh-TW`;
   try {
-    const response = await fetch(url);
+    const response = await fetch(OLLAMA_GENERATE_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: DEFAULT_OLLAMA_MODEL,
+        prompt: buildTranslationPrompt(dict),
+        stream: false,
+      }),
+    });
     if (!response.ok) return null;
-    const data = (await response.json()) as {
-      responseData?: { translatedText?: string };
-    };
-    const text = data.responseData?.translatedText?.trim();
+    const data = (await response.json()) as { response?: string };
+    const raw = data.response?.trim();
+    if (!raw) return null;
+    const text = normalizeTranslation(raw);
     if (!text || text === dict) return null;
     return text;
   } catch {
@@ -659,6 +688,8 @@ function App() {
     "idle" | "loading" | "error"
   >("idle");
   const [exampleMessage, setExampleMessage] = useState("");
+  const [liveZh, setLiveZh] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
   const [isExampleSpeaking, setIsExampleSpeaking] = useState(false);
   const makeQuestionRef = useRef<() => Question | null>(() => null);
   const [mode, setMode] = useState<"normal" | "reviewWrong">("normal");
@@ -896,31 +927,14 @@ function App() {
 
   useEffect(() => {
     if (!result || !question) return;
-    const dict = question.card.dict;
-    const currentZh = question.card.zh?.trim();
-    if (currentZh) return;
+    const answer = result.correctAnswer;
     let cancelled = false;
-    const cached = translationCache.get(dict);
-    if (cached) {
-      setBanks((prev) => {
-        const currentBank = prev[practice];
-        const nextBank = currentBank.map((card) =>
-          card.dict === dict ? { ...card, zh: cached } : card,
-        );
-        return { ...prev, [practice]: nextBank };
-      });
-      return;
-    }
-    fetchZhTranslation(dict).then((zh) => {
-      if (cancelled || !zh) return;
-      translationCache.set(dict, zh);
-      setBanks((prev) => {
-        const currentBank = prev[practice];
-        const nextBank = currentBank.map((card) =>
-          card.dict === dict ? { ...card, zh } : card,
-        );
-        return { ...prev, [practice]: nextBank };
-      });
+    setLiveZh(null);
+    setIsTranslating(true);
+    fetchZhTranslation(answer).then((zh) => {
+      if (cancelled) return;
+      setLiveZh(zh);
+      setIsTranslating(false);
     });
     return () => {
       cancelled = true;
@@ -1350,7 +1364,10 @@ function App() {
                 {question && (
                   <div className="result-row">
                     <span>中文</span>
-                    <strong>{currentCard?.zh?.trim() || "（未取得）"}</strong>
+                    <strong>
+                      {liveZh?.trim() ||
+                        (isTranslating ? "（翻譯中…）" : "（未取得）")}
+                    </strong>
                   </div>
                 )}
                 {result && (

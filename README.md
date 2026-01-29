@@ -71,13 +71,10 @@ npm run build
 
 ## 中文翻譯查詢
 
-匯入資料時會用 MyMemory Translated API 查詢中文翻譯（`ja` → `zh-TW`），API 端點：`https://api.mymemory.translated.net/get`，說明頁：`https://mymemory.translated.net/doc/spec.php`，流程如下：
+答案區的中文翻譯一律即時呼叫本機 Ollama 產生（`ja` → `zh-TW`），不讀取或寫回題庫的 `zh` 欄位。翻譯流程如下：
 
-1. 匯入資料若缺 `zh`，會逐筆呼叫翻譯 API。
-2. 成功取得翻譯後寫入題庫（下次顯示答案會帶中文）。
-3. 若查不到或 API 回傳失敗，該筆保留空白（答案區會顯示「未取得」）。
-
-費用：MyMemory 有免費使用額度與速率限制，日後若大量使用或需要更高配額，可能需要付費方案。詳細限制以官方說明為準。
+1. 顯示正確答案後，直接用該答案向本機 Ollama 取得繁體中文翻譯。
+2. 翻譯完成後即時顯示；若失敗，答案區顯示「未取得」。
 
 ## 例句（本機 Ollama）
 
