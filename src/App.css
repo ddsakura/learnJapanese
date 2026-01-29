@@ -154,6 +154,64 @@ textarea {
   font-size: 18px;
 }
 
+.choice-status {
+  font-size: 14px;
+  color: #6d6451;
+}
+
+.choice-status.error {
+  color: #b9462f;
+}
+
+.choice-list {
+  display: grid;
+  gap: 10px;
+}
+
+.choice-button {
+  width: 100%;
+  text-align: left;
+  border-radius: 12px;
+  padding: 12px 16px;
+  background: #fff;
+  color: #3f3a2f;
+  border: 1px solid #e4dfd1;
+  font-size: 16px;
+}
+
+.choice-button:hover:enabled {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(63, 58, 47, 0.12);
+}
+
+.choice-button.correct {
+  border-color: #2b6f51;
+  background: #ecf6f1;
+}
+
+.choice-button.wrong {
+  border-color: #b9462f;
+  background: #fbf1ee;
+}
+
+.choice-button:disabled {
+  background: #f3f1ea;
+  color: #8b8575;
+  border-color: #e4dfd1;
+}
+
+.choice-button.correct:disabled {
+  background: #ecf6f1;
+  color: #3f3a2f;
+  border-color: #2b6f51;
+}
+
+.choice-button.wrong:disabled {
+  background: #fbf1ee;
+  color: #3f3a2f;
+  border-color: #b9462f;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

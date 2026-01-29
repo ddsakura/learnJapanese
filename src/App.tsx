@@ -62,6 +62,10 @@ type ExampleEntry = {
   grammar: string;
 };
 
+type AnswerMode = "input" | "choice";
+
+type ChoiceStatus = "idle" | "loading" | "error";
+
 const OLLAMA_GENERATE_ENDPOINT = import.meta.env.DEV
   ? DEV_OLLAMA_ENDPOINT
   : OLLAMA_ENDPOINT;
@@ -553,6 +557,7 @@ function normalizeImport(
 }
 
 const translationCache = new Map<string, string>();
+const choiceCache = new Map<string, string[]>();
 
 function buildTranslationPrompt(dict: string) {
   return `請把以下日文翻譯成繁體中文，只輸出翻譯結果，不要加標點或解釋。\n日文：${dict}`;
@@ -698,6 +703,12 @@ function App() {
   const [quickInput, setQuickInput] = useState("");
   const [isImporting, setIsImporting] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [answerMode, setAnswerMode] = useState<AnswerMode>(() => {
+    return loadFromStorage<AnswerMode>(STORAGE_KEYS.answerMode, "input");
+  });
+  const [choiceOptions, setChoiceOptions] = useState<string[]>([]);
+  const [choiceStatus, setChoiceStatus] = useState<ChoiceStatus>("idle");
+  const [choiceMessage, setChoiceMessage] = useState("");
   const canSpeak = typeof window !== "undefined" && "speechSynthesis" in window;
   const scope: Scope = practice === "verb" ? verbScope : adjectiveScope;
   const questionType =
@@ -785,6 +796,10 @@ function App() {
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.wrong.adjective, wrongToday.adjective);
   }, [wrongToday.adjective]);
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.answerMode, answerMode);
+  }, [answerMode]);
 
   useEffect(() => {
     const nextSettings: Settings = {
@@ -876,6 +891,9 @@ function App() {
     setExample(null);
     setExampleStatus("idle");
     setExampleMessage("");
+    setChoiceOptions([]);
+    setChoiceStatus("idle");
+    setChoiceMessage("");
   }, [scope, questionType, bank, mode, result]);
 
   useEffect(() => {
@@ -940,6 +958,56 @@ function App() {
       cancelled = true;
     };
   }, [practice, question, result]);
+
+  useEffect(() => {
+    if (!question || result || answerMode !== "choice") {
+      setChoiceOptions([]);
+      setChoiceStatus("idle");
+      setChoiceMessage("");
+      return;
+    }
+    const correctAnswer = getAnswer(question.card, question.type);
+    if (!correctAnswer.trim()) {
+      setChoiceStatus("error");
+      setChoiceMessage("選項產生失敗：正確答案為空。");
+      return;
+    }
+    const cacheKey = `${practice}:${question.type}:${correctAnswer}`;
+    const cached = choiceCache.get(cacheKey);
+    if (cached) {
+      setChoiceOptions(cached);
+      setChoiceStatus("idle");
+      setChoiceMessage("");
+      return;
+    }
+    let cancelled = false;
+    setChoiceStatus("loading");
+    buildWrongChoices(correctAnswer, question.card.dict, question.type)
+      .then((wrong) => {
+        if (cancelled) return;
+        if (!wrong || wrong.length < 3) {
+          setChoiceStatus("error");
+          setChoiceMessage(
+            "選項產生失敗，請確認 Ollama 已啟動且模型可用。",
+          );
+          return;
+        }
+        const options = shuffle([correctAnswer, ...wrong.slice(0, 3)]);
+        choiceCache.set(cacheKey, options);
+        setChoiceOptions(options);
+        setChoiceStatus("idle");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setChoiceStatus("error");
+        setChoiceMessage(
+          "選項產生失敗，請確認 Ollama 已啟動且模型可用。",
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [answerMode, practice, question, result]);
 
   useEffect(() => {
     if (canSpeak) {
@@ -1082,6 +1150,64 @@ function App() {
     window.speechSynthesis.cancel();
     setIsExampleSpeaking(true);
     window.speechSynthesis.speak(utterance);
+  }
+
+  function handleChoicePick(option: string) {
+    if (result || !question) return;
+    setAnswer(option);
+    checkAnswer(option);
+  }
+
+  function buildChoicePrompt(
+    correctAnswer: string,
+    dict: string,
+    type: Exclude<QuestionType, "mixed">,
+  ) {
+    const typeLabel = QUESTION_LABELS[type];
+    return `任務：幫日文變化練習產生 3 個錯誤答案。\n題目：辭書形＝${dict}，目標＝${typeLabel}，正確答案＝${correctAnswer}。\n要求：\n1) 只輸出 3 行，每行 1 個錯誤答案。\n2) 不要包含正確答案。\n3) 不要重複，不要解釋，不要加編號或其他文字。\n4) 輸出必須是日文詞形。`;
+  }
+
+  function parseChoiceResponse(text: string) {
+    const normalized = text.replace(/\\n/g, "\n").trim();
+    if (!normalized) return [];
+    return normalized
+      .split("\n")
+      .map((line) => line.replace(/^[\s\-*\d\.\)\(]+/, "").trim())
+      .filter(Boolean);
+  }
+
+  async function buildWrongChoices(
+    correctAnswer: string,
+    dict: string,
+    type: Exclude<QuestionType, "mixed">,
+  ) {
+    const response = await fetch(OLLAMA_GENERATE_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: DEFAULT_OLLAMA_MODEL,
+        prompt: buildChoicePrompt(correctAnswer, dict, type),
+        stream: false,
+      }),
+    });
+    if (!response.ok) return null;
+    const data = (await response.json()) as { response?: string };
+    const raw = data.response?.trim();
+    if (!raw) return null;
+    const items = parseChoiceResponse(raw);
+    const unique = Array.from(new Set(items)).filter(
+      (item) => item !== correctAnswer,
+    );
+    return unique.slice(0, 3);
+  }
+
+  function shuffle<T>(items: T[]) {
+    const copy = [...items];
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
   }
 
   function handleExport() {
@@ -1250,6 +1376,18 @@ function App() {
               ))}
             </select>
           </label>
+          <label>
+            作答方式
+            <select
+              value={answerMode}
+              onChange={(event) =>
+                setAnswerMode(event.target.value as AnswerMode)
+              }
+            >
+              <option value="input">文字輸入</option>
+              <option value="choice">四選一</option>
+            </select>
+          </label>
         </div>
       </header>
 
@@ -1300,37 +1438,94 @@ function App() {
             </div>
           )}
 
-          <form className="answer-form" onSubmit={handleSubmit}>
-            <input
-              type="text"
-              value={answer}
-              onChange={(event) => setAnswer(event.target.value)}
-              placeholder="輸入答案，Enter 送出"
-              disabled={!question || Boolean(result)}
-              autoFocus
-            />
-            <div className="actions">
-              <button type="submit" disabled={!question || Boolean(result)}>
-                批改
-              </button>
-              <button
-                type="button"
-                className="ghost"
-                onClick={handleSkip}
+          {answerMode === "input" ? (
+            <form className="answer-form" onSubmit={handleSubmit}>
+              <input
+                type="text"
+                value={answer}
+                onChange={(event) => setAnswer(event.target.value)}
+                placeholder="輸入答案，Enter 送出"
                 disabled={!question || Boolean(result)}
-              >
-                略過
-              </button>
-              <button
-                type="button"
-                className="secondary"
-                onClick={handleNext}
-                disabled={!question || !result}
-              >
-                下一題
-              </button>
+                autoFocus
+              />
+              <div className="actions">
+                <button type="submit" disabled={!question || Boolean(result)}>
+                  批改
+                </button>
+                <button
+                  type="button"
+                  className="ghost"
+                  onClick={handleSkip}
+                  disabled={!question || Boolean(result)}
+                >
+                  略過
+                </button>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={handleNext}
+                  disabled={!question || !result}
+                >
+                  下一題
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="answer-form">
+              {choiceStatus === "loading" && (
+                <div className="choice-status">選項產生中…</div>
+              )}
+              {choiceStatus === "error" && (
+                <div className="choice-status error">
+                  {choiceMessage ||
+                    "選項產生失敗，請確認 Ollama 已啟動。"}
+                </div>
+              )}
+              {choiceOptions.length > 0 && (
+                <div className="choice-list">
+                  {choiceOptions.map((option) => {
+                    const isCorrect =
+                      result && option === result.correctAnswer;
+                    const isWrong =
+                      result &&
+                      option === result.userAnswer &&
+                      option !== result.correctAnswer;
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        className={`choice-button${
+                          isCorrect ? " correct" : ""
+                        }${isWrong ? " wrong" : ""}`}
+                        onClick={() => handleChoicePick(option)}
+                        disabled={!question || Boolean(result)}
+                      >
+                        {option}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="actions">
+                <button
+                  type="button"
+                  className="ghost"
+                  onClick={handleSkip}
+                  disabled={!question || Boolean(result)}
+                >
+                  略過
+                </button>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={handleNext}
+                  disabled={!question || !result}
+                >
+                  下一題
+                </button>
+              </div>
             </div>
-          </form>
+          )}
 
           <div className="result">
             {result ? (
