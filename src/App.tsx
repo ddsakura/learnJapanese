@@ -709,6 +709,7 @@ function App() {
   const [choiceOptions, setChoiceOptions] = useState<string[]>([]);
   const [choiceStatus, setChoiceStatus] = useState<ChoiceStatus>("idle");
   const [choiceMessage, setChoiceMessage] = useState("");
+  const choiceRequestId = useRef(0);
   const canSpeak = typeof window !== "undefined" && "speechSynthesis" in window;
   const scope: Scope = practice === "verb" ? verbScope : adjectiveScope;
   const questionType =
@@ -960,53 +961,14 @@ function App() {
   }, [practice, question, result]);
 
   useEffect(() => {
-    if (!question || result || answerMode !== "choice") {
+    if (!question || answerMode !== "choice") {
       setChoiceOptions([]);
       setChoiceStatus("idle");
       setChoiceMessage("");
       return;
     }
-    const correctAnswer = getAnswer(question.card, question.type);
-    if (!correctAnswer.trim()) {
-      setChoiceStatus("error");
-      setChoiceMessage("選項產生失敗：正確答案為空。");
-      return;
-    }
-    const cacheKey = `${practice}:${question.type}:${correctAnswer}`;
-    const cached = choiceCache.get(cacheKey);
-    if (cached) {
-      setChoiceOptions(cached);
-      setChoiceStatus("idle");
-      setChoiceMessage("");
-      return;
-    }
-    let cancelled = false;
-    setChoiceStatus("loading");
-    buildWrongChoices(correctAnswer, question.card.dict, question.type)
-      .then((wrong) => {
-        if (cancelled) return;
-        if (!wrong || wrong.length < 3) {
-          setChoiceStatus("error");
-          setChoiceMessage(
-            "選項產生失敗，請確認 Ollama 已啟動且模型可用。",
-          );
-          return;
-        }
-        const options = shuffle([correctAnswer, ...wrong.slice(0, 3)]);
-        choiceCache.set(cacheKey, options);
-        setChoiceOptions(options);
-        setChoiceStatus("idle");
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setChoiceStatus("error");
-        setChoiceMessage(
-          "選項產生失敗，請確認 Ollama 已啟動且模型可用。",
-        );
-      });
-    return () => {
-      cancelled = true;
-    };
+    if (result) return;
+    startChoiceGeneration(false);
   }, [answerMode, practice, question, result]);
 
   useEffect(() => {
@@ -1156,6 +1118,56 @@ function App() {
     if (result || !question) return;
     setAnswer(option);
     checkAnswer(option);
+  }
+
+  function startChoiceGeneration(force: boolean) {
+    if (!question) return;
+    const correctAnswer = getAnswer(question.card, question.type);
+    if (!correctAnswer.trim()) {
+      setChoiceStatus("error");
+      setChoiceMessage("選項產生失敗：正確答案為空。");
+      return;
+    }
+    const cacheKey = `${practice}:${question.type}:${question.card.dict}:${correctAnswer}`;
+    if (!force) {
+      const cached = choiceCache.get(cacheKey);
+      if (cached) {
+        setChoiceOptions(cached);
+        setChoiceStatus("idle");
+        setChoiceMessage("");
+        return;
+      }
+    }
+    const requestId = (choiceRequestId.current += 1);
+    setChoiceStatus("loading");
+    setChoiceMessage("");
+    buildWrongChoices(correctAnswer, question.card.dict, question.type)
+      .then((wrong) => {
+        if (choiceRequestId.current !== requestId) return;
+        if (!wrong || wrong.length < 3) {
+          setChoiceStatus("error");
+          setChoiceMessage(
+            "選項產生失敗，請確認 Ollama 已啟動且模型可用。",
+          );
+          return;
+        }
+        const options = shuffle([correctAnswer, ...wrong.slice(0, 3)]);
+        choiceCache.set(cacheKey, options);
+        setChoiceOptions(options);
+        setChoiceStatus("idle");
+      })
+      .catch(() => {
+        if (choiceRequestId.current !== requestId) return;
+        setChoiceStatus("error");
+        setChoiceMessage(
+          "選項產生失敗，請確認 Ollama 已啟動且模型可用。",
+        );
+      });
+  }
+
+  function handleRegenerateChoices() {
+    if (!question || result) return;
+    startChoiceGeneration(true);
   }
 
   function buildChoicePrompt(
@@ -1507,6 +1519,16 @@ function App() {
                 </div>
               )}
               <div className="actions">
+                <button
+                  type="button"
+                  className="ghost"
+                  onClick={handleRegenerateChoices}
+                  disabled={
+                    !question || Boolean(result) || choiceStatus === "loading"
+                  }
+                >
+                  重新產生選項
+                </button>
                 <button
                   type="button"
                   className="ghost"
