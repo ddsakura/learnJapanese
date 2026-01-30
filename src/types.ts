@@ -53,6 +53,23 @@ export type WrongToday = {
   items: WrongEntry[]
 }
 
+export type ExampleEntry = {
+  jp: string
+  reading: string
+  zh: string
+  grammar: string
+}
+
+export type AnswerMode = 'input' | 'choice'
+export type ChoiceStatus = 'idle' | 'loading' | 'error'
+
+export type AnswerResult = {
+  correct: boolean
+  correctAnswer: string
+  userAnswer: string
+  type: Exclude<QuestionType, 'mixed'>
+}
+
 export type Question = {
   card: Card
   type: Exclude<QuestionType, 'mixed'>

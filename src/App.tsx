@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
+import BankPanel from "./components/BankPanel";
+import HeaderControls from "./components/HeaderControls";
+import QuestionCard from "./components/QuestionCard";
+import RulesPanel from "./components/RulesPanel";
+import StatsPanel from "./components/StatsPanel";
 import {
   DAY_MS,
   DEFAULT_ADJECTIVE_BANK,
   DEFAULT_VERB_BANK,
-  GODAN_RU_EXCEPTIONS,
   INCORRECT_DELAY_MS,
-  NA_ADJECTIVE_I_EXCEPTIONS,
   QUESTION_LABELS,
   ADJECTIVE_SCOPE_LABELS,
   DEFAULT_OLLAMA_MODEL,
@@ -17,10 +20,37 @@ import {
   TYPE_OPTIONS,
   VERB_SCOPE_LABELS,
 } from "./data/constants";
+import { normalizeVerbBank } from "./lib/conjugation";
+import { normalizeImport, mergeBank, pruneSrs } from "./lib/importing";
+import {
+  getAnswer,
+  getPool,
+  pickRandom,
+  shuffle,
+} from "./lib/questions";
+import {
+  defaultStats,
+  defaultWrongToday,
+  normalizeStats,
+  normalizeWrongToday,
+} from "./lib/stats";
+import {
+  normalizeTranslation,
+  parseChoiceResponse,
+  parseExampleResponse,
+} from "./lib/parsers";
+import {
+  buildChoicePrompt,
+  buildExamplePrompt,
+  buildTranslationPrompt,
+} from "./lib/prompts";
 import type {
-  AdjectiveGroup,
   AdjectiveScope,
+  AnswerMode,
+  AnswerResult,
   Card,
+  ChoiceStatus,
+  ExampleEntry,
   PracticeKind,
   Question,
   QuestionType,
@@ -28,21 +58,9 @@ import type {
   Settings,
   SrsState,
   Stats,
-  VerbGroup,
   VerbScope,
   WrongToday,
 } from "./types";
-
-const defaultStats = (): Stats => ({
-  streak: 0,
-  todayCount: 0,
-  lastDate: getTodayKey(),
-});
-
-const defaultWrongToday = (): WrongToday => ({
-  date: getTodayKey(),
-  items: [],
-});
 
 const defaultSettings = (): Settings => ({
   practice: "verb",
@@ -55,17 +73,6 @@ type LegacySettings = {
   type: QuestionType;
 };
 
-type ExampleEntry = {
-  jp: string;
-  reading: string;
-  zh: string;
-  grammar: string;
-};
-
-type AnswerMode = "input" | "choice";
-
-type ChoiceStatus = "idle" | "loading" | "error";
-
 const OLLAMA_GENERATE_ENDPOINT = import.meta.env.DEV
   ? DEV_OLLAMA_ENDPOINT
   : OLLAMA_ENDPOINT;
@@ -76,7 +83,7 @@ function normalizeSettings(value: Settings | LegacySettings): Settings {
       ? value
       : {
           practice: "verb",
-          verb: { scope: value.scope as "all" | VerbGroup, type: value.type },
+          verb: { scope: value.scope as VerbScope, type: value.type },
           adjective: { scope: "all", type: "mixed" },
         };
   if (normalized.adjective.type === "potential") {
@@ -100,14 +107,6 @@ function loadSettings() {
   );
   if (legacy) return normalizeSettings(legacy);
   return defaultSettings();
-}
-
-function getTodayKey() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
 }
 
 function loadFromStorage<T>(key: string, fallback: T): T {
@@ -141,117 +140,6 @@ function saveExampleCache(next: Record<string, ExampleEntry>) {
   saveToStorage(STORAGE_KEYS.examples, next);
 }
 
-function normalizeStats(stats: Stats) {
-  const today = getTodayKey();
-  if (stats.lastDate !== today) {
-    return { ...stats, todayCount: 0, lastDate: today };
-  }
-  return stats;
-}
-
-function normalizeWrongToday(data: WrongToday) {
-  const today = getTodayKey();
-  if (data.date !== today) {
-    return { date: today, items: [] };
-  }
-  return data;
-}
-
-function pickRandom<T>(items: T[]) {
-  return items[Math.floor(Math.random() * items.length)];
-}
-
-function getPool(bank: Card[], scope: Scope) {
-  if (scope === "all") return bank;
-  return bank.filter((card) => card.group === scope);
-}
-
-function getAnswer(card: Card, type: Exclude<QuestionType, "mixed">) {
-  if (type === "potential") return card.potential ?? "";
-  return card[type];
-}
-
-function validateBank(data: unknown, practice: PracticeKind): data is Card[] {
-  if (!Array.isArray(data)) return false;
-  return data.every((item) => {
-    if (typeof item !== "object" || item === null) return false;
-    const record = item as Record<string, unknown>;
-    const requiredKeys =
-      practice === "verb"
-        ? ["dict", "nai", "ta", "nakatta", "te", "potential", "group"]
-        : ["dict", "nai", "ta", "nakatta", "te", "group"];
-    if (!requiredKeys.every((key) => typeof record[key] === "string"))
-      return false;
-    const group = record.group as string;
-    if (practice === "verb") {
-      return group === "godan" || group === "ichidan" || group === "irregular";
-    }
-    return group === "i" || group === "na";
-  });
-}
-
-function isKana(char: string) {
-  return /[ぁ-ゖァ-ヺ]/.test(char);
-}
-
-function isIchidan(dict: string) {
-  if (!dict.endsWith("る")) return false;
-  if (GODAN_RU_EXCEPTIONS.has(dict)) return false;
-  const before = dict.slice(-2, -1);
-  if (!before) return false;
-  if (!isKana(before)) return false;
-  return /[いきぎしじちぢにひびぴみりえけげせぜてでねへべぺめれ]/.test(before);
-}
-
-function inferVerbGroup(dict: string): VerbGroup {
-  if (dict.endsWith("する")) return "irregular";
-  if (dict.endsWith("くる") || dict.endsWith("来る")) return "irregular";
-  if (isIchidan(dict)) return "ichidan";
-  return "godan";
-}
-
-function normalizeAdjectiveDict(dict: string) {
-  return dict.endsWith("だ") ? dict.slice(0, -1) : dict;
-}
-
-function inferAdjectiveGroup(dict: string): AdjectiveGroup {
-  const normalized = normalizeAdjectiveDict(dict);
-  if (normalized.endsWith("い") && !NA_ADJECTIVE_I_EXCEPTIONS.has(normalized))
-    return "i";
-  return "na";
-}
-
-function buildNakatta(nai: string) {
-  return nai.endsWith("ない")
-    ? `${nai.slice(0, -2)}なかった`
-    : `${nai}なかった`;
-}
-
-function buildExamplePrompt(term: string, typeLabel: string) {
-  return `系統設定： 你是一位專業的日語老師，擅長將複雜的文法用簡單易懂的方式解釋給 N4 程度的學生。 任務： 請用單字『${term}』（形態：${typeLabel}）造一個 N4 程度的日文句子。  輸出格式要求（嚴格執行）： JP: [日文句子] Reading: [全平假名] ZH: [繁體中文翻譯] Grammar: [簡短說明該單字在此處的用法與形態變化，需點出${typeLabel}]`;
-}
-
-function parseExampleResponse(text: string): ExampleEntry | null {
-  const normalized = text.replace(/\\n/g, "\n").trim();
-  const getLineValue = (label: string) => {
-    const match = normalized.match(new RegExp(`${label}:\\s*([^\\n]+)`, "i"));
-    return match ? match[1].trim() : "";
-  };
-  const getBlockValue = (label: string) => {
-    const match = normalized.match(new RegExp(`${label}:\\s*([\\s\\S]+)`, "i"));
-    return match ? match[1].trim() : "";
-  };
-  const jp = getLineValue("JP");
-  const readingRaw = getLineValue("Reading");
-  const zh = getLineValue("ZH");
-  const grammar = getBlockValue("Grammar");
-
-  const reading = readingRaw;
-
-  if (jp && reading && zh && grammar) return { jp, reading, zh, grammar };
-  return null;
-}
-
 async function generateExample(term: string, typeLabel: string) {
   const response = await fetch(OLLAMA_GENERATE_ENDPOINT, {
     method: "POST",
@@ -269,317 +157,8 @@ async function generateExample(term: string, typeLabel: string) {
   return parseExampleResponse(raw);
 }
 
-function conjugateVerb(dict: string, group: VerbGroup): Card | null {
-  if (group === "irregular") {
-    if (dict.endsWith("する")) {
-      const base = dict.slice(0, -2);
-      const nai = `${base}しない`;
-      return {
-        dict,
-        nai,
-        ta: `${base}した`,
-        nakatta: `${base}しなかった`,
-        te: `${base}して`,
-        potential: `${base}できる`,
-        group,
-      };
-    }
-    if (dict.endsWith("くる") || dict.endsWith("来る")) {
-      const base = dict.endsWith("くる")
-        ? dict.slice(0, -2)
-        : dict.slice(0, -1);
-      const nai = `${base}こない`;
-      const potential = dict.endsWith("くる")
-        ? `${base}こられる`
-        : `${base}られる`;
-      return {
-        dict,
-        nai,
-        ta: `${base}きた`,
-        nakatta: `${base}こなかった`,
-        te: `${base}きて`,
-        potential,
-        group,
-      };
-    }
-    return null;
-  }
-
-  if (group === "ichidan") {
-    if (!dict.endsWith("る")) return null;
-    const stem = dict.slice(0, -1);
-    const nai = `${stem}ない`;
-    return {
-      dict,
-      nai,
-      ta: `${stem}た`,
-      nakatta: `${stem}なかった`,
-      te: `${stem}て`,
-      potential: `${stem}られる`,
-      group,
-    };
-  }
-
-  const last = dict.slice(-1);
-  const stem = dict.slice(0, -1);
-  let nai = "";
-  let ta = "";
-  let te = "";
-  let potential = "";
-
-  switch (last) {
-    case "う":
-      nai = `${stem}わない`;
-      ta = `${stem}った`;
-      te = `${stem}って`;
-      potential = `${stem}える`;
-      break;
-    case "つ":
-      nai = `${stem}たない`;
-      ta = `${stem}った`;
-      te = `${stem}って`;
-      potential = `${stem}てる`;
-      break;
-    case "る":
-      nai = `${stem}らない`;
-      ta = `${stem}った`;
-      te = `${stem}って`;
-      potential = `${stem}れる`;
-      break;
-    case "ぶ":
-      nai = `${stem}ばない`;
-      ta = `${stem}んだ`;
-      te = `${stem}んで`;
-      potential = `${stem}べる`;
-      break;
-    case "む":
-      nai = `${stem}まない`;
-      ta = `${stem}んだ`;
-      te = `${stem}んで`;
-      potential = `${stem}める`;
-      break;
-    case "ぬ":
-      nai = `${stem}なない`;
-      ta = `${stem}んだ`;
-      te = `${stem}んで`;
-      potential = `${stem}ねる`;
-      break;
-    case "く":
-      nai = `${stem}かない`;
-      if (dict.endsWith("行く")) {
-        ta = `${stem}った`;
-        te = `${stem}って`;
-      } else {
-        ta = `${stem}いた`;
-        te = `${stem}いて`;
-      }
-      potential = `${stem}ける`;
-      break;
-    case "ぐ":
-      nai = `${stem}がない`;
-      ta = `${stem}いだ`;
-      te = `${stem}いで`;
-      potential = `${stem}げる`;
-      break;
-    case "す":
-      nai = `${stem}さない`;
-      ta = `${stem}した`;
-      te = `${stem}して`;
-      potential = `${stem}せる`;
-      break;
-    default:
-      return null;
-  }
-
-  return {
-    dict,
-    nai,
-    ta,
-    nakatta: buildNakatta(nai),
-    te,
-    potential,
-    group,
-  };
-}
-
-function conjugateAdjective(dict: string, group: AdjectiveGroup): Card | null {
-  const normalized = normalizeAdjectiveDict(dict);
-  if (!normalized) return null;
-  if (group === "i") {
-    if (normalized === "いい") {
-      return {
-        dict: normalized,
-        nai: "よくない",
-        ta: "よかった",
-        nakatta: "よくなかった",
-        te: "よくて",
-        group,
-      };
-    }
-    if (!normalized.endsWith("い")) return null;
-    const stem = normalized.slice(0, -1);
-    return {
-      dict: normalized,
-      nai: `${stem}くない`,
-      ta: `${stem}かった`,
-      nakatta: `${stem}くなかった`,
-      te: `${stem}くて`,
-      group,
-    };
-  }
-
-  const base = normalized;
-  return {
-    dict: base,
-    nai: `${base}じゃない`,
-    ta: `${base}だった`,
-    nakatta: `${base}じゃなかった`,
-    te: `${base}で`,
-    group,
-  };
-}
-
-function normalizeVerbBank(bank: Card[]) {
-  return bank.map((card) => {
-    if (
-      card.group !== "godan" &&
-      card.group !== "ichidan" &&
-      card.group !== "irregular"
-    ) {
-      return card;
-    }
-    if (card.potential?.trim()) return card;
-    const generated = conjugateVerb(card.dict, card.group);
-    if (!generated?.potential) return card;
-    return { ...card, potential: generated.potential };
-  });
-}
-
-function normalizeImport(
-  data: unknown,
-  practice: PracticeKind,
-): { ok: true; bank: Card[] } | { ok: false; error: string } {
-  if (!Array.isArray(data)) {
-    return { ok: false, error: "JSON 必須為陣列。" };
-  }
-
-  const bank: Card[] = [];
-  for (const item of data) {
-    if (typeof item === "string") {
-      const dict = item.trim();
-      if (!dict) return { ok: false, error: "存在空的項目。" };
-      if (practice === "verb") {
-        const group = inferVerbGroup(dict);
-        const generated = conjugateVerb(dict, group);
-        if (!generated) return { ok: false, error: `無法推導：${dict}` };
-        bank.push(generated);
-        continue;
-      }
-      const group = inferAdjectiveGroup(dict);
-      const generated = conjugateAdjective(dict, group);
-      if (!generated) return { ok: false, error: `無法推導：${dict}` };
-      bank.push(generated);
-      continue;
-    }
-
-    if (typeof item !== "object" || item === null) {
-      return { ok: false, error: "題庫項目格式錯誤。" };
-    }
-
-    const record = item as Record<string, unknown>;
-    const dict = typeof record.dict === "string" ? record.dict.trim() : "";
-    if (!dict) return { ok: false, error: "每筆資料需包含 dict。" };
-    if (practice === "verb") {
-      const groupValue =
-        typeof record.group === "string" ? record.group : undefined;
-      const group =
-        groupValue === "godan" ||
-        groupValue === "ichidan" ||
-        groupValue === "irregular"
-          ? groupValue
-          : inferVerbGroup(dict);
-
-      if (validateBank([record as Card], practice)) {
-        bank.push(record as Card);
-        continue;
-      }
-
-      const generated = conjugateVerb(dict, group);
-      if (!generated) return { ok: false, error: `無法推導：${dict}` };
-      const overrides: Partial<Card> = {};
-      if (typeof record.nai === "string" && record.nai.trim())
-        overrides.nai = record.nai.trim();
-      if (typeof record.ta === "string" && record.ta.trim())
-        overrides.ta = record.ta.trim();
-      if (typeof record.nakatta === "string" && record.nakatta.trim())
-        overrides.nakatta = record.nakatta.trim();
-      if (typeof record.te === "string" && record.te.trim())
-        overrides.te = record.te.trim();
-      if (typeof record.potential === "string" && record.potential.trim())
-        overrides.potential = record.potential.trim();
-      if (typeof record.zh === "string" && record.zh.trim())
-        overrides.zh = record.zh.trim();
-
-      bank.push({ ...generated, ...overrides, group });
-      continue;
-    }
-
-    const groupValue =
-      typeof record.group === "string" ? record.group : undefined;
-    const group =
-      groupValue === "i" || groupValue === "na"
-        ? groupValue
-        : inferAdjectiveGroup(dict);
-
-    if (validateBank([record as Card], practice)) {
-      bank.push(record as Card);
-      continue;
-    }
-
-    const generated = conjugateAdjective(dict, group);
-    if (!generated) return { ok: false, error: `無法推導：${dict}` };
-    const overrides: Partial<Card> = {};
-    if (typeof record.nai === "string" && record.nai.trim())
-      overrides.nai = record.nai.trim();
-    if (typeof record.ta === "string" && record.ta.trim())
-      overrides.ta = record.ta.trim();
-    if (typeof record.nakatta === "string" && record.nakatta.trim())
-      overrides.nakatta = record.nakatta.trim();
-    if (typeof record.te === "string" && record.te.trim())
-      overrides.te = record.te.trim();
-    if (typeof record.zh === "string" && record.zh.trim())
-      overrides.zh = record.zh.trim();
-
-    bank.push({ ...generated, ...overrides, group });
-  }
-
-  return { ok: true, bank };
-}
-
 const translationCache = new Map<string, string>();
 const choiceCache = new Map<string, string[]>();
-
-function buildTranslationPrompt(dict: string) {
-  return `請把以下日文翻譯成繁體中文，只輸出翻譯結果，不要加標點或解釋。\n日文：${dict}`;
-}
-
-function normalizeTranslation(raw: string) {
-  const normalized = raw.replace(/\\n/g, "\n").trim();
-  const firstLine = normalized
-    .split("\n")
-    .map((line) => line.trim())
-    .find(Boolean);
-  if (!firstLine) return null;
-  const withoutLabel = firstLine
-    .replace(/^zh[:：]\s*/i, "")
-    .replace(/^translation[:：]\s*/i, "")
-    .trim();
-  const withoutQuotes = withoutLabel.replace(
-    /^["'「『](.*)["'」』]$/,
-    "$1",
-  );
-  return withoutQuotes.trim() || null;
-}
 
 async function fetchZhTranslation(dict: string) {
   try {
@@ -682,12 +261,7 @@ function App() {
     });
   const [question, setQuestion] = useState<Question | null>(null);
   const [answer, setAnswer] = useState("");
-  const [result, setResult] = useState<{
-    correct: boolean;
-    correctAnswer: string;
-    userAnswer: string;
-    type: Exclude<QuestionType, "mixed">;
-  } | null>(null);
+  const [result, setResult] = useState<AnswerResult | null>(null);
   const [example, setExample] = useState<ExampleEntry | null>(null);
   const [exampleStatus, setExampleStatus] = useState<
     "idle" | "loading" | "error"
@@ -721,7 +295,6 @@ function App() {
   const scopeLabels = (
     practice === "verb" ? VERB_SCOPE_LABELS : ADJECTIVE_SCOPE_LABELS
   ) as Record<Scope, string>;
-  const practiceLabel = practice === "verb" ? "動詞" : "形容詞";
   const dictLabel = practice === "verb" ? "辭書形" : "原形";
   const typeOptions = useMemo(
     () =>
@@ -1170,24 +743,6 @@ function App() {
     startChoiceGeneration(true);
   }
 
-  function buildChoicePrompt(
-    correctAnswer: string,
-    dict: string,
-    type: Exclude<QuestionType, "mixed">,
-  ) {
-    const typeLabel = QUESTION_LABELS[type];
-    return `任務：幫日文變化練習產生 3 個錯誤答案。\n題目：辭書形＝${dict}，目標＝${typeLabel}，正確答案＝${correctAnswer}。\n要求：\n1) 只輸出 3 行，每行 1 個錯誤答案。\n2) 不要包含正確答案。\n3) 不要重複，不要解釋，不要加編號或其他文字。\n4) 輸出必須是日文詞形。`;
-  }
-
-  function parseChoiceResponse(text: string) {
-    const normalized = text.replace(/\\n/g, "\n").trim();
-    if (!normalized) return [];
-    return normalized
-      .split("\n")
-      .map((line) => line.replace(/^[\s\-*\d\.\)\(]+/, "").trim())
-      .filter(Boolean);
-  }
-
   async function buildWrongChoices(
     correctAnswer: string,
     dict: string,
@@ -1213,41 +768,9 @@ function App() {
     return unique.slice(0, 3);
   }
 
-  function shuffle<T>(items: T[]) {
-    const copy = [...items];
-    for (let i = copy.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy;
-  }
-
   function handleExport() {
     setBankText(JSON.stringify(bank, null, 2));
     setMessage("已將題庫輸出到文字框。");
-  }
-
-  function mergeBank(existing: Card[], incoming: Card[]) {
-    const map = new Map<string, Card>();
-    existing.forEach((card) => map.set(card.dict, card));
-    incoming.forEach((card) => {
-      const current = map.get(card.dict);
-      if (current?.zh && !card.zh) {
-        map.set(card.dict, { ...card, zh: current.zh });
-        return;
-      }
-      map.set(card.dict, card);
-    });
-    return Array.from(map.values());
-  }
-
-  function pruneSrs(srs: Record<string, SrsState>, bank: Card[]) {
-    const allowed = new Set(bank.map((card) => card.dict));
-    const next: Record<string, SrsState> = {};
-    Object.entries(srs).forEach(([dict, state]) => {
-      if (allowed.has(dict)) next[dict] = state;
-    });
-    return next;
   }
 
   async function handleImport() {
@@ -1336,536 +859,87 @@ function App() {
 
   return (
     <div className="app">
-      <header className="header">
-        <div>
-          <h1>JLPT N4 普通形{practiceLabel}變化練習</h1>
-          <p>{summaryLine}</p>
-        </div>
-        <div className="controls">
-          <label>
-            類型
-            <select
-              value={practice}
-              onChange={(event) =>
-                setPractice(event.target.value as PracticeKind)
-              }
-            >
-              <option value="verb">動詞</option>
-              <option value="adjective">形容詞</option>
-            </select>
-          </label>
-          <label>
-            題型
-            <select
-              value={questionType}
-              onChange={(event) =>
-                practice === "verb"
-                  ? setVerbQuestionType(event.target.value as QuestionType)
-                  : setAdjectiveQuestionType(event.target.value as QuestionType)
-              }
-            >
-              {typeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            範圍
-            <select
-              value={scope}
-              onChange={(event) =>
-                practice === "verb"
-                  ? setVerbScope(event.target.value as VerbScope)
-                  : setAdjectiveScope(event.target.value as AdjectiveScope)
-              }
-            >
-              {Object.entries(scopeLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            作答方式
-            <select
-              value={answerMode}
-              onChange={(event) =>
-                setAnswerMode(event.target.value as AnswerMode)
-              }
-            >
-              <option value="input">文字輸入</option>
-              <option value="choice">四選一</option>
-            </select>
-          </label>
-        </div>
-      </header>
+      <HeaderControls
+        practice={practice}
+        summaryLine={summaryLine}
+        questionType={questionType}
+        scope={scope}
+        typeOptions={typeOptions}
+        scopeLabels={scopeLabels}
+        answerMode={answerMode}
+        onPracticeChange={setPractice}
+        onQuestionTypeChange={(value) =>
+          practice === "verb"
+            ? setVerbQuestionType(value)
+            : setAdjectiveQuestionType(value)
+        }
+        onScopeChange={(value) =>
+          practice === "verb"
+            ? setVerbScope(value as VerbScope)
+            : setAdjectiveScope(value as AdjectiveScope)
+        }
+        onAnswerModeChange={setAnswerMode}
+      />
 
       <main className="main">
-        <section className="question-card">
-          <div className="question">
-            {question ? (
-              <>
-                <div className="prompt">{question.card.dict}</div>
-                <div className="arrow">→</div>
-                <div className="target">{QUESTION_LABELS[question.type]}</div>
-              </>
-            ) : (
-              <div className="empty">{emptyMessage}</div>
-            )}
-          </div>
-          {question && (
-            <div className="pronunciation">
-              <div className="pronunciation-header">
-                <span>發音</span>
-                <button
-                  type="button"
-                  className="ghost"
-                  onClick={handleSpeak}
-                  disabled={isSpeaking || !canSpeak}
-                >
-                  {isSpeaking ? "播放中…" : "播放"}
-                </button>
-              </div>
-              {!canSpeak && (
-                <div className="pronunciation-note">
-                  此瀏覽器不支援語音播放。
-                </div>
-              )}
-            </div>
-          )}
-          {question && (
-            <div className="dictionary-link">
-              <a
-                href={`https://mazii.net/zh-TW/search/word/jatw/${encodeURIComponent(
-                  question.card.dict,
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                查字典：{question.card.dict}
-              </a>
-            </div>
-          )}
+        <QuestionCard
+          question={question}
+          emptyMessage={emptyMessage}
+          canSpeak={canSpeak}
+          isSpeaking={isSpeaking}
+          onSpeak={handleSpeak}
+          answerMode={answerMode}
+          answer={answer}
+          onAnswerChange={setAnswer}
+          onSubmit={handleSubmit}
+          onSkip={handleSkip}
+          onNext={handleNext}
+          result={result}
+          choiceStatus={choiceStatus}
+          choiceMessage={choiceMessage}
+          choiceOptions={choiceOptions}
+          onChoicePick={handleChoicePick}
+          onRegenerateChoices={handleRegenerateChoices}
+          liveZh={liveZh}
+          isTranslating={isTranslating}
+          example={example}
+          exampleStatus={exampleStatus}
+          exampleMessage={exampleMessage}
+          isExampleSpeaking={isExampleSpeaking}
+          onExampleSpeak={handleExampleSpeak}
+          dictLabel={dictLabel}
+          practice={practice}
+        />
 
-          {answerMode === "input" ? (
-            <form className="answer-form" onSubmit={handleSubmit}>
-              <input
-                type="text"
-                value={answer}
-                onChange={(event) => setAnswer(event.target.value)}
-                placeholder="輸入答案，Enter 送出"
-                disabled={!question || Boolean(result)}
-                autoFocus
-              />
-              <div className="actions">
-                <button type="submit" disabled={!question || Boolean(result)}>
-                  批改
-                </button>
-                <button
-                  type="button"
-                  className="ghost"
-                  onClick={handleSkip}
-                  disabled={!question || Boolean(result)}
-                >
-                  略過
-                </button>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={handleNext}
-                  disabled={!question || !result}
-                >
-                  下一題
-                </button>
-              </div>
-            </form>
-          ) : (
-            <div className="answer-form">
-              {choiceStatus === "loading" && (
-                <div className="choice-status">選項產生中…</div>
-              )}
-              {choiceStatus === "error" && (
-                <div className="choice-status error">
-                  {choiceMessage ||
-                    "選項產生失敗，請確認 Ollama 已啟動。"}
-                </div>
-              )}
-              {choiceOptions.length > 0 && (
-                <div className="choice-list">
-                  {choiceOptions.map((option) => {
-                    const isCorrect =
-                      result && option === result.correctAnswer;
-                    const isWrong =
-                      result &&
-                      option === result.userAnswer &&
-                      option !== result.correctAnswer;
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        className={`choice-button${
-                          isCorrect ? " correct" : ""
-                        }${isWrong ? " wrong" : ""}`}
-                        onClick={() => handleChoicePick(option)}
-                        disabled={!question || Boolean(result)}
-                      >
-                        {option}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-              <div className="actions">
-                <button
-                  type="button"
-                  className="ghost"
-                  onClick={handleRegenerateChoices}
-                  disabled={
-                    !question || Boolean(result) || choiceStatus === "loading"
-                  }
-                >
-                  重新產生選項
-                </button>
-                <button
-                  type="button"
-                  className="ghost"
-                  onClick={handleSkip}
-                  disabled={!question || Boolean(result)}
-                >
-                  略過
-                </button>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={handleNext}
-                  disabled={!question || !result}
-                >
-                  下一題
-                </button>
-              </div>
-            </div>
-          )}
+        <StatsPanel
+          activeStats={activeStats}
+          dueCount={dueCount}
+          wrongCount={wrongCount}
+          scopeLabel={scopeLabels[scope]}
+          mode={mode}
+          onStartReview={handleStartReview}
+          onExitReview={handleExitReview}
+        />
 
-          <div className="result">
-            {result ? (
-              <div className={result.correct ? "correct" : "wrong"}>
-                <div className="badge">
-                  {result.correct ? "✅ 正確" : "❌ 錯誤 / 略過"}
-                </div>
-                <div className="result-row">
-                  <span>題型</span>
-                  <strong>{QUESTION_LABELS[result.type]}</strong>
-                </div>
-                <div className="result-row">
-                  <span>我的答案</span>
-                  <strong>{result.userAnswer || "（空白）"}</strong>
-                </div>
-                <div className="result-row">
-                  <span>正確答案</span>
-                  <strong>{result.correctAnswer}</strong>
-                </div>
-                <div className="dictionary-link">
-                  <a
-                    href={`https://mazii.net/zh-TW/search/word/jatw/${encodeURIComponent(
-                      result.correctAnswer,
-                    )}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    查字典：{result.correctAnswer}
-                  </a>
-                </div>
-                {question && (
-                  <div className="result-row">
-                    <span>中文</span>
-                    <strong>
-                      {liveZh?.trim() ||
-                        (isTranslating ? "（翻譯中…）" : "（未取得）")}
-                    </strong>
-                  </div>
-                )}
-                {result && (
-                  <div className="result-example">
-                    <div className="result-example-title">例句</div>
-                    {exampleStatus === "loading" && (
-                      <div className="result-example-line">例句產生中…</div>
-                    )}
-                    {exampleStatus === "error" && (
-                      <div className="result-example-line error">
-                        {exampleMessage}
-                      </div>
-                    )}
-                    {example && (
-                      <>
-                        <div className="result-example-line">{example.jp}</div>
-                        <div className="result-example-line reading">
-                          {example.reading}
-                        </div>
-                        <div className="result-example-line zh">
-                          {example.zh}
-                        </div>
-                        <div className="result-example-line grammar">
-                          {example.grammar}
-                        </div>
-                        <div className="result-example-actions">
-                          <button
-                            type="button"
-                            className="ghost"
-                            onClick={handleExampleSpeak}
-                            disabled={isExampleSpeaking || !canSpeak}
-                          >
-                            {isExampleSpeaking ? "播放中…" : "朗讀例句"}
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-                {question && (
-                  <div className="result-forms">
-                    <div className="result-forms-title">全部形</div>
-                    <div className="result-forms-grid">
-                      <span>{dictLabel}</span>
-                      <strong>{question.card.dict}</strong>
-                      <span>ない形</span>
-                      <strong>{question.card.nai}</strong>
-                      <span>た形</span>
-                      <strong>{question.card.ta}</strong>
-                      <span>なかった形</span>
-                      <strong>{question.card.nakatta}</strong>
-                      <span>て形</span>
-                      <strong>{question.card.te}</strong>
-                      {practice === "verb" && (
-                        <>
-                          <span>可能形</span>
-                          <strong>
-                            {question.card.potential || "（未提供）"}
-                          </strong>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="hint">輸入答案後按 Enter，或點「批改」。</div>
-            )}
-          </div>
-        </section>
+        <RulesPanel practice={practice} ruleSummary={ruleSummary} />
 
-        <section className="stats">
-          <div>
-            <div className="label">今日答題數</div>
-            <div className="value">{activeStats.todayCount}</div>
-          </div>
-          <div>
-            <div className="label">連續答對</div>
-            <div className="value">{activeStats.streak}</div>
-          </div>
-          <div>
-            <div className="label">待複習數</div>
-            <div className="value">{dueCount}</div>
-          </div>
-          <div>
-            <div className="label">目前範圍</div>
-            <div className="value">{scopeLabels[scope]}</div>
-          </div>
-          <div className="review-card">
-            <div className="label">今日答錯</div>
-            <div className="value">{wrongCount}</div>
-            {mode === "reviewWrong" ? (
-              <button
-                type="button"
-                className="secondary"
-                onClick={handleExitReview}
-              >
-                回到正常題庫
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleStartReview}
-                disabled={wrongCount === 0}
-              >
-                複習今日答錯
-              </button>
-            )}
-          </div>
-        </section>
-
-        {practice === "verb" ? (
-          <details className="rules">
-            <summary>{ruleSummary}</summary>
-            <div className="rules-body">
-              <div className="rule-grid">
-                <div className="rule-card">
-                  <div className="rule-title">う／つ／る</div>
-                  <div className="rule-line">た形：〜った</div>
-                  <div className="rule-line">て形：〜って</div>
-                </div>
-                <div className="rule-card">
-                  <div className="rule-title">む／ぶ／ぬ</div>
-                  <div className="rule-line">た形：〜んだ</div>
-                  <div className="rule-line">て形：〜んで</div>
-                </div>
-                <div className="rule-card">
-                  <div className="rule-title">く（行く除外）</div>
-                  <div className="rule-line">た形：〜いた</div>
-                  <div className="rule-line">て形：〜いて</div>
-                </div>
-                <div className="rule-card">
-                  <div className="rule-title">ぐ</div>
-                  <div className="rule-line">た形：〜いだ</div>
-                  <div className="rule-line">て形：〜いで</div>
-                </div>
-                <div className="rule-card">
-                  <div className="rule-title">す</div>
-                  <div className="rule-line">た形：〜した</div>
-                  <div className="rule-line">て形：〜して</div>
-                </div>
-                <div className="rule-card">
-                  <div className="rule-title">行く（例外）</div>
-                  <div className="rule-line">た形：行った</div>
-                  <div className="rule-line">て形：行って</div>
-                </div>
-                <div className="rule-card">
-                  <div className="rule-title">二段動詞</div>
-                  <div className="rule-line">た形：語幹＋た</div>
-                  <div className="rule-line">て形：語幹＋て</div>
-                </div>
-                <div className="rule-card">
-                  <div className="rule-title">五段動詞（可能形）</div>
-                  <div className="rule-line">語尾改 e 段＋る</div>
-                </div>
-                <div className="rule-card">
-                  <div className="rule-title">二段動詞（可能形）</div>
-                  <div className="rule-line">語幹＋られる</div>
-                </div>
-                <div className="rule-card">
-                  <div className="rule-title">する／くる</div>
-                  <div className="rule-line">た形：した／きた</div>
-                  <div className="rule-line">て形：して／きて</div>
-                  <div className="rule-line">可能形：できる／こられる</div>
-                </div>
-              </div>
-            </div>
-          </details>
-        ) : (
-          <details className="rules">
-            <summary>{ruleSummary}</summary>
-            <div className="rules-body">
-              <div className="rule-grid">
-                <div className="rule-card">
-                  <div className="rule-title">い形容詞</div>
-                  <div className="rule-line">ない形：語幹＋くない</div>
-                  <div className="rule-line">た形：語幹＋かった</div>
-                  <div className="rule-line">なかった形：語幹＋くなかった</div>
-                  <div className="rule-line">て形：語幹＋くて</div>
-                </div>
-                <div className="rule-card">
-                  <div className="rule-title">な形容詞</div>
-                  <div className="rule-line">ない形：語幹＋じゃない</div>
-                  <div className="rule-line">た形：語幹＋だった</div>
-                  <div className="rule-line">
-                    なかった形：語幹＋じゃなかった
-                  </div>
-                  <div className="rule-line">て形：語幹＋で</div>
-                </div>
-                <div className="rule-card">
-                  <div className="rule-title">いい（例外）</div>
-                  <div className="rule-line">ない形：よくない</div>
-                  <div className="rule-line">た形：よかった</div>
-                </div>
-              </div>
-            </div>
-          </details>
-        )}
-
-        <details className="bank">
-          <summary>題庫管理</summary>
-          <div className="bank-body">
-            <div className="bank-guide">
-              <p>匯入會合併題庫並保留學習紀錄。匯出可直接複製。</p>
-              <div className="steps">
-                <div className="step">
-                  <span>1.</span> 點「匯出題庫」可取得目前 JSON。
-                </div>
-                <div className="step">
-                  <span>2.</span> 貼上你的 JSON（支援只給{dictLabel}）。
-                </div>
-                <div className="step">
-                  <span>3.</span> 點「匯入題庫」立即生效。
-                </div>
-              </div>
-              <div className="group-hint">{groupHint}</div>
-              <pre className="example">{bankExample}</pre>
-            </div>
-            <div className="bank-count">
-              目前題庫共有 {bank.length} 個單字。
-            </div>
-            <textarea
-              value={bankText}
-              onChange={(event) => setBankText(event.target.value)}
-              placeholder="在此貼上題庫 JSON 或按下匯出填入"
-              rows={10}
-              disabled={isImporting}
-            />
-            <div className="bank-quick">
-              <input
-                type="text"
-                value={quickInput}
-                onChange={(event) => setQuickInput(event.target.value)}
-                placeholder={`直接輸入${practiceLabel}（可用空白或逗號分隔）`}
-                disabled={isImporting}
-              />
-              <button
-                type="button"
-                onClick={handleQuickImport}
-                className="secondary"
-                disabled={isImporting}
-              >
-                直接匯入{practiceLabel}
-              </button>
-            </div>
-            <div className="bank-actions">
-              <button
-                type="button"
-                onClick={handleExport}
-                disabled={isImporting}
-              >
-                匯出題庫
-              </button>
-              <button
-                type="button"
-                onClick={handleImport}
-                className="secondary"
-                disabled={isImporting}
-              >
-                匯入題庫
-              </button>
-              <button
-                type="button"
-                onClick={handleResetBank}
-                className="ghost"
-                disabled={isImporting}
-              >
-                重置題庫
-              </button>
-              <button
-                type="button"
-                onClick={handleClearProgress}
-                className="ghost"
-                disabled={isImporting}
-              >
-                清空學習紀錄
-              </button>
-            </div>
-            {message && <div className="message">{message}</div>}
-          </div>
-        </details>
+        <BankPanel
+          practice={practice}
+          bankExample={bankExample}
+          groupHint={groupHint}
+          bankCount={bank.length}
+          bankText={bankText}
+          onBankTextChange={setBankText}
+          quickInput={quickInput}
+          onQuickInputChange={setQuickInput}
+          onQuickImport={handleQuickImport}
+          onExport={handleExport}
+          onImport={handleImport}
+          onReset={handleResetBank}
+          onClearProgress={handleClearProgress}
+          isImporting={isImporting}
+          message={message}
+        />
       </main>
     </div>
   );
