@@ -1,0 +1,50 @@
+{
+  "cases": [
+    {
+      "id": "verb-string",
+      "practice": "verb",
+      "input": ["書く"],
+      "ok": true,
+      "expected": [
+        {
+          "dict": "書く",
+          "nai": "書かない",
+          "ta": "書いた",
+          "nakatta": "書かなかった",
+          "te": "書いて",
+          "potential": "書ける",
+          "group": "godan"
+        }
+      ]
+    },
+    {
+      "id": "adjective-object-override",
+      "practice": "adjective",
+      "input": [
+        {
+          "dict": "静か",
+          "group": "na",
+          "nai": "静かじゃない"
+        }
+      ],
+      "ok": true,
+      "expected": [
+        {
+          "dict": "静か",
+          "nai": "静かじゃない",
+          "ta": "静かだった",
+          "nakatta": "静かじゃなかった",
+          "te": "静かで",
+          "group": "na"
+        }
+      ]
+    },
+    {
+      "id": "invalid-empty",
+      "practice": "verb",
+      "input": [""],
+      "ok": false,
+      "error": "存在空的項目。"
+    }
+  ]
+}
