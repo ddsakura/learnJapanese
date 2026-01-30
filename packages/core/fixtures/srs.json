@@ -1,0 +1,31 @@
+{
+  "cases": [
+    {
+      "id": "correct-from-zero",
+      "prevIntervalDays": 0,
+      "isCorrect": true,
+      "expected": {
+        "intervalDays": 1,
+        "dueOffsetMs": 86400000
+      }
+    },
+    {
+      "id": "correct-from-one",
+      "prevIntervalDays": 1,
+      "isCorrect": true,
+      "expected": {
+        "intervalDays": 2,
+        "dueOffsetMs": 172800000
+      }
+    },
+    {
+      "id": "incorrect",
+      "prevIntervalDays": 4,
+      "isCorrect": false,
+      "expected": {
+        "intervalDays": 0,
+        "dueOffsetMs": 120000
+      }
+    }
+  ]
+}
