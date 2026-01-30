@@ -15,6 +15,28 @@ npm install
 npm run dev
 ```
 
+## Web 測試
+
+```bash
+cd apps/web
+npm test
+```
+
+```bash
+cd apps/web
+npm run test:e2e
+```
+
+```bash
+cd apps/web
+npm run test:e2e:ui
+```
+
+```bash
+cd apps/web
+npm run test:all
+```
+
 ## Core 規格與 fixtures
 
 請參考：

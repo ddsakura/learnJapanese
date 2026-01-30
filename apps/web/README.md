@@ -19,6 +19,36 @@ cd apps/web
 npm run build
 ```
 
+## 測試
+
+單元測試（Vitest）：
+
+```bash
+cd apps/web
+npm test
+```
+
+E2E 測試（Playwright）：
+
+```bash
+cd apps/web
+npm run test:e2e
+```
+
+互動式 E2E（Playwright UI）：
+
+```bash
+cd apps/web
+npm run test:e2e:ui
+```
+
+一次跑完 unit + e2e：
+
+```bash
+cd apps/web
+npm run test:all
+```
+
 
 ## 使用方式
 
