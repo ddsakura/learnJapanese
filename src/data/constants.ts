@@ -24,6 +24,7 @@ export const STORAGE_KEYS = {
     adjective: 'jlpt-n4-adjective-wrong-today',
   },
   examples: 'jlpt-n4-example-cache',
+  answerMode: 'jlpt-n4-answer-mode',
 }
 
 export const DAY_MS = 24 * 60 * 60 * 1000
