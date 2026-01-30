@@ -31,7 +31,6 @@ import {
 import {
   defaultStats,
   defaultWrongToday,
-  getTodayKey,
   normalizeStats,
   normalizeWrongToday,
 } from "./lib/stats";
@@ -48,6 +47,7 @@ import {
 import type {
   AdjectiveScope,
   AnswerMode,
+  AnswerResult,
   Card,
   ChoiceStatus,
   ExampleEntry,
@@ -261,12 +261,7 @@ function App() {
     });
   const [question, setQuestion] = useState<Question | null>(null);
   const [answer, setAnswer] = useState("");
-  const [result, setResult] = useState<{
-    correct: boolean;
-    correctAnswer: string;
-    userAnswer: string;
-    type: Exclude<QuestionType, "mixed">;
-  } | null>(null);
+  const [result, setResult] = useState<AnswerResult | null>(null);
   const [example, setExample] = useState<ExampleEntry | null>(null);
   const [exampleStatus, setExampleStatus] = useState<
     "idle" | "loading" | "error"

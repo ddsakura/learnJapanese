@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import type {
   AnswerMode,
+  AnswerResult,
   ChoiceStatus,
   ExampleEntry,
   PracticeKind,
@@ -8,13 +9,6 @@ import type {
   QuestionType,
 } from "../types";
 import { QUESTION_LABELS } from "../data/constants";
-
-type AnswerResult = {
-  correct: boolean;
-  correctAnswer: string;
-  userAnswer: string;
-  type: Exclude<QuestionType, "mixed">;
-};
 
 type QuestionCardProps = {
   question: Question | null;
@@ -251,41 +245,39 @@ export default function QuestionCard({
                 </strong>
               </div>
             )}
-            {result && (
-              <div className="result-example">
-                <div className="result-example-title">例句</div>
-                {exampleStatus === "loading" && (
-                  <div className="result-example-line">例句產生中…</div>
-                )}
-                {exampleStatus === "error" && (
-                  <div className="result-example-line error">
-                    {exampleMessage}
+            <div className="result-example">
+              <div className="result-example-title">例句</div>
+              {exampleStatus === "loading" && (
+                <div className="result-example-line">例句產生中…</div>
+              )}
+              {exampleStatus === "error" && (
+                <div className="result-example-line error">
+                  {exampleMessage}
+                </div>
+              )}
+              {example && (
+                <>
+                  <div className="result-example-line">{example.jp}</div>
+                  <div className="result-example-line reading">
+                    {example.reading}
                   </div>
-                )}
-                {example && (
-                  <>
-                    <div className="result-example-line">{example.jp}</div>
-                    <div className="result-example-line reading">
-                      {example.reading}
-                    </div>
-                    <div className="result-example-line zh">{example.zh}</div>
-                    <div className="result-example-line grammar">
-                      {example.grammar}
-                    </div>
-                    <div className="result-example-actions">
-                      <button
-                        type="button"
-                        className="ghost"
-                        onClick={onExampleSpeak}
-                        disabled={isExampleSpeaking || !canSpeak}
-                      >
-                        {isExampleSpeaking ? "播放中…" : "朗讀例句"}
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+                  <div className="result-example-line zh">{example.zh}</div>
+                  <div className="result-example-line grammar">
+                    {example.grammar}
+                  </div>
+                  <div className="result-example-actions">
+                    <button
+                      type="button"
+                      className="ghost"
+                      onClick={onExampleSpeak}
+                      disabled={isExampleSpeaking || !canSpeak}
+                    >
+                      {isExampleSpeaking ? "播放中…" : "朗讀例句"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
             {question && (
               <div className="result-forms">
                 <div className="result-forms-title">全部形</div>

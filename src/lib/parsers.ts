@@ -15,9 +15,8 @@ export function parseExampleResponse(text: string): ExampleEntry | null {
   const zh = getLineValue("ZH");
   const grammar = getBlockValue("Grammar");
 
-  const reading = readingRaw;
-
-  if (jp && reading && zh && grammar) return { jp, reading, zh, grammar };
+  if (jp && readingRaw && zh && grammar)
+    return { jp, reading: readingRaw, zh, grammar };
   return null;
 }
 

@@ -79,19 +79,14 @@ export function normalizeImport(
 
       const generated = conjugateVerb(dict, group);
       if (!generated) return { ok: false, error: `無法推導：${dict}` };
-      const overrides: Partial<Card> = {};
-      if (typeof record.nai === "string" && record.nai.trim())
-        overrides.nai = record.nai.trim();
-      if (typeof record.ta === "string" && record.ta.trim())
-        overrides.ta = record.ta.trim();
-      if (typeof record.nakatta === "string" && record.nakatta.trim())
-        overrides.nakatta = record.nakatta.trim();
-      if (typeof record.te === "string" && record.te.trim())
-        overrides.te = record.te.trim();
-      if (typeof record.potential === "string" && record.potential.trim())
-        overrides.potential = record.potential.trim();
-      if (typeof record.zh === "string" && record.zh.trim())
-        overrides.zh = record.zh.trim();
+      const overrides = buildOverrides(record, [
+        "nai",
+        "ta",
+        "nakatta",
+        "te",
+        "potential",
+        "zh",
+      ]);
 
       bank.push({ ...generated, ...overrides, group });
       continue;
@@ -111,22 +106,29 @@ export function normalizeImport(
 
     const generated = conjugateAdjective(dict, group);
     if (!generated) return { ok: false, error: `無法推導：${dict}` };
-    const overrides: Partial<Card> = {};
-    if (typeof record.nai === "string" && record.nai.trim())
-      overrides.nai = record.nai.trim();
-    if (typeof record.ta === "string" && record.ta.trim())
-      overrides.ta = record.ta.trim();
-    if (typeof record.nakatta === "string" && record.nakatta.trim())
-      overrides.nakatta = record.nakatta.trim();
-    if (typeof record.te === "string" && record.te.trim())
-      overrides.te = record.te.trim();
-    if (typeof record.zh === "string" && record.zh.trim())
-      overrides.zh = record.zh.trim();
+    const overrides = buildOverrides(record, [
+      "nai",
+      "ta",
+      "nakatta",
+      "te",
+      "zh",
+    ]);
 
     bank.push({ ...generated, ...overrides, group });
   }
 
   return { ok: true, bank };
+}
+
+function buildOverrides(record: Record<string, unknown>, fields: string[]) {
+  const overrides: Partial<Card> = {};
+  fields.forEach((field) => {
+    const value = record[field];
+    if (typeof value === "string" && value.trim()) {
+      overrides[field as keyof Card] = value.trim();
+    }
+  });
+  return overrides;
 }
 
 export function mergeBank(existing: Card[], incoming: Card[]) {
