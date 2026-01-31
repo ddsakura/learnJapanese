@@ -4,6 +4,11 @@ final class AppState: ObservableObject {
     @Published var verbBank: [CardFixture] = []
     @Published var adjectiveBank: [CardFixture] = []
     @Published var currentQuestion: QuestionViewModel?
+    @Published var currentPractice: PracticeKind = .verb
+    @Published var answerMode: AnswerMode = .input
+    @Published var answerText: String = ""
+    @Published var choiceOptions: [String] = []
+    @Published var result: AnswerResult?
     @Published var errorMessage: String?
 
     init() {
@@ -45,13 +50,74 @@ final class AppState: ObservableObject {
     }
 
     func nextQuestion(practice: PracticeKind) {
+        currentPractice = practice
         let bank = practice == .verb ? verbBank : adjectiveBank
         guard let card = bank.randomElement() else {
             currentQuestion = nil
             return
         }
-        let type = QuestionType.allCases.filter { $0 != .mixed }.randomElement() ?? .nai
+        let types = QuestionType.allCases.filter { type in
+            if type == .mixed { return false }
+            if practice == .adjective && type == .potential { return false }
+            return true
+        }
+        let type = types.randomElement() ?? .nai
         currentQuestion = QuestionViewModel(card: card, type: type)
+        answerText = ""
+        result = nil
+        if answerMode == .choice {
+            generateChoices()
+        } else {
+            choiceOptions = []
+        }
+    }
+
+    func submitAnswer(_ value: String) {
+        guard let question = currentQuestion else { return }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        let correct = trimmed == question.answer
+        result = AnswerResult(
+            correct: correct,
+            correctAnswer: question.answer,
+            userAnswer: trimmed,
+            type: question.type
+        )
+    }
+
+    func skip() {
+        submitAnswer("")
+    }
+
+    func generateChoices() {
+        guard let question = currentQuestion else { return }
+        var pool = Set<String>()
+        pool.insert(question.answer)
+
+        // Use other forms of the same card as distractors.
+        let candidates = [
+            question.card.nai,
+            question.card.ta,
+            question.card.nakatta,
+            question.card.te,
+            question.card.potential,
+        ].compactMap { $0 }
+        candidates.forEach { pool.insert($0) }
+
+        // Pull extra distractors from bank if needed.
+        let bank = currentPractice == .verb ? verbBank : adjectiveBank
+        for card in bank.shuffled() {
+            if pool.count >= 4 { break }
+            [card.nai, card.ta, card.nakatta, card.te, card.potential].compactMap { $0 }.forEach {
+                if pool.count < 4 { pool.insert($0) }
+            }
+        }
+
+        // Ensure correct answer included and shuffle.
+        var options = Array(pool)
+        if !options.contains(question.answer) {
+            options.append(question.answer)
+        }
+        choiceOptions = options.shuffled().prefix(4).map { $0 }
     }
 }
 
@@ -93,4 +159,16 @@ enum QuestionType: String, CaseIterable {
         case .mixed: return "混合"
         }
     }
+}
+
+enum AnswerMode: String, CaseIterable {
+    case input
+    case choice
+}
+
+struct AnswerResult {
+    let correct: Bool
+    let correctAnswer: String
+    let userAnswer: String
+    let type: QuestionType
 }
