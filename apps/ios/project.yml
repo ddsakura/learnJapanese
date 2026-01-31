@@ -11,6 +11,9 @@ targets:
     deploymentTarget: "26.0"
     sources:
       - path: Sources
+      - path: Resources/fixtures
+        type: folder
+        buildPhase: resources
     settings:
       GENERATE_INFOPLIST_FILE: YES
       PRODUCT_BUNDLE_IDENTIFIER: com.example.LearnJapanese
