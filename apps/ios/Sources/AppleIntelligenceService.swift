@@ -61,9 +61,15 @@ final class AppleIntelligenceService {
     }
 
     func generateExample(term: String, typeLabel: String) async throws -> AIExample {
-        let prompt = "你是一位專業的日語老師，擅長將複雜的文法用簡單易懂的方式解釋給 N4 程度的學生。請用單字『\(term)』（形態：\(typeLabel)）造一個 N4 程度的日文句子。"
-        let response = try await respond(generating: ExampleResponse.self, prompt: prompt)
-        return AIExample(jp: response.jp, reading: response.reading, zh: response.zh, grammar: response.grammar)
+        let basePrompt = "你是一位專業的日語老師，擅長將複雜的文法用簡單易懂的方式解釋給 N4 程度的學生。請用單字『\(term)』（形態：\(typeLabel)）造一個 N4 程度的日文句子。"
+        let safePrompt = basePrompt + " 限制：只允許日常生活場景，不涉及暴力、犯罪、醫療、成人、政治、宗教、歧視等敏感話題。句子要簡短、單一句，避免故事化。"
+        do {
+            let response = try await respond(generating: ExampleResponse.self, prompt: basePrompt)
+            return AIExample(jp: response.jp, reading: response.reading, zh: response.zh, grammar: response.grammar)
+        } catch {
+            let response = try await respond(generating: ExampleResponse.self, prompt: safePrompt)
+            return AIExample(jp: response.jp, reading: response.reading, zh: response.zh, grammar: response.grammar)
+        }
     }
 
     #if canImport(FoundationModels)

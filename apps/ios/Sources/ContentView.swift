@@ -79,11 +79,11 @@ struct ContentView: View {
                             .frame(maxWidth: .infinity)
                         }
 
-                        if let result = state.result {
-                            VStack(spacing: 8) {
-                                Text(result.correct ? "✅ 正確" : "❌ 錯誤 / 略過")
-                                    .font(.headline)
-                                    .foregroundStyle(result.correct ? .green : .red)
+                    if let result = state.result {
+                        VStack(spacing: 8) {
+                            Text(result.correct ? "✅ 正確" : "❌ 錯誤 / 略過")
+                                .font(.headline)
+                                .foregroundStyle(result.correct ? .green : .red)
                                 VStack(spacing: 6) {
                                     HStack {
                                         Text("題型")
@@ -101,16 +101,47 @@ struct ContentView: View {
                                         Text(result.correctAnswer)
                                     }
                                 }
-                                .font(.subheadline)
-                            }
-                            .padding(.top, 8)
+                            .font(.subheadline)
                         }
+                        .padding(.top, 8)
+                    }
+
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("今日答題數")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("\(state.stats.todayCount)")
+                                .font(.headline)
+                        }
+                        Spacer()
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("連續答對")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("\(state.stats.streak)")
+                                .font(.headline)
+                        }
+                        Spacer()
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("今日答錯")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("\(state.wrongToday.count)")
+                                .font(.headline)
+                        }
+                    }
+                    .padding(.top, 8)
 
                         if case .loading = state.aiStatus {
-                            Text("翻譯與例句產生中…")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                                .padding(.top, 6)
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                    .scaleEffect(0.9)
+                                Text("翻譯與例句產生中…")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.top, 6)
                     } else if case .error(let message) = state.aiStatus {
                         Text(message)
                             .font(.footnote)
@@ -118,34 +149,42 @@ struct ContentView: View {
                             .multilineTextAlignment(.center)
                             .padding(.top, 6)
                     } else {
-                            if let translation = state.translationText {
-                                HStack {
-                                    Text("中文翻譯")
-                                    Spacer()
-                                    Text(translation)
-                                }
-                                .font(.subheadline)
-                                .padding(.top, 6)
+                        if let translation = state.translationText {
+                            HStack {
+                                Text("中文翻譯")
+                                Spacer()
+                                Text(translation)
                             }
-                            if let example = state.example {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("例句")
-                                        .font(.subheadline)
-                                        .fontWeight(.semibold)
-                                    Text(example.jp)
-                                    Text(example.reading)
-                                        .foregroundStyle(.secondary)
-                                        .font(.footnote)
-                                    Text(example.zh)
-                                        .foregroundStyle(.secondary)
-                                    Text(example.grammar)
-                                        .foregroundStyle(.secondary)
-                                        .font(.footnote)
-                                }
-                                .padding(.top, 6)
-                            }
+                            .font(.subheadline)
+                            .padding(.top, 6)
                         }
-                    } else {
+                        if let example = state.example {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("例句")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                Text(example.jp)
+                                Text(example.reading)
+                                    .foregroundStyle(.secondary)
+                                    .font(.footnote)
+                                Text(example.zh)
+                                    .foregroundStyle(.secondary)
+                                Text(example.grammar)
+                                    .foregroundStyle(.secondary)
+                                    .font(.footnote)
+                            }
+                            .padding(.top, 6)
+                        }
+                        if state.result != nil {
+                            Button("重新產生翻譯/例句") {
+                                state.regenerateAI()
+                            }
+                            .buttonStyle(.bordered)
+                            .padding(.top, 6)
+                            .disabled(state.aiStatus == .loading)
+                        }
+                    }
+                } else {
                         Text("目前題庫沒有可用題目")
                             .foregroundStyle(.secondary)
                     }
