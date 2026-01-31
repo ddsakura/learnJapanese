@@ -3,11 +3,15 @@ import Foundation
 final class AppState: ObservableObject {
     private let aiService = AppleIntelligenceService()
     private let srsStore = SrsStore.shared
+    private let bankStore = BankStore.shared
 
     @Published var verbBank: [CardFixture] = []
     @Published var adjectiveBank: [CardFixture] = []
     @Published var currentQuestion: QuestionViewModel?
     @Published var currentPractice: PracticeKind = .verb
+    @Published var selectedQuestionType: QuestionType = .mixed
+    @Published var selectedVerbScope: VerbScope = .all
+    @Published var selectedAdjectiveScope: AdjectiveScope = .all
     @Published var answerMode: AnswerMode = .input
     @Published var answerText: String = ""
     @Published var choiceOptions: [String] = []
@@ -18,6 +22,10 @@ final class AppState: ObservableObject {
     @Published var errorMessage: String?
     @Published var stats: Stats = Stats()
     @Published var wrongToday: [WrongEntry] = []
+    @Published var bankText: String = ""
+    @Published var bankMessage: String = ""
+    @Published var isImporting: Bool = false
+    @Published var quickInput: String = ""
 
     init() {
         loadDefaults()
@@ -29,6 +37,13 @@ final class AppState: ObservableObject {
 
     func loadDefaults() {
         do {
+            let savedVerbs = bankStore.loadVerbBank()
+            let savedAdjectives = bankStore.loadAdjectiveBank()
+            if !savedVerbs.isEmpty || !savedAdjectives.isEmpty {
+                verbBank = savedVerbs
+                adjectiveBank = savedAdjectives
+                return
+            }
             let fixtures = try FixtureLoader.load("conjugation", as: ConjugationFixtures.self)
             verbBank = fixtures.verbs.map { item in
                 CardFixture(
@@ -63,16 +78,12 @@ final class AppState: ObservableObject {
     func nextQuestion(practice: PracticeKind) {
         currentPractice = practice
         let bank = practice == .verb ? verbBank : adjectiveBank
-        guard let card = pickNextCard(from: bank) else {
+        let scopedBank = filterBank(bank, practice: practice)
+        guard let card = pickNextCard(from: scopedBank) else {
             currentQuestion = nil
             return
         }
-        let types = QuestionType.allCases.filter { type in
-            if type == .mixed { return false }
-            if practice == .adjective && type == .potential { return false }
-            return true
-        }
-        let type = types.randomElement() ?? .nai
+        let type = resolveQuestionType(for: practice)
         currentQuestion = QuestionViewModel(card: card, type: type)
         answerText = ""
         result = nil
@@ -147,6 +158,91 @@ final class AppState: ObservableObject {
         Task { await generateAI(for: question) }
     }
 
+    func exportBank(practice: PracticeKind) {
+        bankMessage = ""
+        let bank = practice == .verb ? verbBank : adjectiveBank
+        if let data = try? JSONEncoder().encode(bank),
+           let text = String(data: data, encoding: .utf8) {
+            bankText = text
+            bankMessage = "已匯出題庫"
+        } else {
+            bankMessage = "匯出失敗"
+        }
+    }
+
+    func importBank(practice: PracticeKind) {
+        bankMessage = ""
+        isImporting = true
+        defer { isImporting = false }
+        guard let data = bankText.data(using: .utf8) else {
+            bankMessage = "匯入失敗：JSON 解析錯誤。"
+            return
+        }
+        do {
+            let decoded = try JSONDecoder().decode([ImportItem].self, from: data)
+            let result = Importing.normalizeImport(decoded, practice: practice)
+            switch result {
+            case .success(let bank):
+                if practice == .verb {
+                    verbBank = bank
+                    bankStore.saveVerbBank(bank)
+                } else {
+                    adjectiveBank = bank
+                    bankStore.saveAdjectiveBank(bank)
+                }
+                bankMessage = "匯入成功"
+                nextQuestion(practice: practice)
+            case .failure(let error):
+                bankMessage = "匯入失敗：\(error.message)"
+            }
+        } catch {
+            bankMessage = "匯入失敗：JSON 解析錯誤。"
+        }
+    }
+
+    func quickImport(practice: PracticeKind) {
+        bankMessage = ""
+        isImporting = true
+        defer { isImporting = false }
+        let entries = quickInput
+            .split { $0 == " " || $0 == "\n" || $0 == "\t" || $0 == "," }
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        if entries.isEmpty {
+            bankMessage = practice == .verb ? "請先輸入動詞。" : "請先輸入形容詞。"
+            return
+        }
+        let items = entries.map { ImportItem.string($0) }
+        let result = Importing.normalizeImport(items, practice: practice)
+        switch result {
+        case .success(let bank):
+            if practice == .verb {
+                verbBank = bank
+                bankStore.saveVerbBank(bank)
+            } else {
+                adjectiveBank = bank
+                bankStore.saveAdjectiveBank(bank)
+            }
+            bankMessage = "匯入成功"
+            quickInput = ""
+            nextQuestion(practice: practice)
+        case .failure(let error):
+            bankMessage = "匯入失敗：\(error.message)"
+        }
+    }
+
+    func resetBank(practice: PracticeKind) {
+        bankMessage = ""
+        loadDefaults()
+        if practice == .verb {
+            bankStore.saveVerbBank(verbBank)
+        } else {
+            bankStore.saveAdjectiveBank(adjectiveBank)
+        }
+        bankMessage = "已重置為預設題庫"
+        nextQuestion(practice: practice)
+    }
+
     private func pickNextCard(from bank: [CardFixture]) -> CardFixture? {
         let srs = srsStore.loadSrs()
         let now = Date()
@@ -160,6 +256,46 @@ final class AppState: ObservableObject {
             return selected
         }
         return bank.randomElement()
+    }
+
+    private func filterBank(_ bank: [CardFixture], practice: PracticeKind) -> [CardFixture] {
+        switch practice {
+        case .verb:
+            switch selectedVerbScope {
+            case .all:
+                return bank
+            case .godan:
+                return bank.filter { $0.group == "godan" }
+            case .ichidan:
+                return bank.filter { $0.group == "ichidan" }
+            case .irregular:
+                return bank.filter { $0.group == "irregular" }
+            }
+        case .adjective:
+            switch selectedAdjectiveScope {
+            case .all:
+                return bank
+            case .i:
+                return bank.filter { $0.group == "i" }
+            case .na:
+                return bank.filter { $0.group == "na" }
+            }
+        }
+    }
+
+    private func resolveQuestionType(for practice: PracticeKind) -> QuestionType {
+        let allowed = QuestionType.allCases.filter { type in
+            if practice == .adjective && type == .potential { return false }
+            return true
+        }
+        if selectedQuestionType == .mixed {
+            let pool = allowed.filter { $0 != .mixed }
+            return pool.randomElement() ?? .nai
+        }
+        if allowed.contains(selectedQuestionType) {
+            return selectedQuestionType
+        }
+        return .nai
     }
 
     private func applySrs(for dict: String, isCorrect: Bool) {
@@ -282,4 +418,34 @@ enum AIStatus: Equatable {
     case idle
     case loading
     case error(String)
+}
+
+enum VerbScope: String, CaseIterable {
+    case all
+    case godan
+    case ichidan
+    case irregular
+
+    var label: String {
+        switch self {
+        case .all: return "全部"
+        case .godan: return "五段"
+        case .ichidan: return "二段"
+        case .irregular: return "不規則"
+        }
+    }
+}
+
+enum AdjectiveScope: String, CaseIterable {
+    case all
+    case i
+    case na
+
+    var label: String {
+        switch self {
+        case .all: return "全部"
+        case .i: return "い形"
+        case .na: return "な形"
+        }
+    }
 }

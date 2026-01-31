@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var state = AppState()
     @State private var practice: PracticeKind = .verb
+    @State private var showBankSheet = false
 
     var body: some View {
         NavigationStack {
@@ -17,21 +18,53 @@ struct ContentView: View {
                         state.nextQuestion(practice: newValue)
                     }
 
-                    Picker("作答方式", selection: $state.answerMode) {
-                        Text("文字輸入").tag(AnswerMode.input)
-                        Text("四選一").tag(AnswerMode.choice)
+                Picker("作答方式", selection: $state.answerMode) {
+                    Text("文字輸入").tag(AnswerMode.input)
+                    Text("四選一").tag(AnswerMode.choice)
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: state.answerMode) { _, newValue in
+                    if newValue == .choice {
+                        state.generateChoices()
+                    } else {
+                        state.choiceOptions = []
                     }
-                    .pickerStyle(.segmented)
-                    .onChange(of: state.answerMode) { _, newValue in
-                        if newValue == .choice {
-                            state.generateChoices()
-                        } else {
-                            state.choiceOptions = []
+                }
+
+                Picker("題型", selection: $state.selectedQuestionType) {
+                    ForEach(QuestionType.allCases, id: \.self) { type in
+                        Text(type.label).tag(type)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: state.selectedQuestionType) { _, _ in
+                    state.nextQuestion(practice: practice)
+                }
+
+                if practice == .verb {
+                    Picker("範圍", selection: $state.selectedVerbScope) {
+                        ForEach(VerbScope.allCases, id: \.self) { scope in
+                            Text(scope.label).tag(scope)
                         }
                     }
+                    .pickerStyle(.segmented)
+                    .onChange(of: state.selectedVerbScope) { _, _ in
+                        state.nextQuestion(practice: practice)
+                    }
+                } else {
+                    Picker("範圍", selection: $state.selectedAdjectiveScope) {
+                        ForEach(AdjectiveScope.allCases, id: \.self) { scope in
+                            Text(scope.label).tag(scope)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: state.selectedAdjectiveScope) { _, _ in
+                        state.nextQuestion(practice: practice)
+                    }
+                }
 
-                    if let question = state.currentQuestion {
-                        QuestionCardView(question: question)
+                if let question = state.currentQuestion {
+                    QuestionCardView(question: question)
 
                         if state.answerMode == .input {
                             VStack(spacing: 8) {
@@ -205,6 +238,71 @@ struct ContentView: View {
                 .padding()
             }
             .navigationTitle("LearnJapanese")
+            .toolbar {
+                Button("題庫管理") {
+                    showBankSheet = true
+                }
+            }
+            .sheet(isPresented: $showBankSheet) {
+                NavigationStack {
+                    VStack(spacing: 12) {
+                        Text("目前題庫共有 \(practice == .verb ? state.verbBank.count : state.adjectiveBank.count) 個單字。")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+
+                        TextEditor(text: $state.bankText)
+                            .font(.system(.body, design: .monospaced))
+                            .border(Color.secondary.opacity(0.2))
+                            .frame(minHeight: 220)
+
+                        HStack {
+                            Button("匯出題庫") {
+                                state.exportBank(practice: practice)
+                            }
+                            .buttonStyle(.bordered)
+
+                            Button("匯入題庫") {
+                                state.importBank(practice: practice)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(state.isImporting)
+
+                            Button("重置題庫") {
+                                state.resetBank(practice: practice)
+                            }
+                            .buttonStyle(.bordered)
+                        }
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(practice == .verb ? "快速輸入動詞（空白/逗號分隔）" : "快速輸入形容詞（空白/逗號分隔）")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                            TextField("例如：行く 見る 勉強する", text: $state.quickInput)
+                                .textFieldStyle(.roundedBorder)
+                            Button("快速匯入") {
+                                state.quickImport(practice: practice)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(state.isImporting)
+                        }
+
+                        if !state.bankMessage.isEmpty {
+                            Text(state.bankMessage)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+                    }
+                    .padding()
+                    .navigationTitle("題庫管理")
+                    .toolbar {
+                        Button("完成") {
+                            showBankSheet = false
+                        }
+                    }
+                }
+            }
         }
     }
 }
