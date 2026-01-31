@@ -5,7 +5,8 @@ enum Parsing {
         let normalized = text.replacingOccurrences(of: "\\n", with: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
 
         func lineValue(_ label: String) -> String {
-            let pattern = "^\\s*" + NSRegularExpression.escapedPattern(for: label) + ":\\s*(.+)$"
+            let escaped = NSRegularExpression.escapedPattern(for: label)
+            let pattern = "^\\s*(?:\\*\\*\\s*)?" + escaped + "\\s*(?:\\*\\*\\s*)?:\\s*(.+)$"
             let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
             for line in normalized.components(separatedBy: "\n") {
                 if let match = regex?.firstMatch(in: line, options: [], range: NSRange(location: 0, length: line.utf16.count)) {
@@ -18,7 +19,8 @@ enum Parsing {
         }
 
         func blockValue(_ label: String) -> String {
-            let pattern = NSRegularExpression.escapedPattern(for: label) + ":\\s*([\\s\\S]+)$"
+            let escaped = NSRegularExpression.escapedPattern(for: label)
+            let pattern = "(?:\\*\\*\\s*)?" + escaped + "\\s*(?:\\*\\*\\s*)?:\\s*([\\s\\S]+)$"
             let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
             if let match = regex?.firstMatch(in: normalized, options: [], range: NSRange(location: 0, length: normalized.utf16.count)) {
                 if let range = Range(match.range(at: 1), in: normalized) {

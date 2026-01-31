@@ -1,6 +1,8 @@
 import Foundation
 
 final class AppState: ObservableObject {
+    private let aiService = AppleIntelligenceService()
+
     @Published var verbBank: [CardFixture] = []
     @Published var adjectiveBank: [CardFixture] = []
     @Published var currentQuestion: QuestionViewModel?
@@ -9,6 +11,9 @@ final class AppState: ObservableObject {
     @Published var answerText: String = ""
     @Published var choiceOptions: [String] = []
     @Published var result: AnswerResult?
+    @Published var translationText: String?
+    @Published var example: AIExample?
+    @Published var aiStatus: AIStatus = .idle
     @Published var errorMessage: String?
 
     init() {
@@ -65,6 +70,9 @@ final class AppState: ObservableObject {
         currentQuestion = QuestionViewModel(card: card, type: type)
         answerText = ""
         result = nil
+        translationText = nil
+        example = nil
+        aiStatus = .idle
         if answerMode == .choice {
             generateChoices()
         } else {
@@ -82,6 +90,7 @@ final class AppState: ObservableObject {
             userAnswer: trimmed,
             type: question.type
         )
+        Task { await generateAI(for: question) }
     }
 
     func skip() {
@@ -118,6 +127,27 @@ final class AppState: ObservableObject {
             options.append(question.answer)
         }
         choiceOptions = options.shuffled().prefix(4).map { $0 }
+    }
+
+    @MainActor
+    private func generateAI(for question: QuestionViewModel) async {
+        aiStatus = .loading
+        do {
+            translationText = try await aiService.generateTranslation(question.answer)
+        } catch {
+            aiStatus = .error(String(describing: error))
+            return
+        } catch {
+            aiStatus = .error(String(describing: error))
+            return
+        }
+
+        do {
+            example = try await aiService.generateExample(term: question.answer, typeLabel: question.promptLabel)
+            aiStatus = .idle
+        } catch {
+            aiStatus = .error(String(describing: error))
+        }
     }
 }
 
@@ -171,4 +201,10 @@ struct AnswerResult {
     let correctAnswer: String
     let userAnswer: String
     let type: QuestionType
+}
+
+enum AIStatus: Equatable {
+    case idle
+    case loading
+    case error(String)
 }
