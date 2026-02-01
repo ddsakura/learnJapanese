@@ -63,8 +63,16 @@ struct ContentView: View {
                     }
                 }
 
-                if let question = state.currentQuestion {
-                    QuestionCardView(question: question)
+                    if let question = state.currentQuestion {
+                        HStack {
+                            QuestionCardView(question: question)
+                            Button {
+                                state.speakQuestion()
+                            } label: {
+                                Image(systemName: "speaker.wave.2.fill")
+                            }
+                            .buttonStyle(.bordered)
+                        }
 
                         if state.answerMode == .input {
                             VStack(spacing: 8) {
@@ -196,6 +204,12 @@ struct ContentView: View {
                                 Text("例句")
                                     .font(.subheadline)
                                     .fontWeight(.semibold)
+                                Button {
+                                    state.speakExample()
+                                } label: {
+                                    Label("朗讀例句", systemImage: "speaker.wave.2")
+                                }
+                                .buttonStyle(.bordered)
                                 Text(example.jp)
                                 Text(example.reading)
                                     .foregroundStyle(.secondary)

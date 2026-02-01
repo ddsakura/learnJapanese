@@ -4,6 +4,7 @@ final class AppState: ObservableObject {
     private let aiService = AppleIntelligenceService()
     private let srsStore = SrsStore.shared
     private let bankStore = BankStore.shared
+    private let speechService = SpeechService.shared
 
     @Published var verbBank: [CardFixture] = []
     @Published var adjectiveBank: [CardFixture] = []
@@ -156,6 +157,16 @@ final class AppState: ObservableObject {
     func regenerateAI() {
         guard let question = currentQuestion else { return }
         Task { await generateAI(for: question) }
+    }
+
+    func speakQuestion() {
+        guard let question = currentQuestion else { return }
+        speechService.speak(question.card.dict)
+    }
+
+    func speakExample() {
+        guard let example = example else { return }
+        speechService.speak(example.jp)
     }
 
     func exportBank(practice: PracticeKind) {

@@ -15,6 +15,7 @@
 		3FB969B4DA99ADC3F6F14782 /* ParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44742F48C28195595D299B79 /* ParsingTests.swift */; };
 		456CFDA1594C435BF3953959 /* BankStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49C684FFA03F6FD00129D23A /* BankStore.swift */; };
 		4E55C4DB2D73DE16AD4FA783 /* AppleIntelligenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D527A6DEF9375DF40CF718BA /* AppleIntelligenceService.swift */; };
+		5DC9333DAD89371398F23046 /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82BBDA6C82B9BB4E31C8FE49 /* SpeechService.swift */; };
 		5F8B93C6EE40031603E294C4 /* SrsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F38487D13F21940FF1BF20D /* SrsStore.swift */; };
 		6B7D4F463A8540740AAA2513 /* fixtures in Resources */ = {isa = PBXBuildFile; fileRef = 3B909CE808251C6AEDFEE0C1 /* fixtures */; };
 		6D2DFBE3DBF5DBA9EEE99D1D /* Conjugation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B7F1DA23AD39CB3E2AC484 /* Conjugation.swift */; };
@@ -56,6 +57,7 @@
 		6F38487D13F21940FF1BF20D /* SrsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SrsStore.swift; sourceTree = "<group>"; };
 		72BEB56EF0062252F062509F /* LearnJapaneseTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LearnJapaneseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		82270DA24B5388A71BFEA1C4 /* ImportingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportingTests.swift; sourceTree = "<group>"; };
+		82BBDA6C82B9BB4E31C8FE49 /* SpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechService.swift; sourceTree = "<group>"; };
 		A082A3290DF6ED6BC222318C /* FixtureLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixtureLoaderTests.swift; sourceTree = "<group>"; };
 		BDC02CFE39A562CC2258B438 /* Importing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Importing.swift; sourceTree = "<group>"; };
 		BF4D5BD2533C8018C1DE5FD4 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -82,6 +84,7 @@
 				1A28641D6B42759E7276FFE6 /* LearnJapaneseApp.swift */,
 				3D2108C9A5218254CB2905A7 /* Parsing.swift */,
 				434C888C1725E3D96FBB8375 /* QuestionCardView.swift */,
+				82BBDA6C82B9BB4E31C8FE49 /* SpeechService.swift */,
 				1CAB7131F55A62CA35605184 /* Srs.swift */,
 				6F38487D13F21940FF1BF20D /* SrsStore.swift */,
 			);
@@ -226,6 +229,7 @@
 				F24B40528C9B785A8BDEA531 /* LearnJapaneseApp.swift in Sources */,
 				3B55575B9F43F144371A9146 /* Parsing.swift in Sources */,
 				00C2757BA851F6874DA0DF57 /* QuestionCardView.swift in Sources */,
+				5DC9333DAD89371398F23046 /* SpeechService.swift in Sources */,
 				0CE220E04A59C5DA7FC52D9D /* Srs.swift in Sources */,
 				5F8B93C6EE40031603E294C4 /* SrsStore.swift in Sources */,
 			);
