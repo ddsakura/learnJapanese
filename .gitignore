@@ -13,6 +13,9 @@ dist-ssr
 *.local
 test-results
 playwright-report
+coverage
+.env
+.env.*
 
 # Editor directories and files
 .vscode/*
@@ -24,3 +27,13 @@ playwright-report
 *.njsproj
 *.sln
 *.sw?
+*.xcuserstate
+**/xcuserdata/
+DerivedData/
+build/
+*.xcarchive
+*.dSYM
+*.ipa
+*.xccheckout
+*.xcscmblueprint
+.swiftpm/

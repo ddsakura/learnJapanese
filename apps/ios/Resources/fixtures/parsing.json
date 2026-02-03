@@ -1,0 +1,19 @@
+{
+  "exampleResponse": {
+    "input": "JP: 行った\nReading: いった\nZH: 去了\nGrammar: た形",
+    "output": {
+      "jp": "行った",
+      "reading": "いった",
+      "zh": "去了",
+      "grammar": "た形"
+    }
+  },
+  "translation": {
+    "input": "zh: \"可愛\"",
+    "output": "可愛"
+  },
+  "choices": {
+    "input": "1. 行って\n- 行いた\n  3) 行った",
+    "output": ["行って", "行いた", "行った"]
+  }
+}

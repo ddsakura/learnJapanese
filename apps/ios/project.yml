@@ -1,0 +1,39 @@
+name: LearnJapanese
+options:
+  bundleIdPrefix: com.example
+  indentWidth: 2
+  tabWidth: 2
+
+targets:
+  LearnJapanese:
+    type: application
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: Sources
+      - path: Resources/Assets.xcassets
+      - path: Resources/fixtures
+        type: folder
+        buildPhase: resources
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      PRODUCT_BUNDLE_IDENTIFIER: com.example.LearnJapanese
+      MARKETING_VERSION: 1.0.0
+      CURRENT_PROJECT_VERSION: 1
+
+  LearnJapaneseTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: Tests
+      - path: Resources/fixtures
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - target: LearnJapanese
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+      # 測試 Target 的 Bundle ID 通常會加 .Tests 後綴
+      PRODUCT_BUNDLE_IDENTIFIER: com.example.LearnJapaneseTests
