@@ -411,9 +411,6 @@ final class AppState: ObservableObject {
         } catch {
             aiStatus = .error(friendlyAIError(error))
             return
-        } catch {
-            aiStatus = .error(friendlyAIError(error))
-            return
         }
 
         do {
