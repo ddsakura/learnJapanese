@@ -5,6 +5,13 @@ struct ContentView: View {
     @AppStorage("learnJapanese.practiceKind") private var practiceRaw: String = PracticeKind.verb.rawValue
     @State private var showBankSheet = false
     @State private var showSettingsSheet = false
+    private let cardStroke = Color.black.opacity(0.08)
+    private let softFill = Color.black.opacity(0.04)
+    private let cardCorner: CGFloat = 16
+    private let rowHeight: CGFloat = 44
+    private let cardPadding: CGFloat = 12
+    private let primaryTint = Color.blue
+    private let secondaryTint = Color.blue
 
     var body: some View {
         let practice = PracticeKind(rawValue: practiceRaw) ?? .verb
@@ -35,8 +42,9 @@ struct ContentView: View {
                         }
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
-                        .background(Color.secondary.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .frame(minHeight: rowHeight)
+                        .background(softFill)
+                        .clipShape(RoundedRectangle(cornerRadius: cardCorner, style: .continuous))
                     }
 
                     if let question = state.currentQuestion {
@@ -60,18 +68,22 @@ struct ContentView: View {
                                         state.submitAnswer(state.answerText)
                                     }
                                     .buttonStyle(.borderedProminent)
+                                    .tint(primaryTint)
+                                    .frame(minHeight: rowHeight)
                                     .disabled(state.result != nil)
                                     Button("略過") {
                                         state.skip()
                                     }
                                     .buttonStyle(.bordered)
+                                    .tint(secondaryTint)
+                                    .frame(minHeight: rowHeight)
                                     .disabled(state.result != nil)
                                 }
                             }
-                            .padding(12)
+                            .padding(cardPadding)
                             .background(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
+                                    .stroke(cardStroke, lineWidth: 1)
                             )
                         } else {
                             VStack(spacing: 8) {
@@ -82,7 +94,13 @@ struct ContentView: View {
                                         Text(option)
                                             .frame(maxWidth: .infinity, alignment: .center)
                                     }
-                                    .buttonStyle(.bordered)
+                                    .buttonStyle(ChoiceButtonStyle(
+                                        corner: 14,
+                                        stroke: cardStroke,
+                                        fill: softFill,
+                                        pressedFill: Color.blue.opacity(0.12),
+                                        minHeight: rowHeight
+                                    ))
                                     .disabled(state.result != nil)
                                 }
                                 HStack {
@@ -90,11 +108,15 @@ struct ContentView: View {
                                         state.generateChoices()
                                     }
                                     .buttonStyle(.bordered)
+                                    .tint(secondaryTint)
+                                    .frame(minHeight: rowHeight)
                                     .disabled(state.result != nil)
                                     Button("略過") {
                                         state.skip()
                                     }
                                     .buttonStyle(.bordered)
+                                    .tint(secondaryTint)
+                                    .frame(minHeight: rowHeight)
                                     .disabled(state.result != nil)
                                 }
                             }
@@ -133,10 +155,10 @@ struct ContentView: View {
                                 .padding(.vertical, 10)
                             }
                             .font(.subheadline)
-                            .padding(.horizontal, 12)
+                            .padding(.horizontal, cardPadding)
                             .background(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
+                                    .stroke(cardStroke, lineWidth: 1)
                             )
                         }
                         .padding(.top, 8)
@@ -150,6 +172,8 @@ struct ContentView: View {
                             Text("\(state.stats.todayCount)")
                                 .font(.headline)
                         }
+                        Divider()
+                            .frame(height: 28)
                         Spacer()
                         VStack(alignment: .leading, spacing: 2) {
                             Text("連續答對")
@@ -158,6 +182,8 @@ struct ContentView: View {
                             Text("\(state.stats.streak)")
                                 .font(.headline)
                         }
+                        Divider()
+                            .frame(height: 28)
                         Spacer()
                         VStack(alignment: .leading, spacing: 2) {
                             Text("今日答錯")
@@ -168,10 +194,10 @@ struct ContentView: View {
                         }
                     }
                     .padding(.top, 8)
-                    .padding(12)
+                    .padding(cardPadding)
                     .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
+                            .stroke(cardStroke, lineWidth: 1)
                     )
 
                     if state.mode == .reviewWrong {
@@ -184,12 +210,16 @@ struct ContentView: View {
                                 state.exitReview()
                             }
                             .buttonStyle(.bordered)
+                            .tint(secondaryTint)
+                            .frame(minHeight: rowHeight)
                         }
                     } else {
                         Button("複習今日答錯") {
                             state.startReview()
                         }
                         .buttonStyle(.bordered)
+                        .tint(secondaryTint)
+                        .frame(minHeight: rowHeight)
                         .disabled(wrongCount == 0)
                     }
 
@@ -221,6 +251,10 @@ struct ContentView: View {
                                     }
                                 }
 
+                                if state.translationText != nil && state.example != nil {
+                                    Divider()
+                                }
+
                                 if let example = state.example {
                                     VStack(alignment: .leading, spacing: 6) {
                                         Text("例句")
@@ -232,6 +266,8 @@ struct ContentView: View {
                                             Label("朗讀例句", systemImage: "speaker.wave.2")
                                         }
                                         .buttonStyle(.bordered)
+                                        .tint(secondaryTint)
+                                        .frame(minHeight: rowHeight)
                                         Text(example.jp)
                                         Text(example.reading)
                                             .foregroundStyle(.secondary)
@@ -244,10 +280,10 @@ struct ContentView: View {
                                     }
                                 }
                             }
-                            .padding(12)
+                            .padding(cardPadding)
                             .background(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
+                                    .stroke(cardStroke, lineWidth: 1)
                             )
                             .padding(.top, 6)
                         }
@@ -256,6 +292,8 @@ struct ContentView: View {
                                 state.regenerateAI()
                             }
                             .buttonStyle(.bordered)
+                            .tint(secondaryTint)
+                            .frame(minHeight: rowHeight)
                             .padding(.top, 6)
                             .disabled(state.aiStatus == .loading)
                         }
@@ -269,6 +307,7 @@ struct ContentView: View {
                         state.nextQuestion(practice: practice)
                     }
                     .buttonStyle(.borderedProminent)
+                    .tint(primaryTint)
 
                     if let error = state.errorMessage {
                         Text(error)
@@ -303,17 +342,20 @@ struct ContentView: View {
                                 state.exportBank(practice: practice)
                             }
                             .buttonStyle(.bordered)
+                            .tint(secondaryTint)
 
                             Button("匯入題庫") {
                                 state.importBank(practice: practice)
                             }
                             .buttonStyle(.borderedProminent)
+                            .tint(primaryTint)
                             .disabled(state.isImporting)
 
                             Button("重置題庫") {
                                 state.resetBank(practice: practice)
                             }
                             .buttonStyle(.bordered)
+                            .tint(secondaryTint)
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
@@ -326,6 +368,7 @@ struct ContentView: View {
                                 state.quickImport(practice: practice)
                             }
                             .buttonStyle(.borderedProminent)
+                            .tint(primaryTint)
                             .disabled(state.isImporting)
                         }
 
@@ -382,6 +425,31 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+}
+
+private struct ChoiceButtonStyle: ButtonStyle {
+    let corner: CGFloat
+    let stroke: Color
+    let fill: Color
+    let pressedFill: Color
+    let minHeight: CGFloat
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(maxWidth: .infinity, minHeight: minHeight)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 8)
+            .background(
+                RoundedRectangle(cornerRadius: corner, style: .continuous)
+                    .fill(configuration.isPressed ? pressedFill : fill)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: corner, style: .continuous)
+                    .stroke(stroke, lineWidth: configuration.isPressed ? 1.4 : 1)
+            )
+            .scaleEffect(configuration.isPressed ? 0.99 : 1.0)
+            .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
+    }
 }
 
 private struct SettingsView: View {
