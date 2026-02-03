@@ -5,15 +5,31 @@ final class AppState: ObservableObject {
     private let srsStore = SrsStore.shared
     private let bankStore = BankStore.shared
     private let speechService = SpeechService.shared
+    private let defaults = UserDefaults.standard
+
+    private enum DefaultsKey {
+        static let answerMode = "learnJapanese.answerMode"
+        static let questionType = "learnJapanese.questionType"
+        static let verbScope = "learnJapanese.verbScope"
+        static let adjectiveScope = "learnJapanese.adjectiveScope"
+    }
 
     @Published var verbBank: [CardFixture] = []
     @Published var adjectiveBank: [CardFixture] = []
     @Published var currentQuestion: QuestionViewModel?
     @Published var currentPractice: PracticeKind = .verb
-    @Published var selectedQuestionType: QuestionType = .mixed
-    @Published var selectedVerbScope: VerbScope = .all
-    @Published var selectedAdjectiveScope: AdjectiveScope = .all
-    @Published var answerMode: AnswerMode = .input
+    @Published var selectedQuestionType: QuestionType = .mixed {
+        didSet { defaults.set(selectedQuestionType.rawValue, forKey: DefaultsKey.questionType) }
+    }
+    @Published var selectedVerbScope: VerbScope = .all {
+        didSet { defaults.set(selectedVerbScope.rawValue, forKey: DefaultsKey.verbScope) }
+    }
+    @Published var selectedAdjectiveScope: AdjectiveScope = .all {
+        didSet { defaults.set(selectedAdjectiveScope.rawValue, forKey: DefaultsKey.adjectiveScope) }
+    }
+    @Published var answerMode: AnswerMode = .input {
+        didSet { defaults.set(answerMode.rawValue, forKey: DefaultsKey.answerMode) }
+    }
     @Published var answerText: String = ""
     @Published var choiceOptions: [String] = []
     @Published var result: AnswerResult?
@@ -31,6 +47,7 @@ final class AppState: ObservableObject {
 
     init() {
         loadDefaults()
+        loadPreferences()
         stats = srsStore.loadStats()
         stats.normalizeForToday()
         wrongToday = srsStore.loadWrongToday()
@@ -166,6 +183,25 @@ final class AppState: ObservableObject {
     func regenerateAI() {
         guard let question = currentQuestion else { return }
         Task { await generateAI(for: question) }
+    }
+
+    private func loadPreferences() {
+        if let raw = defaults.string(forKey: DefaultsKey.answerMode),
+           let mode = AnswerMode(rawValue: raw) {
+            answerMode = mode
+        }
+        if let raw = defaults.string(forKey: DefaultsKey.questionType),
+           let type = QuestionType(rawValue: raw) {
+            selectedQuestionType = type
+        }
+        if let raw = defaults.string(forKey: DefaultsKey.verbScope),
+           let scope = VerbScope(rawValue: raw) {
+            selectedVerbScope = scope
+        }
+        if let raw = defaults.string(forKey: DefaultsKey.adjectiveScope),
+           let scope = AdjectiveScope(rawValue: raw) {
+            selectedAdjectiveScope = scope
+        }
     }
 
     func startReview() {

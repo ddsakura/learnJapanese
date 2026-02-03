@@ -2,21 +2,27 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var state = AppState()
-    @State private var practice: PracticeKind = .verb
+    @AppStorage("learnJapanese.practiceKind") private var practiceRaw: String = PracticeKind.verb.rawValue
     @State private var showBankSheet = false
 
     var body: some View {
+        let practice = PracticeKind(rawValue: practiceRaw) ?? .verb
+        let practiceBinding = Binding<PracticeKind>(
+            get: { PracticeKind(rawValue: practiceRaw) ?? .verb },
+            set: { practiceRaw = $0.rawValue }
+        )
         let wrongCount = state.wrongToday.items.filter { $0.practice == practice.rawValue }.count
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    Picker("練習類型", selection: $practice) {
+                    Picker("練習類型", selection: practiceBinding) {
                         Text("動詞").tag(PracticeKind.verb)
                         Text("形容詞").tag(PracticeKind.adjective)
                     }
                     .pickerStyle(.segmented)
-                    .onChange(of: practice) { _, newValue in
-                        state.nextQuestion(practice: newValue)
+                    .onChange(of: practiceRaw) { _, newValue in
+                        let selected = PracticeKind(rawValue: newValue) ?? .verb
+                        state.nextQuestion(practice: selected)
                     }
 
                 Picker("作答方式", selection: $state.answerMode) {
