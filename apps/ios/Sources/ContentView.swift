@@ -5,13 +5,13 @@ struct ContentView: View {
     @AppStorage("learnJapanese.practiceKind") private var practiceRaw: String = PracticeKind.verb.rawValue
     @State private var showBankSheet = false
     @State private var showSettingsSheet = false
-    private let cardStroke = Color.black.opacity(0.08)
-    private let softFill = Color.black.opacity(0.04)
+    private let cardStroke = Color(uiColor: .separator)
+    private let softFill = Color(uiColor: .secondarySystemBackground)
     private let cardCorner: CGFloat = 16
     private let rowHeight: CGFloat = 44
     private let cardPadding: CGFloat = 12
-    private let primaryTint = Color.blue
-    private let secondaryTint = Color.blue
+    private let primaryTint = Color.accentColor
+    private let secondaryTint = Color.accentColor
 
     var body: some View {
         let practice = PracticeKind(rawValue: practiceRaw) ?? .verb
@@ -88,6 +88,8 @@ struct ContentView: View {
                         } else {
                             VStack(spacing: 8) {
                                 ForEach(state.choiceOptions, id: \.self) { option in
+                                    let isSelected = state.result?.userAnswer == option
+                                    let isCorrect = state.result?.correctAnswer == option
                                     Button {
                                         state.submitAnswer(option)
                                     } label: {
@@ -98,8 +100,14 @@ struct ContentView: View {
                                         corner: 14,
                                         stroke: cardStroke,
                                         fill: softFill,
-                                        pressedFill: Color.blue.opacity(0.12),
-                                        minHeight: rowHeight
+                                        pressedFill: Color.accentColor.opacity(0.15),
+                                        selectedFill: Color.accentColor.opacity(0.18),
+                                        correctFill: Color.green.opacity(0.18),
+                                        wrongFill: Color.red.opacity(0.18),
+                                        minHeight: rowHeight,
+                                        isSelected: isSelected,
+                                        isCorrect: isCorrect,
+                                        showResult: state.result != nil
                                     ))
                                     .disabled(state.result != nil)
                                 }
@@ -165,33 +173,36 @@ struct ContentView: View {
                     }
 
                     HStack {
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(spacing: 2) {
                             Text("今日答題數")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             Text("\(state.stats.todayCount)")
                                 .font(.headline)
                         }
+                        .frame(maxWidth: .infinity)
                         Divider()
                             .frame(height: 28)
                         Spacer()
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(spacing: 2) {
                             Text("連續答對")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             Text("\(state.stats.streak)")
                                 .font(.headline)
                         }
+                        .frame(maxWidth: .infinity)
                         Divider()
                             .frame(height: 28)
                         Spacer()
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(spacing: 2) {
                             Text("今日答錯")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             Text("\(wrongCount)")
                                 .font(.headline)
                         }
+                        .frame(maxWidth: .infinity)
                     }
                     .padding(.top, 8)
                     .padding(cardPadding)
@@ -432,20 +443,43 @@ private struct ChoiceButtonStyle: ButtonStyle {
     let stroke: Color
     let fill: Color
     let pressedFill: Color
+    let selectedFill: Color
+    let correctFill: Color
+    let wrongFill: Color
     let minHeight: CGFloat
+    let isSelected: Bool
+    let isCorrect: Bool
+    let showResult: Bool
 
     func makeBody(configuration: Configuration) -> some View {
+        let resolvedFill: Color = {
+            if showResult {
+                if isCorrect { return correctFill }
+                if isSelected { return wrongFill }
+            }
+            if isSelected { return selectedFill }
+            return configuration.isPressed ? pressedFill : fill
+        }()
+
+        let resolvedStroke: Color = {
+            if showResult {
+                if isCorrect { return Color.green.opacity(0.6) }
+                if isSelected { return Color.red.opacity(0.6) }
+            }
+            return stroke
+        }()
+
         configuration.label
             .frame(maxWidth: .infinity, minHeight: minHeight)
             .padding(.vertical, 6)
             .padding(.horizontal, 8)
             .background(
                 RoundedRectangle(cornerRadius: corner, style: .continuous)
-                    .fill(configuration.isPressed ? pressedFill : fill)
+                    .fill(resolvedFill)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: corner, style: .continuous)
-                    .stroke(stroke, lineWidth: configuration.isPressed ? 1.4 : 1)
+                    .stroke(resolvedStroke, lineWidth: configuration.isPressed ? 1.4 : 1)
             )
             .scaleEffect(configuration.isPressed ? 0.99 : 1.0)
             .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
