@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var showBankSheet = false
 
     var body: some View {
+        let wrongCount = state.wrongToday.items.filter { $0.practice == practice.rawValue }.count
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
@@ -168,11 +169,30 @@ struct ContentView: View {
                             Text("今日答錯")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Text("\(state.wrongToday.count)")
+                            Text("\(wrongCount)")
                                 .font(.headline)
                         }
                     }
                     .padding(.top, 8)
+
+                    if state.mode == .reviewWrong {
+                        HStack {
+                            Label("錯題複習中", systemImage: "arrow.triangle.2.circlepath")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button("回到正常題庫") {
+                                state.exitReview()
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                    } else {
+                        Button("複習今日答錯") {
+                            state.startReview()
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(wrongCount == 0)
+                    }
 
                         if case .loading = state.aiStatus {
                             HStack(spacing: 8) {
@@ -232,8 +252,8 @@ struct ContentView: View {
                         }
                     }
                 } else {
-                        Text("目前題庫沒有可用題目")
-                            .foregroundStyle(.secondary)
+                    Text(state.mode == .reviewWrong ? "目前沒有可複習錯題" : "目前題庫沒有可用題目")
+                        .foregroundStyle(.secondary)
                     }
 
                     Button("下一題") {

@@ -8,6 +8,12 @@ struct SrsState: Codable {
 struct WrongEntry: Codable, Hashable {
     let dict: String
     let type: String
+    let practice: String
+}
+
+struct WrongToday: Codable {
+    let date: String
+    let items: [WrongEntry]
 }
 
 final class SrsStore {
@@ -28,12 +34,20 @@ final class SrsStore {
         }
     }
 
-    func loadWrongToday() -> [WrongEntry] {
-        guard let data = UserDefaults.standard.data(forKey: wrongKey) else { return [] }
-        return (try? JSONDecoder().decode([WrongEntry].self, from: data)) ?? []
+    func loadWrongToday() -> WrongToday {
+        let today = Stats.todayKey()
+        guard let data = UserDefaults.standard.data(forKey: wrongKey),
+              let stored = try? JSONDecoder().decode(WrongToday.self, from: data)
+        else {
+            return WrongToday(date: today, items: [])
+        }
+        if stored.date != today {
+            return WrongToday(date: today, items: [])
+        }
+        return stored
     }
 
-    func saveWrongToday(_ value: [WrongEntry]) {
+    func saveWrongToday(_ value: WrongToday) {
         if let data = try? JSONEncoder().encode(value) {
             UserDefaults.standard.set(data, forKey: wrongKey)
         }

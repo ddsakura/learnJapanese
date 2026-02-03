@@ -22,11 +22,12 @@ final class AppState: ObservableObject {
     @Published var aiStatus: AIStatus = .idle
     @Published var errorMessage: String?
     @Published var stats: Stats = Stats()
-    @Published var wrongToday: [WrongEntry] = []
+    @Published var wrongToday: WrongToday = WrongToday(date: Stats.todayKey(), items: [])
     @Published var bankText: String = ""
     @Published var bankMessage: String = ""
     @Published var isImporting: Bool = false
     @Published var quickInput: String = ""
+    @Published var mode: PracticeMode = .normal
 
     init() {
         loadDefaults()
@@ -80,12 +81,20 @@ final class AppState: ObservableObject {
         currentPractice = practice
         let bank = practice == .verb ? verbBank : adjectiveBank
         let scopedBank = filterBank(bank, practice: practice)
-        guard let card = pickNextCard(from: scopedBank) else {
-            currentQuestion = nil
-            return
+        if mode == .reviewWrong {
+            guard let reviewQuestion = pickReviewQuestion(from: scopedBank, practice: practice) else {
+                currentQuestion = nil
+                return
+            }
+            currentQuestion = reviewQuestion
+        } else {
+            guard let card = pickNextCard(from: scopedBank) else {
+                currentQuestion = nil
+                return
+            }
+            let type = resolveQuestionType(for: practice)
+            currentQuestion = QuestionViewModel(card: card, type: type)
         }
-        let type = resolveQuestionType(for: practice)
-        currentQuestion = QuestionViewModel(card: card, type: type)
         answerText = ""
         result = nil
         translationText = nil
@@ -157,6 +166,16 @@ final class AppState: ObservableObject {
     func regenerateAI() {
         guard let question = currentQuestion else { return }
         Task { await generateAI(for: question) }
+    }
+
+    func startReview() {
+        mode = .reviewWrong
+        nextQuestion(practice: currentPractice)
+    }
+
+    func exitReview() {
+        mode = .normal
+        nextQuestion(practice: currentPractice)
     }
 
     func speakQuestion() {
@@ -269,6 +288,14 @@ final class AppState: ObservableObject {
         return bank.randomElement()
     }
 
+    private func pickReviewQuestion(from bank: [CardFixture], practice: PracticeKind) -> QuestionViewModel? {
+        let items = wrongToday.items.filter { $0.practice == practice.rawValue }
+        guard let entry = items.randomElement() else { return nil }
+        guard let card = bank.first(where: { $0.dict == entry.dict }) else { return nil }
+        let type = QuestionType(rawValue: entry.type) ?? .nai
+        return QuestionViewModel(card: card, type: type)
+    }
+
     private func filterBank(_ bank: [CardFixture], practice: PracticeKind) -> [CardFixture] {
         switch practice {
         case .verb:
@@ -327,8 +354,8 @@ final class AppState: ObservableObject {
     }
 
     private func updateWrongToday(question: QuestionViewModel, isCorrect: Bool) {
-        var items = wrongToday
-        let entry = WrongEntry(dict: question.card.dict, type: question.type.rawValue)
+        var items = wrongToday.items
+        let entry = WrongEntry(dict: question.card.dict, type: question.type.rawValue, practice: currentPractice.rawValue)
         if isCorrect {
             items.removeAll { $0 == entry }
         } else {
@@ -336,8 +363,8 @@ final class AppState: ObservableObject {
                 items.append(entry)
             }
         }
-        wrongToday = items
-        srsStore.saveWrongToday(items)
+        wrongToday = WrongToday(date: Stats.todayKey(), items: items)
+        srsStore.saveWrongToday(wrongToday)
     }
 
     @MainActor
@@ -429,6 +456,11 @@ enum AIStatus: Equatable {
     case idle
     case loading
     case error(String)
+}
+
+enum PracticeMode {
+    case normal
+    case reviewWrong
 }
 
 enum VerbScope: String, CaseIterable {
