@@ -4,6 +4,7 @@ struct ContentView: View {
     @StateObject private var state = AppState()
     @AppStorage("learnJapanese.practiceKind") private var practiceRaw: String = PracticeKind.verb.rawValue
     @State private var showBankSheet = false
+    @State private var showSettingsSheet = false
 
     var body: some View {
         let practice = PracticeKind(rawValue: practiceRaw) ?? .verb
@@ -15,60 +16,28 @@ struct ContentView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    Picker("練習類型", selection: practiceBinding) {
-                        Text("動詞").tag(PracticeKind.verb)
-                        Text("形容詞").tag(PracticeKind.adjective)
-                    }
-                    .pickerStyle(.segmented)
-                    .onChange(of: practiceRaw) { _, newValue in
-                        let selected = PracticeKind(rawValue: newValue) ?? .verb
-                        state.nextQuestion(practice: selected)
-                    }
-
-                Picker("作答方式", selection: $state.answerMode) {
-                    Text("文字輸入").tag(AnswerMode.input)
-                    Text("四選一").tag(AnswerMode.choice)
-                }
-                .pickerStyle(.segmented)
-                .onChange(of: state.answerMode) { _, newValue in
-                    if newValue == .choice {
-                        state.generateChoices()
-                    } else {
-                        state.choiceOptions = []
-                    }
-                }
-
-                Picker("題型", selection: $state.selectedQuestionType) {
-                    ForEach(QuestionType.allCases, id: \.self) { type in
-                        Text(type.label).tag(type)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .onChange(of: state.selectedQuestionType) { _, _ in
-                    state.nextQuestion(practice: practice)
-                }
-
-                if practice == .verb {
-                    Picker("範圍", selection: $state.selectedVerbScope) {
-                        ForEach(VerbScope.allCases, id: \.self) { scope in
-                            Text(scope.label).tag(scope)
+                    Button {
+                        showSettingsSheet = true
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "gearshape.fill")
+                                .foregroundStyle(.secondary)
+                            Text("學習設定")
+                                .fontWeight(.semibold)
+                            Text("·")
+                                .foregroundStyle(.secondary)
+                            Text(settingsSummary(practice: practice))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(.secondary)
                         }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(Color.secondary.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
-                    .pickerStyle(.segmented)
-                    .onChange(of: state.selectedVerbScope) { _, _ in
-                        state.nextQuestion(practice: practice)
-                    }
-                } else {
-                    Picker("範圍", selection: $state.selectedAdjectiveScope) {
-                        ForEach(AdjectiveScope.allCases, id: \.self) { scope in
-                            Text(scope.label).tag(scope)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .onChange(of: state.selectedAdjectiveScope) { _, _ in
-                        state.nextQuestion(practice: practice)
-                    }
-                }
 
                     if let question = state.currentQuestion {
                         HStack {
@@ -82,7 +51,7 @@ struct ContentView: View {
                         }
 
                         if state.answerMode == .input {
-                            VStack(spacing: 8) {
+                            VStack(spacing: 10) {
                                 TextField("輸入答案", text: $state.answerText)
                                     .textFieldStyle(.roundedBorder)
                                     .disabled(state.result != nil)
@@ -99,6 +68,11 @@ struct ContentView: View {
                                     .disabled(state.result != nil)
                                 }
                             }
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                            )
                         } else {
                             VStack(spacing: 8) {
                                 ForEach(state.choiceOptions, id: \.self) { option in
@@ -132,24 +106,38 @@ struct ContentView: View {
                             Text(result.correct ? "✅ 正確" : "❌ 錯誤 / 略過")
                                 .font(.headline)
                                 .foregroundStyle(result.correct ? .green : .red)
-                                VStack(spacing: 6) {
-                                    HStack {
-                                        Text("題型")
-                                        Spacer()
-                                        Text(result.type.label)
-                                    }
-                                    HStack {
-                                        Text("我的答案")
-                                        Spacer()
-                                        Text(result.userAnswer.isEmpty ? "（空白）" : result.userAnswer)
-                                    }
-                                    HStack {
-                                        Text("正確答案")
-                                        Spacer()
-                                        Text(result.correctAnswer)
-                                    }
+                            VStack(spacing: 0) {
+                                HStack {
+                                    Text("題型")
+                                    Spacer()
+                                    Text(result.type.label)
                                 }
+                                .padding(.vertical, 10)
+
+                                Divider()
+
+                                HStack {
+                                    Text("我的答案")
+                                    Spacer()
+                                    Text(result.userAnswer.isEmpty ? "（空白）" : result.userAnswer)
+                                }
+                                .padding(.vertical, 10)
+
+                                Divider()
+
+                                HStack {
+                                    Text("正確答案")
+                                    Spacer()
+                                    Text(result.correctAnswer)
+                                }
+                                .padding(.vertical, 10)
+                            }
                             .font(.subheadline)
+                            .padding(.horizontal, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                            )
                         }
                         .padding(.top, 8)
                     }
@@ -180,6 +168,11 @@ struct ContentView: View {
                         }
                     }
                     .padding(.top, 8)
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                    )
 
                     if state.mode == .reviewWrong {
                         HStack {
@@ -216,36 +209,46 @@ struct ContentView: View {
                             .multilineTextAlignment(.center)
                             .padding(.top, 6)
                     } else {
-                        if let translation = state.translationText {
-                            HStack {
-                                Text("中文翻譯")
-                                Spacer()
-                                Text(translation)
-                            }
-                            .font(.subheadline)
-                            .padding(.top, 6)
-                        }
-                        if let example = state.example {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("例句")
-                                    .font(.subheadline)
-                                    .fontWeight(.semibold)
-                                Button {
-                                    state.speakExample()
-                                } label: {
-                                    Label("朗讀例句", systemImage: "speaker.wave.2")
+                        if state.translationText != nil || state.example != nil {
+                            VStack(alignment: .leading, spacing: 10) {
+                                if let translation = state.translationText {
+                                    HStack {
+                                        Text("中文翻譯")
+                                            .font(.subheadline)
+                                            .fontWeight(.semibold)
+                                        Spacer()
+                                        Text(translation)
+                                    }
                                 }
-                                .buttonStyle(.bordered)
-                                Text(example.jp)
-                                Text(example.reading)
-                                    .foregroundStyle(.secondary)
-                                    .font(.footnote)
-                                Text(example.zh)
-                                    .foregroundStyle(.secondary)
-                                Text(example.grammar)
-                                    .foregroundStyle(.secondary)
-                                    .font(.footnote)
+
+                                if let example = state.example {
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        Text("例句")
+                                            .font(.subheadline)
+                                            .fontWeight(.semibold)
+                                        Button {
+                                            state.speakExample()
+                                        } label: {
+                                            Label("朗讀例句", systemImage: "speaker.wave.2")
+                                        }
+                                        .buttonStyle(.bordered)
+                                        Text(example.jp)
+                                        Text(example.reading)
+                                            .foregroundStyle(.secondary)
+                                            .font(.footnote)
+                                        Text(example.zh)
+                                            .foregroundStyle(.secondary)
+                                        Text(example.grammar)
+                                            .foregroundStyle(.secondary)
+                                            .font(.footnote)
+                                    }
+                                }
                             }
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                            )
                             .padding(.top, 6)
                         }
                         if state.result != nil {
@@ -343,10 +346,138 @@ struct ContentView: View {
                     }
                 }
             }
+            .sheet(isPresented: $showSettingsSheet) {
+                SettingsView(
+                    practice: practiceBinding,
+                    answerMode: $state.answerMode,
+                    questionType: $state.selectedQuestionType,
+                    verbScope: $state.selectedVerbScope,
+                    adjectiveScope: $state.selectedAdjectiveScope,
+                    onApply: {
+                        state.nextQuestion(practice: practice)
+                        if state.answerMode == .choice {
+                            state.generateChoices()
+                        } else {
+                            state.choiceOptions = []
+                        }
+                    }
+                )
+            }
         }
+    }
+
+    private func settingsSummary(practice: PracticeKind) -> String {
+        let practiceText = practice == .verb ? "動詞" : "形容詞"
+        let modeText = state.answerMode == .choice ? "四選一" : "文字輸入"
+        let typeText = state.selectedQuestionType.label
+        let scopeText: String
+        if practice == .verb {
+            scopeText = state.selectedVerbScope.label
+        } else {
+            scopeText = state.selectedAdjectiveScope.label
+        }
+        return "\(practiceText)・\(modeText)・\(typeText)・\(scopeText)"
     }
 }
 
 #Preview {
     ContentView()
+}
+
+private struct SettingsView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var practice: PracticeKind
+    @Binding var answerMode: AnswerMode
+    @Binding var questionType: QuestionType
+    @Binding var verbScope: VerbScope
+    @Binding var adjectiveScope: AdjectiveScope
+    let onApply: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("學習對象") {
+                    Picker("學習對象", selection: $practice) {
+                        Text("動詞").tag(PracticeKind.verb)
+                        Text("形容詞").tag(PracticeKind.adjective)
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                Section("作答方式") {
+                    Picker("作答方式", selection: $answerMode) {
+                        Text("文字輸入").tag(AnswerMode.input)
+                        Text("四選一").tag(AnswerMode.choice)
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                Section("題型") {
+                    ForEach(QuestionType.allCases, id: \.self) { type in
+                        HStack {
+                            Text(type.label)
+                            Spacer()
+                            if questionType == type {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.tint)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            questionType = type
+                        }
+                    }
+                }
+
+                if practice == .verb {
+                    Section("動詞種類") {
+                        ForEach(VerbScope.allCases, id: \.self) { scope in
+                            HStack {
+                                Text(scope.label)
+                                Spacer()
+                                if verbScope == scope {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.tint)
+                                }
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                verbScope = scope
+                            }
+                        }
+                    }
+                } else {
+                    Section("形容詞種類") {
+                        ForEach(AdjectiveScope.allCases, id: \.self) { scope in
+                            HStack {
+                                Text(scope.label)
+                                Spacer()
+                                if adjectiveScope == scope {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.tint)
+                                }
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                adjectiveScope = scope
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("學習設定")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("取消") { dismiss() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("套用") {
+                        onApply()
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
 }
