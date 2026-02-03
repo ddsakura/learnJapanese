@@ -129,7 +129,7 @@ final class AppState: ObservableObject {
             question.card.ta,
             question.card.nakatta,
             question.card.te,
-            question.card.potential,
+            question.card.potential
         ].compactMap { $0 }
         for candidate in candidates where !candidate.isEmpty && !used.contains(candidate) {
             options.append(candidate)
