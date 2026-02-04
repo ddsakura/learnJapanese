@@ -32,7 +32,7 @@ apps/android/
 CLI build：
 ```bash
 cd apps/android
-勿 assembleDebug
+./gradlew assembleDebug
 ```
 
 ## Fixtures

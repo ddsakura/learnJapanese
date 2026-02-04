@@ -69,6 +69,11 @@ class AppViewModel(
     private val prefs = application.getSharedPreferences("learnjapanese.prefs", 0)
     private val speechService = SpeechService(application)
 
+    override fun onCleared() {
+        super.onCleared()
+        speechService.shutdown()
+    }
+
     private object DefaultsKey {
         const val ANSWER_MODE = "learnJapanese.answerMode"
         const val QUESTION_TYPE = "learnJapanese.questionType"
@@ -471,12 +476,28 @@ class AppViewModel(
     }
 
     private fun resolveQuestionType(practice: PracticeKind): QuestionType {
-        if (selectedQuestionType != QuestionType.MIXED) return selectedQuestionType
+        // If the user selected a specific question type and it's valid for this practice kind,
+        // honor it. Otherwise, fall back to picking a valid type at random.
+        val isPotentialUnsupported = practice != PracticeKind.VERB && selectedQuestionType == QuestionType.POTENTIAL
+        if (selectedQuestionType != QuestionType.MIXED && !isPotentialUnsupported) {
+            return selectedQuestionType
+        }
         val types =
             if (practice == PracticeKind.VERB) {
-                listOf(QuestionType.NAI, QuestionType.TA, QuestionType.NAKATTA, QuestionType.TE, QuestionType.POTENTIAL)
+                listOf(
+                    QuestionType.NAI,
+                    QuestionType.TA,
+                    QuestionType.NAKATTA,
+                    QuestionType.TE,
+                    QuestionType.POTENTIAL,
+                )
             } else {
-                listOf(QuestionType.NAI, QuestionType.TA, QuestionType.NAKATTA, QuestionType.TE)
+                listOf(
+                    QuestionType.NAI,
+                    QuestionType.TA,
+                    QuestionType.NAKATTA,
+                    QuestionType.TE,
+                )
             }
         return types.random()
     }

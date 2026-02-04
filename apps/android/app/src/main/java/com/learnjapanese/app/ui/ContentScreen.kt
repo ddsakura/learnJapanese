@@ -643,7 +643,12 @@ private fun SettingsSheet(
         }
 
         SettingsSection(title = "題型") {
-            QuestionType.entries.forEach { type ->
+            val availableTypes = if (pendingPractice == PracticeKind.VERB) {
+                QuestionType.entries
+            } else {
+                QuestionType.entries.filter { it != QuestionType.POTENTIAL }
+            }
+            availableTypes.forEach { type ->
                 SelectableRow(
                     label = type.label,
                     selected = pendingQuestionType == type,

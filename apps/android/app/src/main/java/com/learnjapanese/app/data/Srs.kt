@@ -20,5 +20,5 @@ object Srs {
         if (!isCorrect) return INCORRECT_DELAY_MS
         val interval = nextIntervalDays(previous, isCorrect)
         return interval * DAY_MS
-勿    }
+    }
 }
