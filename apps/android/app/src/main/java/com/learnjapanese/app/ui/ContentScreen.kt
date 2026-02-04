@@ -470,6 +470,13 @@ private fun AiSection(viewModel: AppViewModel) {
         AIStatus.Idle -> {
             val translation = viewModel.translationText
             val example = viewModel.example
+            viewModel.aiSourceNote?.let { note ->
+                Text(
+                    note,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             if (translation != null || example != null) {
                 Surface(
                     shape = RoundedCornerShape(16.dp),

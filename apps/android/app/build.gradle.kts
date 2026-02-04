@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -6,6 +8,20 @@ plugins {
 }
 
 android {
+    val localProperties = Properties().apply {
+        val localFile = rootProject.file("local.properties")
+        if (localFile.exists()) {
+            localFile.inputStream().use { load(it) }
+        }
+    }
+    val ollamaBaseUrl =
+        (localProperties.getProperty("ollama.baseUrl") ?: "http://10.0.2.2:11434")
+            .replace("\"", "\\\"")
+    val ollamaModel =
+        (localProperties.getProperty("ollama.model") ?: "qwen2.5:3b")
+            .replace("\"", "\\\"")
+    val ollamaEnabled = (localProperties.getProperty("ollama.enabled") ?: "true").toBoolean()
+
     namespace = "com.learnjapanese.app"
     compileSdk = 34
 
@@ -19,6 +35,21 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+
+    buildTypes {
+        debug {
+            buildConfigField("String", "OLLAMA_BASE_URL", "\"$ollamaBaseUrl\"")
+            buildConfigField("String", "OLLAMA_MODEL", "\"$ollamaModel\"")
+            buildConfigField("boolean", "OLLAMA_ENABLED", ollamaEnabled.toString())
+        }
+        release {
+            buildConfigField("String", "OLLAMA_BASE_URL", "\"$ollamaBaseUrl\"")
+            buildConfigField("String", "OLLAMA_MODEL", "\"$ollamaModel\"")
+            buildConfigField("boolean", "OLLAMA_ENABLED", ollamaEnabled.toString())
+            isMinifyEnabled = false
+        }
     }
 
     compileOptions {

@@ -1,11 +1,13 @@
 package com.learnjapanese.app.ui
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.learnjapanese.app.BuildConfig
 import com.learnjapanese.app.data.AIExample
 import com.learnjapanese.app.data.AIService
 import com.learnjapanese.app.data.AdjectiveScope
@@ -18,6 +20,7 @@ import com.learnjapanese.app.data.ImportItem
 import com.learnjapanese.app.data.ImportResult
 import com.learnjapanese.app.data.Importing
 import com.learnjapanese.app.data.OfflineAIService
+import com.learnjapanese.app.data.OllamaAIService
 import com.learnjapanese.app.data.PracticeKind
 import com.learnjapanese.app.data.PracticeMode
 import com.learnjapanese.app.data.QuestionType
@@ -63,7 +66,17 @@ data class AnswerResult(
 class AppViewModel(
     application: Application,
 ) : AndroidViewModel(application) {
-    private val aiService: AIService = OfflineAIService()
+    private val tag = "AppViewModel"
+    private val fallbackAiService: AIService = OfflineAIService()
+    private val aiService: AIService =
+        if (BuildConfig.OLLAMA_ENABLED) {
+            OllamaAIService(
+                baseUrl = BuildConfig.OLLAMA_BASE_URL,
+                model = BuildConfig.OLLAMA_MODEL,
+            )
+        } else {
+            fallbackAiService
+        }
     private val srsStore = SrsStore(application)
     private val bankStore = BankStore(application)
     private val prefs = application.getSharedPreferences("learnjapanese.prefs", 0)
@@ -108,6 +121,8 @@ class AppViewModel(
     var example by mutableStateOf<AIExample?>(null)
         private set
     var aiStatus by mutableStateOf<AIStatus>(AIStatus.Idle)
+        private set
+    var aiSourceNote by mutableStateOf<String?>(null)
         private set
     var errorMessage by mutableStateOf<String?>(null)
         private set
@@ -548,20 +563,47 @@ class AppViewModel(
 
     private suspend fun generateAI(question: QuestionViewModel) {
         aiStatus = AIStatus.Loading
-        try {
-            translationText = aiService.generateTranslation(question.answer)
-        } catch (e: Exception) {
-            aiStatus = AIStatus.Error(e.message ?: "Unknown error")
-            return
-        }
+        aiSourceNote = null
+        var usedFallback = false
+        var fallbackReason: String? = null
 
-        try {
-            example = aiService.generateExample(question.answer, question.promptLabel)
-            aiStatus = AIStatus.Idle
-        } catch (e: Exception) {
-            aiStatus = AIStatus.Error(e.message ?: "Unknown error")
-        }
+        val translationPrimary = runCatching { aiService.generateTranslation(question.answer) }
+        val translationTextValue =
+            translationPrimary.getOrElse { primaryError ->
+                usedFallback = true
+                fallbackReason = primaryError.message
+                Log.w(tag, "Translation via Ollama failed, fallback to offline", primaryError)
+                runCatching { fallbackAiService.generateTranslation(question.answer) }
+                    .getOrElse { fallbackError ->
+                        aiStatus = AIStatus.Error(fallbackError.message ?: "Unknown error")
+                        return
+                    }
+            }
+        translationText = translationTextValue
+
+        val examplePrimary = runCatching { aiService.generateExample(question.answer, question.promptLabel) }
+        val exampleValue =
+            examplePrimary.getOrElse { primaryError ->
+                usedFallback = true
+                fallbackReason = primaryError.message
+                Log.w(tag, "Example via Ollama failed, fallback to offline", primaryError)
+                runCatching { fallbackAiService.generateExample(question.answer, question.promptLabel) }
+                    .getOrElse { fallbackError ->
+                        aiStatus = AIStatus.Error(fallbackError.message ?: "Unknown error")
+                        return
+                    }
+            }
+        example = exampleValue
+
+        aiSourceNote =
+            when {
+                !BuildConfig.OLLAMA_ENABLED -> "AI 來源：離線模板（已停用 Ollama）"
+                usedFallback -> "AI 來源：離線模板（Ollama 失敗已 fallback：${fallbackReason?.take(60) ?: "未知原因"}）"
+                else -> "AI 來源：Ollama (${BuildConfig.OLLAMA_MODEL})"
+            }
+        aiStatus = AIStatus.Idle
     }
+
 }
 
 sealed class AIStatus {
