@@ -44,6 +44,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -218,7 +222,13 @@ private fun QuestionCard(viewModel: AppViewModel) {
         }
 
         Surface(
-            modifier = Modifier.size(width = 60.dp, height = 46.dp),
+            modifier =
+                Modifier
+                    .size(width = 60.dp, height = 46.dp)
+                    .semantics {
+                        contentDescription = "朗讀題目"
+                        role = Role.Button
+                    },
             shape = RoundedCornerShape(18.dp),
             color = MaterialTheme.colorScheme.surfaceVariant,
             onClick = { viewModel.speakQuestion() },
@@ -642,8 +652,8 @@ private fun SettingsSheet(
     var pendingVerbScope by remember { mutableStateOf(viewModel.selectedVerbScope) }
     var pendingAdjectiveScope by remember { mutableStateOf(viewModel.selectedAdjectiveScope) }
     var pendingOllamaEnabled by remember { mutableStateOf(viewModel.ollamaEnabled) }
-    var pendingOllamaBaseUrl by remember { mutableStateOf(viewModel.ollamaBaseUrl.ifBlank { "http://10.0.2.2:11434" }) }
-    var pendingOllamaModel by remember { mutableStateOf(viewModel.ollamaModel.ifBlank { "translategemma:12b" }) }
+    var pendingOllamaBaseUrl by remember { mutableStateOf(viewModel.ollamaBaseUrl) }
+    var pendingOllamaModel by remember { mutableStateOf(viewModel.ollamaModel) }
 
     Column(
         modifier =
@@ -729,7 +739,7 @@ private fun SettingsSheet(
                 onValueChange = { pendingOllamaBaseUrl = it },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Base URL") },
-                placeholder = { Text("http://10.0.2.2:11434") },
+                placeholder = { Text(viewModel.ollamaBaseUrl) },
                 enabled = pendingOllamaEnabled,
             )
             OutlinedTextField(
@@ -737,7 +747,7 @@ private fun SettingsSheet(
                 onValueChange = { pendingOllamaModel = it },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Model") },
-                placeholder = { Text("translategemma:12b") },
+                placeholder = { Text(viewModel.ollamaModel) },
                 enabled = pendingOllamaEnabled,
             )
         }

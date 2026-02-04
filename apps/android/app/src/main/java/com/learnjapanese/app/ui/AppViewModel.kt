@@ -386,24 +386,23 @@ class AppViewModel(
 
     fun speakQuestion() {
         val question = currentQuestion ?: return
-        speechMessage =
-            when (speechService.currentStatus()) {
-                SpeechStatus.READY_NON_JAPANESE -> "語音引擎未安裝日文語音，請到系統 TTS 下載 ja-JP。"
-                SpeechStatus.FAILED -> "語音引擎初始化失敗。"
-                else -> null
-            }
+        updateSpeechMessageForCurrentStatus()
         speechService.speak(question.card.dict)
     }
 
     fun speakExample() {
         val content = example ?: return
+        updateSpeechMessageForCurrentStatus()
+        speechService.speak(content.jp)
+    }
+
+    private fun updateSpeechMessageForCurrentStatus() {
         speechMessage =
             when (speechService.currentStatus()) {
                 SpeechStatus.READY_NON_JAPANESE -> "語音引擎未安裝日文語音，請到系統 TTS 下載 ja-JP。"
                 SpeechStatus.FAILED -> "語音引擎初始化失敗。"
                 else -> null
             }
-        speechService.speak(content.jp)
     }
 
     fun exportBank(practice: PracticeKind) {
@@ -616,6 +615,12 @@ class AppViewModel(
     }
 
     private suspend fun generateAI(question: QuestionViewModel) {
+        if (!BuildConfig.DEBUG && ollamaEnabled && ollamaBaseUrl.startsWith("http://")) {
+            aiStatus = AIStatus.Error("Release 版本僅支援 HTTPS Ollama URL。")
+            aiSourceNote = "AI 來源：離線模板（release 禁用 HTTP Ollama）"
+            return
+        }
+
         val aiService: AIService =
             if (ollamaEnabled) {
                 OllamaAIService(

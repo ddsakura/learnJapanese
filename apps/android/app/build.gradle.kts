@@ -19,7 +19,7 @@ android {
         (localProperties.getProperty("ollama.baseUrl") ?: "http://10.0.2.2:11434")
             .replace("\"", "\\\"")
     val ollamaModel =
-        (localProperties.getProperty("ollama.model") ?: "qwen2.5:3b")
+        (localProperties.getProperty("ollama.model") ?: "translategemma:12b")
             .replace("\"", "\\\"")
     val ollamaEnabled = (localProperties.getProperty("ollama.enabled") ?: "true").toBoolean()
 
@@ -48,7 +48,7 @@ android {
         release {
             buildConfigField("String", "OLLAMA_BASE_URL", "\"$ollamaBaseUrl\"")
             buildConfigField("String", "OLLAMA_MODEL", "\"$ollamaModel\"")
-            buildConfigField("boolean", "OLLAMA_ENABLED", ollamaEnabled.toString())
+            buildConfigField("boolean", "OLLAMA_ENABLED", "false")
             isMinifyEnabled = false
         }
     }
