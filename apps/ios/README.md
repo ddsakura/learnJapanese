@@ -43,7 +43,7 @@ apps/ios/
       srs.json                   # SRS fixtures
     Assets.xcassets/
       AppIcon.appiconset         # App Icon 資源
-    icon-1024.png                # App Icon 來源圖（裁切後）
+    # App Icon 來源圖統一使用 repo root 的 icon-source.png
   Tests/
     ConjugationTests.swift       # 變化規則測試
     ParsingTests.swift           # 解析測試
