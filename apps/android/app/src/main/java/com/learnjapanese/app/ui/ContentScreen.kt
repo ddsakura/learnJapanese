@@ -668,32 +668,35 @@ private fun SettingsSheet(
                 } else {
                     QuestionType.entries.filter { it != QuestionType.POTENTIAL }
                 }
-            availableTypes.forEach { type ->
+            availableTypes.forEachIndexed { index, type ->
                 SelectableRow(
                     label = type.label,
                     selected = pendingQuestionType == type,
                     onClick = { pendingQuestionType = type },
+                    showDivider = index < availableTypes.lastIndex,
                 )
             }
         }
 
         if (pendingPractice == PracticeKind.VERB) {
             SettingsSection(title = "動詞種類") {
-                VerbScope.entries.forEach { scope ->
+                VerbScope.entries.forEachIndexed { index, scope ->
                     SelectableRow(
                         label = scope.label,
                         selected = pendingVerbScope == scope,
                         onClick = { pendingVerbScope = scope },
+                        showDivider = index < VerbScope.entries.lastIndex,
                     )
                 }
             }
         } else {
             SettingsSection(title = "形容詞種類") {
-                AdjectiveScope.entries.forEach { scope ->
+                AdjectiveScope.entries.forEachIndexed { index, scope ->
                     SelectableRow(
                         label = scope.label,
                         selected = pendingAdjectiveScope == scope,
                         onClick = { pendingAdjectiveScope = scope },
+                        showDivider = index < AdjectiveScope.entries.lastIndex,
                     )
                 }
             }
@@ -763,8 +766,19 @@ private fun SettingsSection(
     content: @Composable () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(title, style = MaterialTheme.typography.labelLarge)
-        content()
+        Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            color = MaterialTheme.colorScheme.surface,
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                content()
+            }
+        }
     }
 }
 
@@ -774,21 +788,33 @@ private fun <T> SegmentedRow(
     selected: T,
     onSelect: (T) -> Unit,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         options.forEach { (value, label) ->
             val isSelected = value == selected
-            val colors =
-                if (isSelected) {
-                    ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                } else {
-                    ButtonDefaults.outlinedButtonColors()
-                }
-            Button(
+            Surface(
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(999.dp),
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                border =
+                    BorderStroke(
+                        1.dp,
+                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                    ),
                 onClick = { onSelect(value) },
-                colors = colors,
-                contentPadding = ButtonDefaults.ContentPadding,
             ) {
-                Text(label)
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        label,
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                    )
+                }
             }
         }
     }
@@ -799,19 +825,29 @@ private fun SelectableRow(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
+    showDivider: Boolean = false,
 ) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable { onClick() }
-                .padding(vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(label)
-        Spacer(modifier = Modifier.weight(1f))
-        if (selected) {
-            Text("✓", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { onClick() }
+                    .padding(vertical = 10.dp, horizontal = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                label,
+                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            if (selected) {
+                Text("✓", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+            }
+        }
+        if (showDivider) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         }
     }
 }
