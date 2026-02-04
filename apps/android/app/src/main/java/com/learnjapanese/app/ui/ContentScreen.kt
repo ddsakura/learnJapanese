@@ -31,6 +31,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -114,6 +115,13 @@ fun ContentScreen(viewModel: AppViewModel) {
             }
 
             viewModel.errorMessage?.let {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            viewModel.speechMessage?.let {
                 Text(
                     text = it,
                     color = MaterialTheme.colorScheme.error,
@@ -623,11 +631,15 @@ private fun SettingsSheet(
     var pendingQuestionType by remember { mutableStateOf(viewModel.selectedQuestionType) }
     var pendingVerbScope by remember { mutableStateOf(viewModel.selectedVerbScope) }
     var pendingAdjectiveScope by remember { mutableStateOf(viewModel.selectedAdjectiveScope) }
+    var pendingOllamaEnabled by remember { mutableStateOf(viewModel.ollamaEnabled) }
+    var pendingOllamaBaseUrl by remember { mutableStateOf(viewModel.ollamaBaseUrl.ifBlank { "http://10.0.2.2:11434" }) }
+    var pendingOllamaModel by remember { mutableStateOf(viewModel.ollamaModel.ifBlank { "translategemma:12b" }) }
 
     Column(
         modifier =
             Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -650,11 +662,12 @@ private fun SettingsSheet(
         }
 
         SettingsSection(title = "題型") {
-            val availableTypes = if (pendingPractice == PracticeKind.VERB) {
-                QuestionType.entries
-            } else {
-                QuestionType.entries.filter { it != QuestionType.POTENTIAL }
-            }
+            val availableTypes =
+                if (pendingPractice == PracticeKind.VERB) {
+                    QuestionType.entries
+                } else {
+                    QuestionType.entries.filter { it != QuestionType.POTENTIAL }
+                }
             availableTypes.forEach { type ->
                 SelectableRow(
                     label = type.label,
@@ -686,6 +699,36 @@ private fun SettingsSheet(
             }
         }
 
+        SettingsSection(title = "AI（Ollama）") {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("啟用 Ollama")
+                Spacer(modifier = Modifier.weight(1f))
+                Switch(
+                    checked = pendingOllamaEnabled,
+                    onCheckedChange = { pendingOllamaEnabled = it },
+                )
+            }
+            OutlinedTextField(
+                value = pendingOllamaBaseUrl,
+                onValueChange = { pendingOllamaBaseUrl = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Base URL") },
+                placeholder = { Text("http://10.0.2.2:11434") },
+                enabled = pendingOllamaEnabled,
+            )
+            OutlinedTextField(
+                value = pendingOllamaModel,
+                onValueChange = { pendingOllamaModel = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Model") },
+                placeholder = { Text("translategemma:12b") },
+                enabled = pendingOllamaEnabled,
+            )
+        }
+
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             TextButton(onClick = onClose) { Text("取消") }
             Spacer(modifier = Modifier.width(8.dp))
@@ -696,6 +739,11 @@ private fun SettingsSheet(
                     viewModel.setQuestionType(pendingQuestionType)
                     viewModel.setVerbScope(pendingVerbScope)
                     viewModel.setAdjectiveScope(pendingAdjectiveScope)
+                    viewModel.setOllamaConfig(
+                        enabled = pendingOllamaEnabled,
+                        baseUrl = pendingOllamaBaseUrl,
+                        model = pendingOllamaModel,
+                    )
                     viewModel.nextQuestion(pendingPractice)
                     if (pendingAnswerMode == AnswerMode.CHOICE) {
                         viewModel.generateChoices()

@@ -8,12 +8,13 @@ plugins {
 }
 
 android {
-    val localProperties = Properties().apply {
-        val localFile = rootProject.file("local.properties")
-        if (localFile.exists()) {
-            localFile.inputStream().use { load(it) }
+    val localProperties =
+        Properties().apply {
+            val localFile = rootProject.file("local.properties")
+            if (localFile.exists()) {
+                localFile.inputStream().use { load(it) }
+            }
         }
-    }
     val ollamaBaseUrl =
         (localProperties.getProperty("ollama.baseUrl") ?: "http://10.0.2.2:11434")
             .replace("\"", "\\\"")

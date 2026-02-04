@@ -1,14 +1,13 @@
 package com.learnjapanese.app.data
 
 object Parsing {
-    private fun cleanModelText(input: String): String {
-        return input
+    private fun cleanModelText(input: String): String =
+        input
             .replace(Regex("\\*\\*(.*?)\\*\\*"), "$1")
             .replace(Regex("__(.*?)__"), "$1")
             .replace(Regex("`(.*?)`"), "$1")
             .replace(Regex("^[-*]\\s+"), "")
             .trim()
-    }
 
     fun parseExampleResponse(text: String): ExampleOutput? {
         val normalized = text.replace("\\n", "\n").trim()

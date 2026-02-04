@@ -69,13 +69,14 @@ class OllamaAIService(
 
     private fun requestGenerate(prompt: String): String {
         val endpoint = "${baseUrl.trimEnd('/')}/api/generate"
-        val connection = (URL(endpoint).openConnection() as HttpURLConnection).apply {
-            requestMethod = "POST"
-            connectTimeout = 15_000
-            readTimeout = 30_000
-            doOutput = true
-            setRequestProperty("Content-Type", "application/json")
-        }
+        val connection =
+            (URL(endpoint).openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                connectTimeout = 15_000
+                readTimeout = 30_000
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+            }
         val payload =
             OllamaGenerateRequest(
                 model = model,
@@ -92,7 +93,10 @@ class OllamaAIService(
                 if (code in 200..299) {
                     connection.inputStream.bufferedReader().use { it.readText() }
                 } else {
-                    connection.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
+                    connection.errorStream
+                        ?.bufferedReader()
+                        ?.use { it.readText() }
+                        .orEmpty()
                 }
             if (code !in 200..299) {
                 throw AIServiceFailed("Ollama generate failed: HTTP $code ${responseText.take(120)}")
@@ -108,13 +112,14 @@ class OllamaAIService(
 
     private fun requestChat(prompt: String): String {
         val endpoint = "${baseUrl.trimEnd('/')}/api/chat"
-        val connection = (URL(endpoint).openConnection() as HttpURLConnection).apply {
-            requestMethod = "POST"
-            connectTimeout = 15_000
-            readTimeout = 30_000
-            doOutput = true
-            setRequestProperty("Content-Type", "application/json")
-        }
+        val connection =
+            (URL(endpoint).openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                connectTimeout = 15_000
+                readTimeout = 30_000
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+            }
         val payload =
             OllamaChatRequest(
                 model = model,
@@ -135,7 +140,10 @@ class OllamaAIService(
                 if (code in 200..299) {
                     connection.inputStream.bufferedReader().use { it.readText() }
                 } else {
-                    connection.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
+                    connection.errorStream
+                        ?.bufferedReader()
+                        ?.use { it.readText() }
+                        .orEmpty()
                 }
             if (code !in 200..299) {
                 throw AIServiceFailed("Ollama chat failed: HTTP $code ${responseText.take(120)}")
@@ -180,13 +188,13 @@ class OllamaAIService(
 
         // Some Ollama setups can still return NDJSON-like chunks.
         val candidates =
-            raw.lineSequence()
+            raw
+                .lineSequence()
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
                 .mapNotNull { line ->
                     runCatching { json.decodeFromString(OllamaGenerateResponse.serializer(), line) }.getOrNull()
-                }
-                .toList()
+                }.toList()
 
         if (candidates.isEmpty()) {
             throw AIServiceFailed("Ollama generate parse failed: ${raw.take(120)}")
@@ -211,13 +219,13 @@ class OllamaAIService(
             ?.let { return it }
 
         val candidates =
-            raw.lineSequence()
+            raw
+                .lineSequence()
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
                 .mapNotNull { line ->
                     runCatching { json.decodeFromString(OllamaChatResponse.serializer(), line) }.getOrNull()
-                }
-                .toList()
+                }.toList()
 
         if (candidates.isEmpty()) {
             throw AIServiceFailed("Ollama chat parse failed: ${raw.take(120)}")
@@ -237,14 +245,16 @@ class OllamaAIService(
         )
     }
 
-    private fun buildExamplePrompt(term: String, typeLabel: String): String =
+    private fun buildExamplePrompt(
+        term: String,
+        typeLabel: String,
+    ): String =
         "系統設定： 你是一位專業的日語老師，擅長將複雜的文法用簡單易懂的方式解釋給 N4 程度的學生。 " +
             "任務： 請用單字『$term』（形態：$typeLabel）造一個 N4 程度的日文句子。  " +
             "輸出格式要求（嚴格執行）： JP: [日文句子] Reading: [全平假名] ZH: [繁體中文翻譯] " +
             "Grammar: [簡短說明該單字在此處的用法與形態變化，需點出$typeLabel]"
 
-    private fun buildTranslationPrompt(dict: String): String =
-        "請把以下日文翻譯成繁體中文，只輸出翻譯結果，不要加標點或解釋。\n日文：$dict"
+    private fun buildTranslationPrompt(dict: String): String = "請把以下日文翻譯成繁體中文，只輸出翻譯結果，不要加標點或解釋。\n日文：$dict"
 }
 
 class OfflineAIService : AIService {

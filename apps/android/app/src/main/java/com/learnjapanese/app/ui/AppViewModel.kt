@@ -25,6 +25,7 @@ import com.learnjapanese.app.data.PracticeKind
 import com.learnjapanese.app.data.PracticeMode
 import com.learnjapanese.app.data.QuestionType
 import com.learnjapanese.app.data.SpeechService
+import com.learnjapanese.app.data.SpeechStatus
 import com.learnjapanese.app.data.Srs
 import com.learnjapanese.app.data.SrsState
 import com.learnjapanese.app.data.SrsStore
@@ -68,15 +69,6 @@ class AppViewModel(
 ) : AndroidViewModel(application) {
     private val tag = "AppViewModel"
     private val fallbackAiService: AIService = OfflineAIService()
-    private val aiService: AIService =
-        if (BuildConfig.OLLAMA_ENABLED) {
-            OllamaAIService(
-                baseUrl = BuildConfig.OLLAMA_BASE_URL,
-                model = BuildConfig.OLLAMA_MODEL,
-            )
-        } else {
-            fallbackAiService
-        }
     private val srsStore = SrsStore(application)
     private val bankStore = BankStore(application)
     private val prefs = application.getSharedPreferences("learnjapanese.prefs", 0)
@@ -93,6 +85,9 @@ class AppViewModel(
         const val VERB_SCOPE = "learnJapanese.verbScope"
         const val ADJECTIVE_SCOPE = "learnJapanese.adjectiveScope"
         const val PRACTICE_KIND = "learnJapanese.practiceKind"
+        const val OLLAMA_ENABLED = "learnJapanese.ollama.enabled"
+        const val OLLAMA_BASE_URL = "learnJapanese.ollama.baseUrl"
+        const val OLLAMA_MODEL = "learnJapanese.ollama.model"
     }
 
     var verbBank by mutableStateOf(listOf<CardFixture>())
@@ -124,7 +119,15 @@ class AppViewModel(
         private set
     var aiSourceNote by mutableStateOf<String?>(null)
         private set
+    var ollamaEnabled by mutableStateOf(BuildConfig.OLLAMA_ENABLED)
+        private set
+    var ollamaBaseUrl by mutableStateOf(BuildConfig.OLLAMA_BASE_URL)
+        private set
+    var ollamaModel by mutableStateOf(BuildConfig.OLLAMA_MODEL)
+        private set
     var errorMessage by mutableStateOf<String?>(null)
+        private set
+    var speechMessage by mutableStateOf<String?>(null)
         private set
     var stats by mutableStateOf(Stats())
         private set
@@ -206,6 +209,37 @@ class AppViewModel(
         prefs.getString(DefaultsKey.PRACTICE_KIND, null)?.let { raw ->
             currentPractice = if (raw == PracticeKind.ADJECTIVE.raw) PracticeKind.ADJECTIVE else PracticeKind.VERB
         }
+        ollamaEnabled = prefs.getBoolean(DefaultsKey.OLLAMA_ENABLED, BuildConfig.OLLAMA_ENABLED)
+        ollamaBaseUrl =
+            prefs
+                .getString(DefaultsKey.OLLAMA_BASE_URL, BuildConfig.OLLAMA_BASE_URL)
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+                ?: BuildConfig.OLLAMA_BASE_URL
+        ollamaModel =
+            prefs
+                .getString(DefaultsKey.OLLAMA_MODEL, BuildConfig.OLLAMA_MODEL)
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+                ?: BuildConfig.OLLAMA_MODEL
+    }
+
+    fun setOllamaConfig(
+        enabled: Boolean,
+        baseUrl: String,
+        model: String,
+    ) {
+        val safeBaseUrl = baseUrl.trim().ifEmpty { BuildConfig.OLLAMA_BASE_URL }
+        val safeModel = model.trim().ifEmpty { BuildConfig.OLLAMA_MODEL }
+        ollamaEnabled = enabled
+        ollamaBaseUrl = safeBaseUrl
+        ollamaModel = safeModel
+        prefs
+            .edit()
+            .putBoolean(DefaultsKey.OLLAMA_ENABLED, enabled)
+            .putString(DefaultsKey.OLLAMA_BASE_URL, safeBaseUrl)
+            .putString(DefaultsKey.OLLAMA_MODEL, safeModel)
+            .apply()
     }
 
     @JvmName("updatePracticeKind")
@@ -218,6 +252,14 @@ class AppViewModel(
     fun setAnswerMode(value: AnswerMode) {
         answerMode = value
         prefs.edit().putString(DefaultsKey.ANSWER_MODE, value.name).apply()
+        // Ensure UI updates immediately when switching answer mode from settings.
+        if (value == AnswerMode.CHOICE) {
+            if (currentQuestion != null) {
+                generateChoices()
+            }
+        } else {
+            choiceOptions = emptyList()
+        }
     }
 
     @JvmName("updateQuestionType")
@@ -344,11 +386,23 @@ class AppViewModel(
 
     fun speakQuestion() {
         val question = currentQuestion ?: return
+        speechMessage =
+            when (speechService.currentStatus()) {
+                SpeechStatus.READY_NON_JAPANESE -> "語音引擎未安裝日文語音，請到系統 TTS 下載 ja-JP。"
+                SpeechStatus.FAILED -> "語音引擎初始化失敗。"
+                else -> null
+            }
         speechService.speak(question.card.dict)
     }
 
     fun speakExample() {
         val content = example ?: return
+        speechMessage =
+            when (speechService.currentStatus()) {
+                SpeechStatus.READY_NON_JAPANESE -> "語音引擎未安裝日文語音，請到系統 TTS 下載 ja-JP。"
+                SpeechStatus.FAILED -> "語音引擎初始化失敗。"
+                else -> null
+            }
         speechService.speak(content.jp)
     }
 
@@ -562,6 +616,15 @@ class AppViewModel(
     }
 
     private suspend fun generateAI(question: QuestionViewModel) {
+        val aiService: AIService =
+            if (ollamaEnabled) {
+                OllamaAIService(
+                    baseUrl = ollamaBaseUrl,
+                    model = ollamaModel,
+                )
+            } else {
+                fallbackAiService
+            }
         aiStatus = AIStatus.Loading
         aiSourceNote = null
         var usedFallback = false
@@ -597,13 +660,12 @@ class AppViewModel(
 
         aiSourceNote =
             when {
-                !BuildConfig.OLLAMA_ENABLED -> "AI 來源：離線模板（已停用 Ollama）"
+                !ollamaEnabled -> "AI 來源：離線模板（已停用 Ollama）"
                 usedFallback -> "AI 來源：離線模板（Ollama 失敗已 fallback：${fallbackReason?.take(60) ?: "未知原因"}）"
-                else -> "AI 來源：Ollama (${BuildConfig.OLLAMA_MODEL})"
+                else -> "AI 來源：Ollama ($ollamaModel)"
             }
         aiStatus = AIStatus.Idle
     }
-
 }
 
 sealed class AIStatus {
