@@ -4,7 +4,7 @@
 
 - `apps/web`：現有的 Vite/React Web App
 - `apps/ios`：SwiftUI 版本（開發中）
-- `apps/android`：Jetpack Compose 版本（預留）
+- `apps/android`：Jetpack Compose 版本（可 build）
 - `packages/core`：跨平台共用規格與 fixtures
 
 ## Web 開發
@@ -69,3 +69,19 @@ iOS 會從 `apps/ios/Resources/fixtures` 讀取題庫（與 `packages/core/fixtu
 Web 介面匯出的是 `CardFixture[]` 格式（扁平化題庫），可直接貼到 iOS 的「題庫管理 → 匯入題庫」。
 
 注意：`conjugation.json` 是原始規格資料，格式不同，不能直接用 UI 匯入。
+
+## Android 開發
+
+需求：
+- Android Studio (Hedgehog+)
+- JDK 17
+
+使用方式（Android Studio）：
+1. 開啟 `apps/android`
+2. Gradle Sync 後即可 build / run
+
+使用方式（CLI）：
+```bash
+cd apps/android
+./gradlew assembleDebug
+```

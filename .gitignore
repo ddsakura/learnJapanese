@@ -37,3 +37,15 @@ build/
 *.xccheckout
 *.xcscmblueprint
 .swiftpm/
+
+# Android/Gradle
+**/.gradle/
+**/build/
+**/out/
+**/captures/
+**/local.properties
+**/keystore.properties
+**/*.jks
+**/*.keystore
+**/.idea/
+**/*.iml
