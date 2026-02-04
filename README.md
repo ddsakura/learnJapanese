@@ -3,8 +3,8 @@
 此 repo 目前包含：
 
 - `apps/web`：現有的 Vite/React Web App
-- `apps/ios`：SwiftUI 版本（開發中）
-- `apps/android`：Jetpack Compose 版本（可 build）
+- `apps/ios`：SwiftUI 版本
+- `apps/android`：Jetpack Compose 版本 (開發中)
 - `packages/core`：跨平台共用規格與 fixtures
 
 ## Web 開發
