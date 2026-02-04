@@ -54,6 +54,10 @@ ollama.model=qwen2.5:3b
 ## Fixtures
 Android 會從 `app/src/main/assets/fixtures` 讀取，來源為 `packages/core/fixtures`。
 
+## App Icon
+- 共同來源圖使用 repo root 的 `icon-source.png`
+- Android adaptive icon / mipmap 圖示由該來源圖產生
+
 ## 核心規格
 請參考：
 - `packages/core/docs`

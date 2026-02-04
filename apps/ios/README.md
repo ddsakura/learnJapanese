@@ -60,6 +60,10 @@ apps/ios/
 
 iOS 會從 `Resources/fixtures` 讀取題庫資料，與 `packages/core/fixtures` 結構一致。
 
+## App Icon
+- 共同來源圖使用 repo root 的 `icon-source.png`
+- iOS 產出的 icon 資源放在 `Resources/Assets.xcassets/AppIcon.appiconset`
+
 ## 題庫匯入 / 匯出
 
 iOS 介面匯入/匯出使用 `CardFixture[]` 格式（扁平化題庫）。
