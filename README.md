@@ -4,7 +4,7 @@
 
 - `apps/web`：現有的 Vite/React Web App
 - `apps/ios`：SwiftUI 版本
-- `apps/android`：Jetpack Compose 版本 (開發中)
+- `apps/android`：Jetpack Compose 版本
 - `packages/core`：跨平台共用規格與 fixtures
 
 ## Web 開發
@@ -85,3 +85,9 @@ Web 介面匯出的是 `CardFixture[]` 格式（扁平化題庫），可直接�
 cd apps/android
 ./gradlew assembleDebug
 ```
+
+Android 可連接本機 Ollama（零成本），完整設定請看 `apps/android/README.md`。
+
+## App Icon
+
+- 共用來源圖：`icon-source.png`（repo root）

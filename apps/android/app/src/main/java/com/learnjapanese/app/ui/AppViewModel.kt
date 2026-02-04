@@ -1,11 +1,13 @@
 package com.learnjapanese.app.ui
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.learnjapanese.app.BuildConfig
 import com.learnjapanese.app.data.AIExample
 import com.learnjapanese.app.data.AIService
 import com.learnjapanese.app.data.AdjectiveScope
@@ -18,10 +20,12 @@ import com.learnjapanese.app.data.ImportItem
 import com.learnjapanese.app.data.ImportResult
 import com.learnjapanese.app.data.Importing
 import com.learnjapanese.app.data.OfflineAIService
+import com.learnjapanese.app.data.OllamaAIService
 import com.learnjapanese.app.data.PracticeKind
 import com.learnjapanese.app.data.PracticeMode
 import com.learnjapanese.app.data.QuestionType
 import com.learnjapanese.app.data.SpeechService
+import com.learnjapanese.app.data.SpeechStatus
 import com.learnjapanese.app.data.Srs
 import com.learnjapanese.app.data.SrsState
 import com.learnjapanese.app.data.SrsStore
@@ -63,7 +67,8 @@ data class AnswerResult(
 class AppViewModel(
     application: Application,
 ) : AndroidViewModel(application) {
-    private val aiService: AIService = OfflineAIService()
+    private val tag = "AppViewModel"
+    private val fallbackAiService: AIService = OfflineAIService()
     private val srsStore = SrsStore(application)
     private val bankStore = BankStore(application)
     private val prefs = application.getSharedPreferences("learnjapanese.prefs", 0)
@@ -80,6 +85,9 @@ class AppViewModel(
         const val VERB_SCOPE = "learnJapanese.verbScope"
         const val ADJECTIVE_SCOPE = "learnJapanese.adjectiveScope"
         const val PRACTICE_KIND = "learnJapanese.practiceKind"
+        const val OLLAMA_ENABLED = "learnJapanese.ollama.enabled"
+        const val OLLAMA_BASE_URL = "learnJapanese.ollama.baseUrl"
+        const val OLLAMA_MODEL = "learnJapanese.ollama.model"
     }
 
     var verbBank by mutableStateOf(listOf<CardFixture>())
@@ -109,7 +117,17 @@ class AppViewModel(
         private set
     var aiStatus by mutableStateOf<AIStatus>(AIStatus.Idle)
         private set
+    var aiSourceNote by mutableStateOf<String?>(null)
+        private set
+    var ollamaEnabled by mutableStateOf(BuildConfig.OLLAMA_ENABLED)
+        private set
+    var ollamaBaseUrl by mutableStateOf(BuildConfig.OLLAMA_BASE_URL)
+        private set
+    var ollamaModel by mutableStateOf(BuildConfig.OLLAMA_MODEL)
+        private set
     var errorMessage by mutableStateOf<String?>(null)
+        private set
+    var speechMessage by mutableStateOf<String?>(null)
         private set
     var stats by mutableStateOf(Stats())
         private set
@@ -191,6 +209,37 @@ class AppViewModel(
         prefs.getString(DefaultsKey.PRACTICE_KIND, null)?.let { raw ->
             currentPractice = if (raw == PracticeKind.ADJECTIVE.raw) PracticeKind.ADJECTIVE else PracticeKind.VERB
         }
+        ollamaEnabled = prefs.getBoolean(DefaultsKey.OLLAMA_ENABLED, BuildConfig.OLLAMA_ENABLED)
+        ollamaBaseUrl =
+            prefs
+                .getString(DefaultsKey.OLLAMA_BASE_URL, BuildConfig.OLLAMA_BASE_URL)
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+                ?: BuildConfig.OLLAMA_BASE_URL
+        ollamaModel =
+            prefs
+                .getString(DefaultsKey.OLLAMA_MODEL, BuildConfig.OLLAMA_MODEL)
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+                ?: BuildConfig.OLLAMA_MODEL
+    }
+
+    fun setOllamaConfig(
+        enabled: Boolean,
+        baseUrl: String,
+        model: String,
+    ) {
+        val safeBaseUrl = baseUrl.trim().ifEmpty { BuildConfig.OLLAMA_BASE_URL }
+        val safeModel = model.trim().ifEmpty { BuildConfig.OLLAMA_MODEL }
+        ollamaEnabled = enabled
+        ollamaBaseUrl = safeBaseUrl
+        ollamaModel = safeModel
+        prefs
+            .edit()
+            .putBoolean(DefaultsKey.OLLAMA_ENABLED, enabled)
+            .putString(DefaultsKey.OLLAMA_BASE_URL, safeBaseUrl)
+            .putString(DefaultsKey.OLLAMA_MODEL, safeModel)
+            .apply()
     }
 
     @JvmName("updatePracticeKind")
@@ -203,6 +252,14 @@ class AppViewModel(
     fun setAnswerMode(value: AnswerMode) {
         answerMode = value
         prefs.edit().putString(DefaultsKey.ANSWER_MODE, value.name).apply()
+        // Ensure UI updates immediately when switching answer mode from settings.
+        if (value == AnswerMode.CHOICE) {
+            if (currentQuestion != null) {
+                generateChoices()
+            }
+        } else {
+            choiceOptions = emptyList()
+        }
     }
 
     @JvmName("updateQuestionType")
@@ -329,12 +386,23 @@ class AppViewModel(
 
     fun speakQuestion() {
         val question = currentQuestion ?: return
+        updateSpeechMessageForCurrentStatus()
         speechService.speak(question.card.dict)
     }
 
     fun speakExample() {
         val content = example ?: return
+        updateSpeechMessageForCurrentStatus()
         speechService.speak(content.jp)
+    }
+
+    private fun updateSpeechMessageForCurrentStatus() {
+        speechMessage =
+            when (speechService.currentStatus()) {
+                SpeechStatus.READY_NON_JAPANESE -> "語音引擎未安裝日文語音，請到系統 TTS 下載 ja-JP。"
+                SpeechStatus.FAILED -> "語音引擎初始化失敗。"
+                else -> null
+            }
     }
 
     fun exportBank(practice: PracticeKind) {
@@ -547,20 +615,61 @@ class AppViewModel(
     }
 
     private suspend fun generateAI(question: QuestionViewModel) {
-        aiStatus = AIStatus.Loading
-        try {
-            translationText = aiService.generateTranslation(question.answer)
-        } catch (e: Exception) {
-            aiStatus = AIStatus.Error(e.message ?: "Unknown error")
+        if (!BuildConfig.DEBUG && ollamaEnabled && ollamaBaseUrl.startsWith("http://")) {
+            aiStatus = AIStatus.Error("Release 版本僅支援 HTTPS Ollama URL。")
+            aiSourceNote = "AI 來源：離線模板（release 禁用 HTTP Ollama）"
             return
         }
 
-        try {
-            example = aiService.generateExample(question.answer, question.promptLabel)
-            aiStatus = AIStatus.Idle
-        } catch (e: Exception) {
-            aiStatus = AIStatus.Error(e.message ?: "Unknown error")
-        }
+        val aiService: AIService =
+            if (ollamaEnabled) {
+                OllamaAIService(
+                    baseUrl = ollamaBaseUrl,
+                    model = ollamaModel,
+                )
+            } else {
+                fallbackAiService
+            }
+        aiStatus = AIStatus.Loading
+        aiSourceNote = null
+        var usedFallback = false
+        var fallbackReason: String? = null
+
+        val translationPrimary = runCatching { aiService.generateTranslation(question.answer) }
+        val translationTextValue =
+            translationPrimary.getOrElse { primaryError ->
+                usedFallback = true
+                fallbackReason = primaryError.message
+                Log.w(tag, "Translation via Ollama failed, fallback to offline", primaryError)
+                runCatching { fallbackAiService.generateTranslation(question.answer) }
+                    .getOrElse { fallbackError ->
+                        aiStatus = AIStatus.Error(fallbackError.message ?: "Unknown error")
+                        return
+                    }
+            }
+        translationText = translationTextValue
+
+        val examplePrimary = runCatching { aiService.generateExample(question.answer, question.promptLabel) }
+        val exampleValue =
+            examplePrimary.getOrElse { primaryError ->
+                usedFallback = true
+                fallbackReason = primaryError.message
+                Log.w(tag, "Example via Ollama failed, fallback to offline", primaryError)
+                runCatching { fallbackAiService.generateExample(question.answer, question.promptLabel) }
+                    .getOrElse { fallbackError ->
+                        aiStatus = AIStatus.Error(fallbackError.message ?: "Unknown error")
+                        return
+                    }
+            }
+        example = exampleValue
+
+        aiSourceNote =
+            when {
+                !ollamaEnabled -> "AI 來源：離線模板（已停用 Ollama）"
+                usedFallback -> "AI 來源：離線模板（Ollama 失敗已 fallback：${fallbackReason?.take(60) ?: "未知原因"}）"
+                else -> "AI 來源：Ollama ($ollamaModel)"
+            }
+        aiStatus = AIStatus.Idle
     }
 }
 

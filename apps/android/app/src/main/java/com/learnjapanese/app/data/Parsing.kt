@@ -1,6 +1,14 @@
 package com.learnjapanese.app.data
 
 object Parsing {
+    private fun cleanModelText(input: String): String =
+        input
+            .replace(Regex("\\*\\*(.*?)\\*\\*"), "$1")
+            .replace(Regex("__(.*?)__"), "$1")
+            .replace(Regex("`(.*?)`"), "$1")
+            .replace(Regex("^[-*]\\s+"), "")
+            .trim()
+
     fun parseExampleResponse(text: String): ExampleOutput? {
         val normalized = text.replace("\\n", "\n").trim()
 
@@ -17,7 +25,7 @@ object Parsing {
                         .find(line)
                         ?.groupValues
                         ?.getOrNull(1)
-                        ?.trim()
+                        ?.let(::cleanModelText)
                 }.firstOrNull()
                 .orEmpty()
         }
@@ -32,7 +40,7 @@ object Parsing {
                 .find(normalized)
                 ?.groupValues
                 ?.getOrNull(1)
-                ?.trim()
+                ?.let(::cleanModelText)
                 .orEmpty()
         }
 
@@ -62,6 +70,7 @@ object Parsing {
         line = line.replace(Regex("^translation[:：]\\s*", RegexOption.IGNORE_CASE), "")
         line = line.trim()
         line = line.replace(Regex("^['\"「『](.*)['\"」』]$"), "$1").trim()
+        line = cleanModelText(line)
         return line.ifEmpty { null }
     }
 

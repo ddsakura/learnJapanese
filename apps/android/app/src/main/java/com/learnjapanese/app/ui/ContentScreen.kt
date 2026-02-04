@@ -31,6 +31,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -43,6 +44,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -120,6 +125,13 @@ fun ContentScreen(viewModel: AppViewModel) {
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
+            viewModel.speechMessage?.let {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
         }
     }
 
@@ -177,37 +189,53 @@ private fun SettingsSummaryRow(
 @Composable
 private fun QuestionCard(viewModel: AppViewModel) {
     val question = viewModel.currentQuestion ?: return
-    ElevatedCard(
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Column(
+        ElevatedCard(
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = question.card.dict,
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text("→", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    question.promptLabel,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF2E7D32),
+                )
+            }
+        }
+
+        Surface(
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .size(width = 60.dp, height = 46.dp)
+                    .semantics {
+                        contentDescription = "朗讀題目"
+                        role = Role.Button
+                    },
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            onClick = { viewModel.speakQuestion() },
         ) {
-            Text(
-                text = question.card.dict,
-                fontSize = 36.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text("→", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(
-                question.promptLabel,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF2E7D32),
-            )
-        }
-    }
-    Spacer(modifier = Modifier.height(6.dp))
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Spacer(modifier = Modifier.weight(1f))
-        OutlinedButton(onClick = { viewModel.speakQuestion() }) {
-            Text("朗讀題目")
+            Box(contentAlignment = Alignment.Center) {
+                Text("🔊", fontSize = 24.sp, color = MaterialTheme.colorScheme.primary)
+            }
         }
     }
 }
@@ -470,6 +498,13 @@ private fun AiSection(viewModel: AppViewModel) {
         AIStatus.Idle -> {
             val translation = viewModel.translationText
             val example = viewModel.example
+            viewModel.aiSourceNote?.let { note ->
+                Text(
+                    note,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             if (translation != null || example != null) {
                 Surface(
                     shape = RoundedCornerShape(16.dp),
@@ -616,11 +651,15 @@ private fun SettingsSheet(
     var pendingQuestionType by remember { mutableStateOf(viewModel.selectedQuestionType) }
     var pendingVerbScope by remember { mutableStateOf(viewModel.selectedVerbScope) }
     var pendingAdjectiveScope by remember { mutableStateOf(viewModel.selectedAdjectiveScope) }
+    var pendingOllamaEnabled by remember { mutableStateOf(viewModel.ollamaEnabled) }
+    var pendingOllamaBaseUrl by remember { mutableStateOf(viewModel.ollamaBaseUrl) }
+    var pendingOllamaModel by remember { mutableStateOf(viewModel.ollamaModel) }
 
     Column(
         modifier =
             Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -643,40 +682,74 @@ private fun SettingsSheet(
         }
 
         SettingsSection(title = "題型") {
-            val availableTypes = if (pendingPractice == PracticeKind.VERB) {
-                QuestionType.entries
-            } else {
-                QuestionType.entries.filter { it != QuestionType.POTENTIAL }
-            }
-            availableTypes.forEach { type ->
+            val availableTypes =
+                if (pendingPractice == PracticeKind.VERB) {
+                    QuestionType.entries
+                } else {
+                    QuestionType.entries.filter { it != QuestionType.POTENTIAL }
+                }
+            availableTypes.forEachIndexed { index, type ->
                 SelectableRow(
                     label = type.label,
                     selected = pendingQuestionType == type,
                     onClick = { pendingQuestionType = type },
+                    showDivider = index < availableTypes.lastIndex,
                 )
             }
         }
 
         if (pendingPractice == PracticeKind.VERB) {
             SettingsSection(title = "動詞種類") {
-                VerbScope.entries.forEach { scope ->
+                VerbScope.entries.forEachIndexed { index, scope ->
                     SelectableRow(
                         label = scope.label,
                         selected = pendingVerbScope == scope,
                         onClick = { pendingVerbScope = scope },
+                        showDivider = index < VerbScope.entries.lastIndex,
                     )
                 }
             }
         } else {
             SettingsSection(title = "形容詞種類") {
-                AdjectiveScope.entries.forEach { scope ->
+                AdjectiveScope.entries.forEachIndexed { index, scope ->
                     SelectableRow(
                         label = scope.label,
                         selected = pendingAdjectiveScope == scope,
                         onClick = { pendingAdjectiveScope = scope },
+                        showDivider = index < AdjectiveScope.entries.lastIndex,
                     )
                 }
             }
+        }
+
+        SettingsSection(title = "AI（Ollama）") {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("啟用 Ollama")
+                Spacer(modifier = Modifier.weight(1f))
+                Switch(
+                    checked = pendingOllamaEnabled,
+                    onCheckedChange = { pendingOllamaEnabled = it },
+                )
+            }
+            OutlinedTextField(
+                value = pendingOllamaBaseUrl,
+                onValueChange = { pendingOllamaBaseUrl = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Base URL") },
+                placeholder = { Text(viewModel.ollamaBaseUrl) },
+                enabled = pendingOllamaEnabled,
+            )
+            OutlinedTextField(
+                value = pendingOllamaModel,
+                onValueChange = { pendingOllamaModel = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Model") },
+                placeholder = { Text(viewModel.ollamaModel) },
+                enabled = pendingOllamaEnabled,
+            )
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -689,6 +762,11 @@ private fun SettingsSheet(
                     viewModel.setQuestionType(pendingQuestionType)
                     viewModel.setVerbScope(pendingVerbScope)
                     viewModel.setAdjectiveScope(pendingAdjectiveScope)
+                    viewModel.setOllamaConfig(
+                        enabled = pendingOllamaEnabled,
+                        baseUrl = pendingOllamaBaseUrl,
+                        model = pendingOllamaModel,
+                    )
                     viewModel.nextQuestion(pendingPractice)
                     if (pendingAnswerMode == AnswerMode.CHOICE) {
                         viewModel.generateChoices()
@@ -708,8 +786,19 @@ private fun SettingsSection(
     content: @Composable () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(title, style = MaterialTheme.typography.labelLarge)
-        content()
+        Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            color = MaterialTheme.colorScheme.surface,
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                content()
+            }
+        }
     }
 }
 
@@ -719,21 +808,33 @@ private fun <T> SegmentedRow(
     selected: T,
     onSelect: (T) -> Unit,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         options.forEach { (value, label) ->
             val isSelected = value == selected
-            val colors =
-                if (isSelected) {
-                    ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                } else {
-                    ButtonDefaults.outlinedButtonColors()
-                }
-            Button(
+            Surface(
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(999.dp),
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                border =
+                    BorderStroke(
+                        1.dp,
+                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                    ),
                 onClick = { onSelect(value) },
-                colors = colors,
-                contentPadding = ButtonDefaults.ContentPadding,
             ) {
-                Text(label)
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        label,
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                    )
+                }
             }
         }
     }
@@ -744,19 +845,29 @@ private fun SelectableRow(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
+    showDivider: Boolean = false,
 ) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable { onClick() }
-                .padding(vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(label)
-        Spacer(modifier = Modifier.weight(1f))
-        if (selected) {
-            Text("✓", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { onClick() }
+                    .padding(vertical = 10.dp, horizontal = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                label,
+                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            if (selected) {
+                Text("✓", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+            }
+        }
+        if (showDivider) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         }
     }
 }
