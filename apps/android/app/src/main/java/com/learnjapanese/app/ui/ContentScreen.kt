@@ -185,37 +185,47 @@ private fun SettingsSummaryRow(
 @Composable
 private fun QuestionCard(viewModel: AppViewModel) {
     val question = viewModel.currentQuestion ?: return
-    ElevatedCard(
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ElevatedCard(
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(16.dp),
         ) {
-            Text(
-                text = question.card.dict,
-                fontSize = 36.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text("→", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(
-                question.promptLabel,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF2E7D32),
-            )
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = question.card.dict,
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text("→", fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    question.promptLabel,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF2E7D32),
+                )
+            }
         }
-    }
-    Spacer(modifier = Modifier.height(6.dp))
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Spacer(modifier = Modifier.weight(1f))
-        OutlinedButton(onClick = { viewModel.speakQuestion() }) {
-            Text("朗讀題目")
+
+        Surface(
+            modifier = Modifier.size(width = 60.dp, height = 46.dp),
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            onClick = { viewModel.speakQuestion() },
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text("🔊", fontSize = 24.sp, color = MaterialTheme.colorScheme.primary)
+            }
         }
     }
 }
