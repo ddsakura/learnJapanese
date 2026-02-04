@@ -1,0 +1,113 @@
+{
+  "verbs": [
+    {
+      "dict": "書く",
+      "group": "godan",
+      "expected": {
+        "nai": "書かない",
+        "ta": "書いた",
+        "nakatta": "書かなかった",
+        "te": "書いて",
+        "potential": "書ける"
+      }
+    },
+    {
+      "dict": "行く",
+      "group": "godan",
+      "expected": {
+        "nai": "行かない",
+        "ta": "行った",
+        "nakatta": "行かなかった",
+        "te": "行って",
+        "potential": "行ける"
+      }
+    },
+    {
+      "dict": "食べる",
+      "group": "ichidan",
+      "expected": {
+        "nai": "食べない",
+        "ta": "食べた",
+        "nakatta": "食べなかった",
+        "te": "食べて",
+        "potential": "食べられる"
+      }
+    },
+    {
+      "dict": "する",
+      "group": "irregular",
+      "expected": {
+        "nai": "しない",
+        "ta": "した",
+        "nakatta": "しなかった",
+        "te": "して",
+        "potential": "できる"
+      }
+    },
+    {
+      "dict": "勉強する",
+      "group": "irregular",
+      "expected": {
+        "nai": "勉強しない",
+        "ta": "勉強した",
+        "nakatta": "勉強しなかった",
+        "te": "勉強して",
+        "potential": "勉強できる"
+      }
+    },
+    {
+      "dict": "くる",
+      "group": "irregular",
+      "expected": {
+        "nai": "こない",
+        "ta": "きた",
+        "nakatta": "こなかった",
+        "te": "きて",
+        "potential": "こられる"
+      }
+    }
+  ],
+  "adjectives": [
+    {
+      "dict": "高い",
+      "group": "i",
+      "expected": {
+        "nai": "高くない",
+        "ta": "高かった",
+        "nakatta": "高くなかった",
+        "te": "高くて"
+      }
+    },
+    {
+      "dict": "いい",
+      "group": "i",
+      "expected": {
+        "nai": "よくない",
+        "ta": "よかった",
+        "nakatta": "よくなかった",
+        "te": "よくて"
+      }
+    },
+    {
+      "dict": "静か",
+      "group": "na",
+      "expected": {
+        "nai": "静かじゃない",
+        "ta": "静かだった",
+        "nakatta": "静かじゃなかった",
+        "te": "静かで"
+      }
+    },
+    {
+      "dict": "静かだ",
+      "group": "na",
+      "expected": {
+        "dict": "静か",
+        "nai": "静かじゃない",
+        "ta": "静かだった",
+        "nakatta": "静かじゃなかった",
+        "te": "静かで"
+      }
+    }
+  ]
+}
