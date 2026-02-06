@@ -1,5 +1,10 @@
 import Foundation
 
+struct BankFixtures: Codable {
+    let verb: [CardFixture]
+    let adjective: [CardFixture]
+}
+
 struct ConjugationFixtures: Codable {
     let verbs: [VerbFixture]
     let adjectives: [AdjectiveFixture]

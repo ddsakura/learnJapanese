@@ -11,6 +11,7 @@ type BankPanelProps = {
   onQuickInputChange: (value: string) => void;
   onQuickImport: () => void;
   onExport: () => void;
+  onExportAll: () => void;
   onImport: () => void;
   onReset: () => void;
   onClearProgress: () => void;
@@ -29,6 +30,7 @@ export default function BankPanel({
   onQuickInputChange,
   onQuickImport,
   onExport,
+  onExportAll,
   onImport,
   onReset,
   onClearProgress,
@@ -43,7 +45,7 @@ export default function BankPanel({
       <summary>題庫管理</summary>
       <div className="bank-body">
         <div className="bank-guide">
-          <p>匯入會合併題庫並保留學習紀錄。匯出可直接複製。</p>
+          <p>匯入會合併題庫並保留學習紀錄。匯出可直接複製或下載。</p>
           <div className="steps">
             <div className="step">
               <span>1.</span> 點「匯出題庫」可取得目前 JSON。
@@ -53,6 +55,9 @@ export default function BankPanel({
             </div>
             <div className="step">
               <span>3.</span> 點「匯入題庫」立即生效。
+            </div>
+            <div className="step">
+              <span>4.</span> 點「匯出全部題庫」可下載 bank-export.json（跨平台用）。
             </div>
           </div>
           <div className="group-hint">{groupHint}</div>
@@ -86,6 +91,9 @@ export default function BankPanel({
         <div className="bank-actions">
           <button type="button" onClick={onExport} disabled={isImporting}>
             匯出題庫
+          </button>
+          <button type="button" onClick={onExportAll} disabled={isImporting}>
+            匯出全部題庫
           </button>
           <button
             type="button"

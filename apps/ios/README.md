@@ -37,7 +37,8 @@ apps/ios/
     SpeechService.swift          # TTS 朗讀
   Resources/
     fixtures/
-      conjugation.json           # 變化題庫
+      bank.json                  # 預設題庫（動態題庫，不含進度）
+      conjugation.json           # 變化規則測試 fixtures
       parsing.json               # 解析 fixtures
       importing.json             # 匯入 fixtures
       srs.json                   # SRS fixtures
@@ -67,4 +68,5 @@ iOS 會從 `Resources/fixtures` 讀取題庫資料，與 `packages/core/fixtures
 ## 題庫匯入 / 匯出
 
 iOS 介面匯入/匯出使用 `CardFixture[]` 格式（扁平化題庫）。
-`conjugation.json` 為原始規格資料，格式不同，不能直接匯入。
+跨平台預設題庫為 `bank.json`，Web 匯出為 `bank-export.json`。
+`conjugation.json` 為變化規則測試 fixtures。

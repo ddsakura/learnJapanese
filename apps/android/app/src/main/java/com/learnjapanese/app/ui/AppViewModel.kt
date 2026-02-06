@@ -14,7 +14,6 @@ import com.learnjapanese.app.data.AdjectiveScope
 import com.learnjapanese.app.data.AnswerMode
 import com.learnjapanese.app.data.BankStore
 import com.learnjapanese.app.data.CardFixture
-import com.learnjapanese.app.data.ConjugationFixtures
 import com.learnjapanese.app.data.FixtureLoader
 import com.learnjapanese.app.data.ImportItem
 import com.learnjapanese.app.data.ImportResult
@@ -160,34 +159,9 @@ class AppViewModel(
             return
         }
         try {
-            val fixtures = FixtureLoader.load<ConjugationFixtures>(getApplication(), "conjugation")
-            verbBank =
-                fixtures.verbs.map { item ->
-                    CardFixture(
-                        dict = item.dict,
-                        nai = item.expected.nai,
-                        ta = item.expected.ta,
-                        nakatta = item.expected.nakatta,
-                        te = item.expected.te,
-                        potential = item.expected.potential,
-                        group = item.group,
-                        zh = null,
-                    )
-                }
-            adjectiveBank =
-                fixtures.adjectives.map { item ->
-                    val dict = item.expected.dict ?: item.dict.replace("だ", "")
-                    CardFixture(
-                        dict = dict,
-                        nai = item.expected.nai,
-                        ta = item.expected.ta,
-                        nakatta = item.expected.nakatta,
-                        te = item.expected.te,
-                        potential = null,
-                        group = item.group,
-                        zh = null,
-                    )
-                }
+            val bankFixtures = FixtureLoader.load<BankFixtures>(getApplication(), "bank")
+            verbBank = bankFixtures.verb
+            adjectiveBank = bankFixtures.adjective
         } catch (error: Exception) {
             errorMessage = error.message
         }

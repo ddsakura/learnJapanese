@@ -68,7 +68,8 @@ iOS 會從 `apps/ios/Resources/fixtures` 讀取題庫（與 `packages/core/fixtu
 
 Web 介面匯出的是 `CardFixture[]` 格式（扁平化題庫），可直接貼到 iOS 的「題庫管理 → 匯入題庫」。
 
-注意：`conjugation.json` 是原始規格資料，格式不同，不能直接用 UI 匯入。
+注意：`bank.json` 是跨平台預設題庫（動態題庫，不含進度），格式為 `CardFixture[]` 集合的包裝物，Web 匯出會是 `bank-export.json`。
+`conjugation.json` 則是變化規則測試用 fixtures（規則輸入 + 預期輸出）。
 
 ## Android 開發
 
