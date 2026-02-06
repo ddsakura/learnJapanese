@@ -1,27 +1,70 @@
-# Core 規格（跨平台）
+# Core 規格總覽
 
-此目錄提供跨平台共用的「資料格式、規則、fixtures」。
-iOS/Android/Web 都應該以這些規格為依據實作，並用 fixtures 驗證一致性。
+`packages/core` 是三個平台共用的規格來源。目標是讓 Web、iOS、Android 在資料格式與行為上保持一致。
 
-內容
-- data-model.md：題庫資料格式與型別定義
-- rules.md：動詞/形容詞變化規則摘要
-- srs.md：SRS 規則
-- importing.md：題庫匯入/正規化規則
-- fixtures/：可跨平台重用的測試資料與預設題庫（JSON）
-  - bank.json：預設題庫（不含學習進度），作為跨平台 source of truth
-  - conjugation.json：變化規則測試用 fixtures（規則輸入 + 預期輸出）
+## 這裡放什麼
 
-同步題庫
-- 將 root source 同步到各平台（預設題庫）：
-  - `node scripts/fixtures-push.mjs --to all`
-  - 或指定：`node scripts/fixtures-push.mjs --to web|ios|android`
-- 將平台題庫回寫成 root source：
-  - `node scripts/fixtures-pull.mjs --from web|ios|android`
-  - 若從 Web 匯出的檔案回寫：`node scripts/fixtures-pull.mjs --from file --path /path/to/bank-export.json`
+- `data-model.md`：跨平台資料模型
+- `rules.md`：動詞/形容詞變化規則摘要
+- `importing.md`：題庫匯入與正規化規則
+- `srs.md`：SRS 規則
+- `fixtures/`：跨平台共用 JSON
 
-產生變化規則 fixtures
-- `conjugation.json` 可由 `bank.json` 生成（用於規則測試）：
-  - `node scripts/generate-conjugation.mjs`
-- 檢查 `conjugation.json` 是否與 `bank.json` 同步：
-  - `node scripts/check-conjugation.mjs`
+## fixtures 分工
+
+- `fixtures/bank.json`
+  - 用途：App 預設題庫（不含學習進度）
+  - 性質：source of truth
+- `fixtures/conjugation.json`
+  - 用途：規則測試 fixtures（輸入 + 預期輸出）
+  - 性質：由 `bank.json` 推導出的測試資料
+- `fixtures/importing.json` / `fixtures/parsing.json` / `fixtures/srs.json`
+  - 用途：對應模組測試案例
+
+## 同步流程
+
+### 1. root -> 平台
+
+將 root 題庫同步到各平台預設檔：
+
+```bash
+node scripts/fixtures-push.mjs --to all
+```
+
+也可指定單一平台：
+
+```bash
+node scripts/fixtures-push.mjs --to web
+node scripts/fixtures-push.mjs --to ios
+node scripts/fixtures-push.mjs --to android
+```
+
+### 2. 平台 -> root
+
+將平台題庫回寫成 root source：
+
+```bash
+node scripts/fixtures-pull.mjs --from web
+node scripts/fixtures-pull.mjs --from ios
+node scripts/fixtures-pull.mjs --from android
+```
+
+若從 Web 匯出檔回寫：
+
+```bash
+node scripts/fixtures-pull.mjs --from file --path /path/to/bank-export.json
+```
+
+## 規則 fixtures 維護
+
+由 `bank.json` 生成 `conjugation.json` 並同步 iOS/Android：
+
+```bash
+node scripts/generate-conjugation.mjs
+```
+
+檢查三份 `conjugation.json` 是否與 `bank.json` 同步：
+
+```bash
+node scripts/check-conjugation.mjs
+```
