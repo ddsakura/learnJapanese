@@ -1475,14 +1475,14 @@
       }
     },
     {
-      "dict": "酒する",
+      "dict": "飲酒する",
       "group": "irregular",
       "expected": {
-        "nai": "酒しない",
-        "ta": "酒した",
-        "nakatta": "酒しなかった",
-        "te": "酒して",
-        "potential": "酒できる"
+        "nai": "飲酒しない",
+        "ta": "飲酒した",
+        "nakatta": "飲酒しなかった",
+        "te": "飲酒して",
+        "potential": "飲酒できる"
       }
     },
     {

@@ -42,14 +42,24 @@ class ConjugationFixturesTest {
     }
 
     private fun loadConjugationFixtures(): ConjugationFixtures {
-        val candidates = listOf(
-            File("packages/core/fixtures/conjugation.json"),
-            File("../../packages/core/fixtures/conjugation.json"),
-            File("../packages/core/fixtures/conjugation.json"),
-            File("../../../packages/core/fixtures/conjugation.json"),
-        )
-        val file = candidates.firstOrNull { it.exists() }
-            ?: error("Missing conjugation.json. Tried: ${candidates.joinToString { it.path }}")
+        val relativePath = "packages/core/fixtures/conjugation.json"
+        val startDir = File(System.getProperty("user.dir") ?: ".").canonicalFile
+
+        var current: File? = startDir
+        var resolved: File? = null
+        while (current != null) {
+            val candidate = File(current, relativePath)
+            if (candidate.exists()) {
+                resolved = candidate
+                break
+            }
+            current = current.parentFile
+        }
+
+        val file = resolved
+            ?: error(
+                "Missing conjugation.json. Looked for '$relativePath' from '${startDir.path}' while walking parent directories.",
+            )
         val text = file.readText()
         return FixtureLoader.json().decodeFromString(text)
     }
