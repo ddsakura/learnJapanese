@@ -12,6 +12,7 @@ import com.learnjapanese.app.data.AIExample
 import com.learnjapanese.app.data.AIService
 import com.learnjapanese.app.data.AdjectiveScope
 import com.learnjapanese.app.data.AnswerMode
+import com.learnjapanese.app.data.BankFixtures
 import com.learnjapanese.app.data.BankStore
 import com.learnjapanese.app.data.CardFixture
 import com.learnjapanese.app.data.FixtureLoader

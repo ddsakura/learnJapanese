@@ -8,6 +8,7 @@ activity-compose = "1.12.3"
 material = "1.13.0"
 kotlinx-serialization-json = "1.10.0"
 kotlinx-coroutines-android = "1.10.2"
+junit4 = "4.13.2"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -27,3 +28,4 @@ androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 google-material = { module = "com.google.android.material:material", version.ref = "material" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines-android" }
+junit4 = { module = "junit:junit", version.ref = "junit4" }
