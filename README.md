@@ -1,13 +1,25 @@
-# learnJapanese (monorepo)
+# learnJapanese Monorepo
 
-此 repo 目前包含：
+這個 repo 包含三個 App（Web / iOS / Android）與一份跨平台核心規格（Core）。
 
-- `apps/web`：現有的 Vite/React Web App
-- `apps/ios`：SwiftUI 版本
-- `apps/android`：Jetpack Compose 版本
-- `packages/core`：跨平台共用規格與 fixtures
+## Repo 結構
 
-## Web 開發
+- `apps/web`：Vite + React Web App
+- `apps/ios`：SwiftUI App
+- `apps/android`：Jetpack Compose App
+- `packages/core`：跨平台規格文件與 fixtures
+
+## 文件入口
+
+- Monorepo apps 導覽：`apps/README.md`
+- Core 規格總覽：`packages/core/docs/overview.md`
+- Web 操作：`apps/web/README.md`
+- iOS 操作：`apps/ios/README.md`
+- Android 操作：`apps/android/README.md`
+
+## 快速開始
+
+### Web
 
 ```bash
 cd apps/web
@@ -15,79 +27,54 @@ npm install
 npm run dev
 ```
 
-## Web 測試
-
-```bash
-cd apps/web
-npm test
-```
-
-```bash
-cd apps/web
-npm run test:e2e
-```
-
-```bash
-cd apps/web
-npm run test:e2e:ui
-```
-
-```bash
-cd apps/web
-npm run test:all
-```
-
-## Core 規格與 fixtures
-
-請參考：
-- `packages/core/docs`
-- `packages/core/fixtures`
-
-## iOS 開發
-
-需求：
-- Xcode（目前專案 iOS Deployment Target 為 26.0）
-- XcodeGen（已用來產生專案）
-
-產生 Xcode 專案：
+### iOS
 
 ```bash
 cd apps/ios
 xcodegen generate
 ```
 
-使用方式：
-1. 打開 `apps/ios/LearnJapanese.xcodeproj`
-2. 選擇 iOS Simulator 或實機執行
+然後打開 `apps/ios/LearnJapanese.xcodeproj` 執行。
 
-## iOS Fixtures
+### Android
 
-iOS 會從 `apps/ios/Resources/fixtures` 讀取題庫（與 `packages/core/fixtures` 同結構）。
-
-## 題庫匯入/匯出（Web ↔ iOS）
-
-Web 介面匯出的是 `CardFixture[]` 格式（扁平化題庫），可直接貼到 iOS 的「題庫管理 → 匯入題庫」。
-
-注意：`conjugation.json` 是原始規格資料，格式不同，不能直接用 UI 匯入。
-
-## Android 開發
-
-需求：
-- Android Studio (Hedgehog+)
-- JDK 17
-
-使用方式（Android Studio）：
-1. 開啟 `apps/android`
-2. Gradle Sync 後即可 build / run
-
-使用方式（CLI）：
 ```bash
 cd apps/android
 ./gradlew assembleDebug
 ```
 
-Android 可連接本機 Ollama（零成本），完整設定請看 `apps/android/README.md`。
+## 測試
 
-## App Icon
+### Web
 
-- 共用來源圖：`icon-source.png`（repo root）
+```bash
+cd apps/web
+npm test
+npm run test:e2e
+```
+
+### iOS
+
+請用 Xcode Test（`LearnJapaneseTests` target）。
+
+### Android
+
+```bash
+cd apps/android
+./gradlew :app:testDebugUnitTest
+```
+
+## 跨平台題庫與 fixtures
+
+`packages/core/fixtures/bank.json` 是預設題庫 source of truth（不含學習進度）。
+
+常用操作請看：`packages/core/docs/overview.md`
+
+- 推送 root 題庫到各平台：`node scripts/fixtures-push.mjs --to all`
+- 將平台題庫回寫 root：`node scripts/fixtures-pull.mjs --from web|ios|android`
+- 生成規則測試 fixtures：`node scripts/generate-conjugation.mjs`
+- 檢查 fixtures 同步：`node scripts/check-conjugation.mjs`
+
+## 其他
+
+- 共用 App Icon 來源：`icon-source.png`

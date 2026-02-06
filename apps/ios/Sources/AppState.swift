@@ -63,32 +63,9 @@ final class AppState: ObservableObject {
                 adjectiveBank = savedAdjectives
                 return
             }
-            let fixtures = try FixtureLoader.load("conjugation", as: ConjugationFixtures.self)
-            verbBank = fixtures.verbs.map { item in
-                CardFixture(
-                    dict: item.dict,
-                    nai: item.expected.nai,
-                    ta: item.expected.ta,
-                    nakatta: item.expected.nakatta,
-                    te: item.expected.te,
-                    potential: item.expected.potential,
-                    group: item.group,
-                    zh: nil
-                )
-            }
-            adjectiveBank = fixtures.adjectives.map { item in
-                let dict = item.expected.dict ?? item.dict.replacingOccurrences(of: "だ", with: "")
-                return CardFixture(
-                    dict: dict,
-                    nai: item.expected.nai,
-                    ta: item.expected.ta,
-                    nakatta: item.expected.nakatta,
-                    te: item.expected.te,
-                    potential: nil,
-                    group: item.group,
-                    zh: nil
-                )
-            }
+            let bankFixtures = try FixtureLoader.load("bank", as: BankFixtures.self)
+            verbBank = bankFixtures.verb
+            adjectiveBank = bankFixtures.adjective
         } catch {
             errorMessage = String(describing: error)
         }

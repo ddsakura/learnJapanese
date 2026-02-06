@@ -26,7 +26,7 @@ final class ConjugationTests: XCTestCase {
                 continue
             }
             let result = try Conjugation.conjugateAdjective(dict: item.dict, group: group)
-            let expectedDict = item.expected.dict ?? item.dict.replacingOccurrences(of: "だ", with: "")
+            let expectedDict = item.expected.dict ?? (item.dict.hasSuffix("だ") ? String(item.dict.dropLast()) : item.dict)
             XCTAssertEqual(result.dict, expectedDict, "dict mismatch for \(item.dict)")
             XCTAssertEqual(result.nai, item.expected.nai, "nai mismatch for \(item.dict)")
             XCTAssertEqual(result.ta, item.expected.ta, "ta mismatch for \(item.dict)")

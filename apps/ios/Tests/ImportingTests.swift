@@ -3,17 +3,22 @@ import XCTest
 
 final class ImportingTests: XCTestCase {
     func testImportingFixtures() throws {
+        // This test validates the import normalization logic against a set of
+        // fixture cases defined in importing.json.
         let fixtures = try FixtureLoader.load("importing", as: ImportingFixtures.self)
 
         for testCase in fixtures.cases {
+            // Each case declares the practice kind (verb/adjective) and the raw input format.
             guard let practice = PracticeKind(rawValue: testCase.practice) else {
                 XCTFail("Unknown practice: \(testCase.practice)")
                 continue
             }
 
+            // Normalize input into CardFixture[] or an error.
             let result = Importing.normalizeImport(testCase.input, practice: practice)
             switch (testCase.ok, result) {
             case (true, .success(let cards)):
+                // Success case: compare count and every field against expected output.
                 XCTAssertEqual(cards.count, testCase.expected?.count ?? 0, "Case \(testCase.id)")
                 if let expected = testCase.expected {
                     for (index, card) in cards.enumerated() {
@@ -29,9 +34,11 @@ final class ImportingTests: XCTestCase {
                 }
 
             case (false, .failure(let error)):
+                // Failure case: ensure we return the expected error message.
                 XCTAssertEqual(error.message, testCase.error ?? "", "Case \(testCase.id)")
 
             default:
+                // Any mismatch between expectation and actual result should fail.
                 XCTFail("Case \(testCase.id) failed: \(result)")
             }
         }

@@ -12,6 +12,12 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
+data class BankFixtures(
+    val verb: List<CardFixture>,
+    val adjective: List<CardFixture>,
+)
+
+@Serializable
 data class ConjugationFixtures(
     val verbs: List<VerbFixture>,
     val adjectives: List<AdjectiveFixture>,

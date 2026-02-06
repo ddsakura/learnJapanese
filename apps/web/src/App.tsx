@@ -22,12 +22,7 @@ import {
 } from "./data/constants";
 import { normalizeVerbBank } from "./lib/conjugation";
 import { normalizeImport, mergeBank, pruneSrs } from "./lib/importing";
-import {
-  getAnswer,
-  getPool,
-  pickRandom,
-  shuffle,
-} from "./lib/questions";
+import { getAnswer, getPool, pickRandom, shuffle } from "./lib/questions";
 import {
   defaultStats,
   defaultWrongToday,
@@ -318,7 +313,9 @@ function App() {
     practice === "verb" ? "た形・て形・可能形 變形規則" : "形容詞變化規則";
   const currentCard = useMemo(() => {
     if (!question) return null;
-    return bank.find((card) => card.dict === question.card.dict) ?? question.card;
+    return (
+      bank.find((card) => card.dict === question.card.dict) ?? question.card
+    );
   }, [bank, question]);
   const bankExample =
     practice === "verb"
@@ -719,9 +716,7 @@ function App() {
         if (choiceRequestId.current !== requestId) return;
         if (!wrong || wrong.length < 3) {
           setChoiceStatus("error");
-          setChoiceMessage(
-            "選項產生失敗，請確認 Ollama 已啟動且模型可用。",
-          );
+          setChoiceMessage("選項產生失敗，請確認 Ollama 已啟動且模型可用。");
           return;
         }
         const options = shuffle([correctAnswer, ...wrong.slice(0, 3)]);
@@ -732,9 +727,7 @@ function App() {
       .catch(() => {
         if (choiceRequestId.current !== requestId) return;
         setChoiceStatus("error");
-        setChoiceMessage(
-          "選項產生失敗，請確認 Ollama 已啟動且模型可用。",
-        );
+        setChoiceMessage("選項產生失敗，請確認 Ollama 已啟動且模型可用。");
       });
   }
 
@@ -771,6 +764,28 @@ function App() {
   function handleExport() {
     setBankText(JSON.stringify(bank, null, 2));
     setMessage("已將題庫輸出到文字框。");
+  }
+
+  function downloadJson(filename: string, data: unknown) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  function handleExportAll() {
+    downloadJson("bank-export.json", {
+      verb: banks.verb,
+      adjective: banks.adjective,
+    });
+    setMessage("已下載完整題庫 bank-export.json。");
   }
 
   async function handleImport() {
@@ -934,6 +949,7 @@ function App() {
           onQuickInputChange={setQuickInput}
           onQuickImport={handleQuickImport}
           onExport={handleExport}
+          onExportAll={handleExportAll}
           onImport={handleImport}
           onReset={handleResetBank}
           onClearProgress={handleClearProgress}

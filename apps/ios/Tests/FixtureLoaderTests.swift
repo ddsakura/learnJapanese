@@ -12,6 +12,16 @@ final class FixtureLoaderTests: XCTestCase {
         }
     }
 
+    func testLoadBankFixtures() throws {
+        do {
+            let fixtures = try FixtureLoader.load("bank", as: BankFixtures.self)
+            XCTAssertFalse(fixtures.verb.isEmpty)
+            XCTAssertFalse(fixtures.adjective.isEmpty)
+        } catch {
+            XCTFail(String(describing: error))
+        }
+    }
+
     func testLoadParsingFixtures() throws {
         do {
             let fixtures = try FixtureLoader.load("parsing", as: ParsingFixtures.self)

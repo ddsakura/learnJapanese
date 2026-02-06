@@ -1,9 +1,15 @@
-# Apps
+# Apps 目錄說明
 
-此資料夾放各平台實作：
+`apps/` 放三個平台實作。跨平台規格請看 `packages/core/docs/overview.md`。
 
-- web：Vite/React 版本
-- ios：SwiftUI 版本
-- android：Jetpack Compose 版本
+## 子目錄
 
-每個平台應讀取 `packages/core` 內的規格與 fixtures。
+- `apps/web`：Vite + React
+- `apps/ios`：SwiftUI
+- `apps/android`：Jetpack Compose
+
+## 文件入口
+
+- `apps/web/README.md`
+- `apps/ios/README.md`
+- `apps/android/README.md`
