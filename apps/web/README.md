@@ -17,6 +17,17 @@ npm run dev
 
 macOS 下，`npm run dev` 會嘗試自動啟動 `ollama serve`（若未啟動）。
 
+### macOS 快速啟動
+
+- `start-web-dev.command`
+  - 在 Finder 雙擊即可開啟 Terminal 並執行 `npm run dev`
+  - 檔案位置：`apps/web/start-web-dev.command`
+- `start-web-dev-raycast.sh`
+  - 給 Raycast 的 Script Command
+  - 檔案位置：`apps/web/start-web-dev-raycast.sh`
+  - 在 Raycast 設定 `Extensions` -> `Script Commands`，把 Script Commands folder 指到 `apps/web`（或包含此檔案的目錄）
+  - 之後可在 Raycast 搜尋 `Start Web Dev` 執行
+
 ## Build
 
 ```bash
