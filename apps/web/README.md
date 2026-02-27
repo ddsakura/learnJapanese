@@ -19,6 +19,12 @@ macOS 下，`npm run dev` 會嘗試自動啟動 `ollama serve`（若未啟動）
 
 ### macOS 快速啟動
 
+若雙擊或 Raycast 執行時出現權限問題，先執行：
+
+```bash
+chmod +x apps/web/start-web-dev.command apps/web/start-web-dev-raycast.sh
+```
+
 - `start-web-dev.command`
   - 在 Finder 雙擊即可開啟 Terminal 並執行 `npm run dev`
   - 檔案位置：`apps/web/start-web-dev.command`
