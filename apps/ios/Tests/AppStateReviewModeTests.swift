@@ -1,6 +1,7 @@
 import XCTest
 @testable import LearnJapanese
 
+@MainActor
 final class AppStateReviewModeTests: XCTestCase {
     private let defaults = UserDefaults.standard
 

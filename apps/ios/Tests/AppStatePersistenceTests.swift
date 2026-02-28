@@ -2,6 +2,7 @@ import SwiftUI
 import XCTest
 @testable import LearnJapanese
 
+@MainActor
 final class AppStatePersistenceTests: XCTestCase {
     private let defaults = UserDefaults.standard
 
