@@ -1,0 +1,29 @@
+{
+  "configurations" : [
+    {
+      "id" : "A2E27868-37EC-4A6D-8C31-11E9A5AC6F6F",
+      "name" : "Default",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:LearnJapanese.xcodeproj",
+      "identifier" : "631CDDEB9FA81B626543D1FA",
+      "name" : "LearnJapanese"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:LearnJapanese.xcodeproj",
+        "identifier" : "17E69C46750545E6E68CEC61",
+        "name" : "LearnJapaneseTests"
+      }
+    }
+  ],
+  "version" : 1
+}

@@ -50,6 +50,7 @@
 		10B7F1DA23AD39CB3E2AC484 /* Conjugation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conjugation.swift; sourceTree = "<group>"; };
 		1A28641D6B42759E7276FFE6 /* LearnJapaneseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearnJapaneseApp.swift; sourceTree = "<group>"; };
 		1CAB7131F55A62CA35605184 /* Srs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Srs.swift; sourceTree = "<group>"; };
+		2702EE462F53422600B3F3CB /* LearnJapanese.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = LearnJapanese.xctestplan; sourceTree = "<group>"; };
 		270C90092F532C3100724945 /* AppleIntelligenceServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligenceServiceTests.swift; sourceTree = "<group>"; };
 		35BB83D90D43A8CBF5DAF9FE /* ConjugationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConjugationTests.swift; sourceTree = "<group>"; };
 		3B909CE808251C6AEDFEE0C1 /* fixtures */ = {isa = PBXFileReference; lastKnownFileType = folder; name = fixtures; path = Resources/fixtures; sourceTree = SOURCE_ROOT; };
@@ -118,6 +119,7 @@
 		B6EFF96F291A85A9C59E141A = {
 			isa = PBXGroup;
 			children = (
+				2702EE462F53422600B3F3CB /* LearnJapanese.xctestplan */,
 				3B909CE808251C6AEDFEE0C1 /* fixtures */,
 				DE760C7EA96C63DDABF452FC /* Resources */,
 				2FF296765DC74F744A631FA4 /* Sources */,
