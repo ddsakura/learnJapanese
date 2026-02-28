@@ -1,5 +1,6 @@
 import AVFoundation
 
+@MainActor
 final class SpeechService: NSObject, AVSpeechSynthesizerDelegate {
     static let shared = SpeechService()
 
