@@ -12,6 +12,7 @@
 		0CE220E04A59C5DA7FC52D9D /* Srs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CAB7131F55A62CA35605184 /* Srs.swift */; };
 		0D994620359DF4CA9BC2D353 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF4D5BD2533C8018C1DE5FD4 /* AppState.swift */; };
 		24E3736BC7C23504126CFCC2 /* AppStatePersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8CF1C064FAA452EE3DF99C2 /* AppStatePersistenceTests.swift */; };
+		270C900A2F532C3100724945 /* AppleIntelligenceServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 270C90092F532C3100724945 /* AppleIntelligenceServiceTests.swift */; };
 		3B55575B9F43F144371A9146 /* Parsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D2108C9A5218254CB2905A7 /* Parsing.swift */; };
 		3C646864C2DB81A2A31AC696 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EBCB3B61645C55F0B0D16E1F /* Assets.xcassets */; };
 		3FB969B4DA99ADC3F6F14782 /* ParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44742F48C28195595D299B79 /* ParsingTests.swift */; };
@@ -45,10 +46,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		05164E205EA9366AFC72D5FC /* LearnJapanese.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = LearnJapanese.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		05164E205EA9366AFC72D5FC /* LearnJapanese.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LearnJapanese.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		10B7F1DA23AD39CB3E2AC484 /* Conjugation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conjugation.swift; sourceTree = "<group>"; };
 		1A28641D6B42759E7276FFE6 /* LearnJapaneseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearnJapaneseApp.swift; sourceTree = "<group>"; };
 		1CAB7131F55A62CA35605184 /* Srs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Srs.swift; sourceTree = "<group>"; };
+		2702EE462F53422600B3F3CB /* LearnJapanese.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = LearnJapanese.xctestplan; sourceTree = "<group>"; };
+		270C90092F532C3100724945 /* AppleIntelligenceServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligenceServiceTests.swift; sourceTree = "<group>"; };
 		35BB83D90D43A8CBF5DAF9FE /* ConjugationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConjugationTests.swift; sourceTree = "<group>"; };
 		3B909CE808251C6AEDFEE0C1 /* fixtures */ = {isa = PBXFileReference; lastKnownFileType = folder; name = fixtures; path = Resources/fixtures; sourceTree = SOURCE_ROOT; };
 		3D2108C9A5218254CB2905A7 /* Parsing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Parsing.swift; sourceTree = "<group>"; };
@@ -59,7 +62,7 @@
 		5ACFB53ECC66DB886BAC882F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		5DA548357E6F995D5106196F /* AppStateReviewModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateReviewModeTests.swift; sourceTree = "<group>"; };
 		6F38487D13F21940FF1BF20D /* SrsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SrsStore.swift; sourceTree = "<group>"; };
-		72BEB56EF0062252F062509F /* LearnJapaneseTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LearnJapaneseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		72BEB56EF0062252F062509F /* LearnJapaneseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LearnJapaneseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		82270DA24B5388A71BFEA1C4 /* ImportingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportingTests.swift; sourceTree = "<group>"; };
 		82BBDA6C82B9BB4E31C8FE49 /* SpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechService.swift; sourceTree = "<group>"; };
 		A082A3290DF6ED6BC222318C /* FixtureLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixtureLoaderTests.swift; sourceTree = "<group>"; };
@@ -108,6 +111,7 @@
 				473D599945A6BCB94C92C1FB /* LearnJapaneseTests.swift */,
 				44742F48C28195595D299B79 /* ParsingTests.swift */,
 				D2E17591B10EF96F6B8B36A9 /* SrsTests.swift */,
+				270C90092F532C3100724945 /* AppleIntelligenceServiceTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -115,6 +119,7 @@
 		B6EFF96F291A85A9C59E141A = {
 			isa = PBXGroup;
 			children = (
+				2702EE462F53422600B3F3CB /* LearnJapanese.xctestplan */,
 				3B909CE808251C6AEDFEE0C1 /* fixtures */,
 				DE760C7EA96C63DDABF452FC /* Resources */,
 				2FF296765DC74F744A631FA4 /* Sources */,
@@ -189,7 +194,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 2630;
 			};
 			buildConfigurationList = BED95EDD615F73B6EAEED887 /* Build configuration list for PBXProject "LearnJapanese" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -201,7 +206,6 @@
 			);
 			mainGroup = B6EFF96F291A85A9C59E141A;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -263,6 +267,7 @@
 				9A0FE1535E546F6034CF5E4D /* FixtureLoaderTests.swift in Sources */,
 				E7B53030EB2F69076CFB632D /* ImportingTests.swift in Sources */,
 				A3F9B4A2B4B485F9AD8ACC0E /* LearnJapaneseTests.swift in Sources */,
+				270C900A2F532C3100724945 /* AppleIntelligenceServiceTests.swift in Sources */,
 				3FB969B4DA99ADC3F6F14782 /* ParsingTests.swift in Sources */,
 				A45C8E919E50022CB891AFF1 /* SrsTests.swift in Sources */,
 			);
@@ -392,6 +397,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -411,6 +417,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -454,6 +461,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -466,6 +474,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;

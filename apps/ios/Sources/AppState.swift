@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 final class AppState: ObservableObject {
     private let aiService = AppleIntelligenceService()
     private let srsStore = SrsStore.shared

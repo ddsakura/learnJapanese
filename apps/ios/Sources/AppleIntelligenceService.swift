@@ -61,15 +61,53 @@ final class AppleIntelligenceService {
     }
 
     func generateExample(term: String, typeLabel: String) async throws -> AIExample {
-        let basePrompt = "你是一位專業的日語老師，擅長將複雜的文法用簡單易懂的方式解釋給 N4 程度的學生。請用單字『\(term)』（形態：\(typeLabel)）造一個 N4 程度的日文句子。"
-        let safePrompt = basePrompt + " 限制：只允許日常生活場景，不涉及暴力、犯罪、醫療、成人、政治、宗教、歧視等敏感話題。句子要簡短、單一句，避免故事化。"
-        do {
-            let response = try await respond(generating: ExampleResponse.self, prompt: basePrompt)
-            return AIExample(jp: response.jp, reading: response.reading, zh: response.zh, grammar: response.grammar)
-        } catch {
-            let response = try await respond(generating: ExampleResponse.self, prompt: safePrompt)
-            return AIExample(jp: response.jp, reading: response.reading, zh: response.zh, grammar: response.grammar)
+        let strictPrompt = """
+        你是一位專業的日語老師。請用「\(term)」（形態：\(typeLabel)）造一個 N4 程度、日常生活情境的單一句。
+        強制規則：
+        1) 日文句子必須逐字包含「\(term)」，不可改寫成其他形態。
+        2) 句子簡短自然，不要故事化。
+        3) 不涉及暴力、犯罪、醫療、成人、政治、宗教、歧視等敏感話題。
+        """
+        let repairPrompt = """
+        請重新產生。你是一位專業的日語老師。請用「\(term)」（形態：\(typeLabel)）造一個 N4 程度、日常生活情境的單一句。
+        強制規則：
+        1) 日文句子必須逐字包含「\(term)」，不可改寫成其他形態。
+        2) 句子簡短自然，不要故事化，只能一個簡短句子。
+        3) 不涉及暴力、犯罪、醫療、成人、政治、宗教、歧視等敏感話題。
+        """
+
+        for prompt in [strictPrompt, repairPrompt] {
+            for _ in 0..<2 {
+                try Task.checkCancellation()
+                do {
+                    let response = try await respond(generating: ExampleResponse.self, prompt: prompt)
+                    if ExampleValidator.containsExactTerm(response.jp, term: term) {
+                        return AIExample(
+                            jp: response.jp.trimmingCharacters(in: .whitespacesAndNewlines),
+                            reading: response.reading.trimmingCharacters(in: .whitespacesAndNewlines),
+                            zh: response.zh.trimmingCharacters(in: .whitespacesAndNewlines),
+                            grammar: response.grammar.trimmingCharacters(in: .whitespacesAndNewlines)
+                        )
+                    }
+                } catch let error as CancellationError {
+                    throw error
+                } catch {
+                    continue
+                }
+            }
         }
+
+        // Keep UI usable even when the model repeatedly fails or ignores the exact-term constraint.
+        return fallbackExample(term: term, typeLabel: typeLabel)
+    }
+
+    private func fallbackExample(term: String, typeLabel: String) -> AIExample {
+        AIExample(
+            jp: "この例では「\(term)」を使います。",
+            reading: "このれいでは「\(term)」をつかいます。",
+            zh: "這個例句會直接使用「\(term)」。",
+            grammar: "保底例句：包含題目答案「\(term)」（\(typeLabel)）。"
+        )
     }
 
     #if canImport(FoundationModels)
@@ -89,6 +127,22 @@ final class AppleIntelligenceService {
         throw AIServiceError.unavailable("FoundationModels unavailable")
     }
     #endif
+}
+
+enum ExampleValidator {
+    static func containsExactTerm(_ sentence: String, term: String) -> Bool {
+        let normalizedSentence = normalize(sentence)
+        let normalizedTerm = normalize(term)
+        guard !normalizedSentence.isEmpty, !normalizedTerm.isEmpty else { return false }
+        return normalizedSentence.contains(normalizedTerm)
+    }
+
+    private static func normalize(_ text: String) -> String {
+        text
+            .precomposedStringWithCanonicalMapping
+            .replacingOccurrences(of: "　", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }
 
 #if canImport(FoundationModels)
