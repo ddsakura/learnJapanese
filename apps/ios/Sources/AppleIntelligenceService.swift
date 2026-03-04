@@ -69,11 +69,16 @@ final class AppleIntelligenceService {
         3) 不涉及暴力、犯罪、醫療、成人、政治、宗教、歧視等敏感話題。
         """
         let repairPrompt = """
-        請重新產生。日文句子必須逐字包含「\(term)」且只能一個簡短句子，保持 N4 程度與日常場景。
+        請重新產生。你是一位專業的日語老師。請用「\(term)」（形態：\(typeLabel)）造一個 N4 程度、日常生活情境的單一句。
+        強制規則：
+        1) 日文句子必須逐字包含「\(term)」，不可改寫成其他形態。
+        2) 句子簡短自然，不要故事化，只能一個簡短句子。
+        3) 不涉及暴力、犯罪、醫療、成人、政治、宗教、歧視等敏感話題。
         """
 
         for prompt in [strictPrompt, repairPrompt] {
             for _ in 0..<2 {
+                try Task.checkCancellation()
                 do {
                     let response = try await respond(generating: ExampleResponse.self, prompt: prompt)
                     if ExampleValidator.containsExactTerm(response.jp, term: term) {
@@ -84,6 +89,8 @@ final class AppleIntelligenceService {
                             grammar: response.grammar.trimmingCharacters(in: .whitespacesAndNewlines)
                         )
                     }
+                } catch let error as CancellationError {
+                    throw error
                 } catch {
                     continue
                 }
