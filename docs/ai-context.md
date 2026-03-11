@@ -12,7 +12,7 @@ A cross-platform JLPT N4 Japanese verb/adjective conjugation learning app (monor
 npm run dev          # Start dev server (also auto-starts Ollama if not running)
 npm run build        # Production build
 npm test             # Unit tests with Vitest
-npm run test:e2e     # E2E tests with Playwright (requires built app)
+npm run test:e2e     # E2E tests with Playwright (uses Vite dev server; no pre-build required)
 npm run test:all     # All tests
 npm run lint         # ESLint
 ```
@@ -46,7 +46,7 @@ node scripts/check-conjugation.mjs
 ### Monorepo Structure
 
 ```text
-packages/core/          Shared TypeScript conjugation engine, types, docs, fixtures
+packages/core/          Shared specs, documentation, and fixtures
 apps/web/               React 19 + Vite web app
 apps/ios/               SwiftUI app, XcodeGen project
 apps/android/           Jetpack Compose app
@@ -56,29 +56,33 @@ scripts/                Fixture sync and generation utilities
 ### Data Flow and Source of Truth
 
 - `packages/core/fixtures/bank.json` is the root source of truth for the question bank.
-- Platform copies live at `apps/{web,ios,android}/src/data/bank.json`.
+- Platform copies live at:
+  - Web: `apps/web/src/data/bank.json`
+  - iOS: `apps/ios/Resources/fixtures/bank.json`
+  - Android: `apps/android/app/src/main/assets/fixtures/bank.json`
 - Use the fixture scripts to sync changes between root and platform copies.
 - User SRS progress is stored locally per platform.
 
-### Core Package (`packages/core/`)
+### Shared Logic and Specs
 
-Shared TypeScript modules used directly by web and mirrored in Swift/Kotlin for native clients:
+`packages/core/` currently holds the shared specifications, documentation, and fixture data used across platforms.
+
+The current TypeScript implementation used by the web app lives in `apps/web/src/lib/`:
 
 - `conjugation.ts`: verb/adjective conjugation rules
 - `questions.ts`: question generation and SRS pool selection
-- `srs.ts`: simplified SRS algorithm
 - `importing.ts`: bank import and normalization
 - `parsers.ts`: AI response parsing
 - `prompts.ts`: Ollama prompt generation
 - `stats.ts`: statistics tracking
 
-The authoritative cross-platform specifications live in `packages/core/docs/`.
+The authoritative cross-platform specifications live in `packages/core/docs/`, and the native apps maintain their own Swift/Kotlin implementations.
 
 ## AI Integration (Ollama)
 
 - Default model: `translategemma:12b`
-- Web proxies `/api/` to `http://127.0.0.1:11434`
-- iOS uses `AppleIntelligenceService` with optional Ollama fallback
+- Web proxies `/ollama` to `http://127.0.0.1:11434`
+- iOS uses `AppleIntelligenceService`
 - Android uses `local.properties` for the base URL; emulator access is `10.0.2.2:11434`
 - AI is used for examples/translations and is not required for core functionality
 
