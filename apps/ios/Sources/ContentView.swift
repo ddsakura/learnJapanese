@@ -581,9 +581,8 @@ private struct TransitivityCardView: View {
                             .frame(minHeight: rowHeight)
                     }
                 } else if state.answerMode == .choice {
-                    let choices = getTransitivityChoicesSwift(q: q, bank: state.transitivityBank)
                     VStack(spacing: 8) {
-                        ForEach(choices, id: \.self) { option in
+                        ForEach(state.transitivityChoiceOptions, id: \.self) { option in
                             Button {
                                 state.submitTransitivityAnswer(option)
                             } label: {
@@ -625,20 +624,6 @@ private struct TransitivityCardView: View {
             Text("題庫沒有自他動詞資料")
                 .foregroundStyle(.secondary)
         }
-    }
-
-    private func getTransitivityChoicesSwift(q: TransitivityQuestionViewModel, bank: [TransitivityCardFixture]) -> [String] {
-        let correct = q.answer
-        let answerSide = q.side == "intransitive" ? "transitive" : "intransitive"
-        var distractors: [String] = bank
-            .filter { $0.intransitive != q.card.intransitive }
-            .compactMap { answerSide == "transitive" ? $0.transitive : $0.intransitive }
-            .filter { $0 != correct }
-        distractors.shuffle()
-        let wrong = Array(distractors.prefix(3))
-        var options = [correct] + wrong
-        options.shuffle()
-        return options
     }
 }
 
@@ -752,12 +737,14 @@ private struct SettingsView: View {
                     }
                 }
 
-                Section("作答方式") {
-                    Picker("作答方式", selection: $answerMode) {
-                        Text("文字輸入").tag(AnswerMode.input)
-                        Text("四選一").tag(AnswerMode.choice)
+                if topicMode == .transitivity {
+                    Section("作答方式") {
+                        Picker("作答方式", selection: $answerMode) {
+                            Text("文字輸入").tag(AnswerMode.input)
+                            Text("四選一").tag(AnswerMode.choice)
+                        }
+                        .pickerStyle(.segmented)
                     }
-                    .pickerStyle(.segmented)
                 }
             }
             .navigationTitle("學習設定")

@@ -335,12 +335,6 @@ function App() {
       : "ない形／た形／なかった形／て形・快速刷題 + 簡易 SRS";
   const ruleSummary =
     practice === "verb" ? "た形・て形・可能形 變形規則" : "形容詞變化規則";
-  const currentCard = useMemo(() => {
-    if (!question) return null;
-    return (
-      bank.find((card) => card.dict === question.card.dict) ?? question.card
-    );
-  }, [bank, question]);
   const bankExample =
     practice === "verb"
       ? `[
@@ -1074,10 +1068,6 @@ function App() {
       </section>
     );
   };
-
-  // suppress unused variable warning
-  void currentCard;
-
   return (
     <div className="app">
       <HeaderControls

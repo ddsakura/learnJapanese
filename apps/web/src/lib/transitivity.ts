@@ -1,8 +1,5 @@
 import type { TransitivityCard, TransitivityQuestion, TransitivityQuestionType } from "../types"
-
-function pickRandom<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]
-}
+import { pickRandom, shuffle } from "./questions"
 
 export function makeTransitivityQuestion(
   bank: TransitivityCard[],
@@ -38,9 +35,6 @@ export function getTransitivityChoices(
     .filter((c) => c !== question.card)
     .map((c) => c[answerSide])
     .filter((v): v is string => Boolean(v) && v !== correct)
-  // shuffle and take 3
-  const shuffled = distractors.sort(() => Math.random() - 0.5)
-  const wrong = shuffled.slice(0, 3)
-  const options = [correct, ...wrong].sort(() => Math.random() - 0.5)
-  return options
+  const wrong = shuffle(distractors).slice(0, 3)
+  return shuffle([correct, ...wrong])
 }

@@ -651,7 +651,7 @@ private fun TransitivitySection(viewModel: AppViewModel) {
             }
         }
     } else if (viewModel.answerMode == AnswerMode.CHOICE) {
-        val choices = viewModel.getTransitivityChoices()
+        val choices = viewModel.transitivityChoiceOptions
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             choices.forEach { option ->
                 val isSelected = viewModel.transitivityResult?.third == option
@@ -924,8 +924,8 @@ private fun SettingsSheet(
             Spacer(modifier = Modifier.width(8.dp))
             Button(
                 onClick = {
-                    viewModel.updateTopicMode(pendingTopicMode)
                     viewModel.updateTransitivityType(pendingTransitivityType)
+                    viewModel.updateTopicMode(pendingTopicMode)
                     viewModel.setPracticeKind(pendingPractice)
                     viewModel.setAnswerMode(pendingAnswerMode)
                     viewModel.setQuestionType(pendingQuestionType)

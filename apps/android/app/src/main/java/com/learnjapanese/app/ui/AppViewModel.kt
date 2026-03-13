@@ -124,6 +124,8 @@ class AppViewModel(
         private set
     var currentTransitivityQuestion by mutableStateOf<TransitivityQuestionViewModel?>(null)
         private set
+    var transitivityChoiceOptions by mutableStateOf(listOf<String>())
+        private set
     var transitivityResult by mutableStateOf<Triple<Boolean, String, String>?>(null)
         private set
     var transitivityAnswerText by mutableStateOf("")
@@ -412,15 +414,19 @@ class AppViewModel(
         val bank = transitivityBank
         if (bank.isEmpty()) {
             currentTransitivityQuestion = null
+            transitivityChoiceOptions = emptyList()
             return
         }
         val card = bank.random()
         val side = listOf("intransitive", "transitive").random()
-        currentTransitivityQuestion = TransitivityQuestionViewModel(
+        val question =
+            TransitivityQuestionViewModel(
             card = card,
             type = selectedTransitivityType,
             side = side,
         )
+        currentTransitivityQuestion = question
+        transitivityChoiceOptions = buildTransitivityChoices(question)
         transitivityAnswerText = ""
         transitivityResult = null
     }
@@ -436,8 +442,10 @@ class AppViewModel(
         submitTransitivityAnswer("")
     }
 
-    fun getTransitivityChoices(): List<String> {
-        val question = currentTransitivityQuestion ?: return emptyList()
+    private fun buildTransitivityChoices(question: TransitivityQuestionViewModel): List<String> {
+        if (question.type == TransitivityQuestionType.IDENTIFY) {
+            return listOf("自動詞", "他動詞")
+        }
         val correct = question.answer
         val answerSide = if (question.side == "intransitive") "transitive" else "intransitive"
         val distractors = transitivityBank

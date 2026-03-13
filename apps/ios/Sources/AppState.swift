@@ -29,6 +29,7 @@ final class AppState: ObservableObject {
         didSet { defaults.set(transitivityQuestionType.rawValue, forKey: DefaultsKey.transitivityQuestionType) }
     }
     @Published var currentTransitivityQuestion: TransitivityQuestionViewModel?
+    @Published var transitivityChoiceOptions: [String] = []
     @Published var transitivityResult: (correct: Bool, correctAnswer: String, userAnswer: String)?
     @Published var transitivityAnswerText: String = ""
     @Published var selectedQuestionType: QuestionType = .mixed {
@@ -206,15 +207,18 @@ final class AppState: ObservableObject {
     func nextTransitivityQuestion() {
         guard !transitivityBank.isEmpty else {
             currentTransitivityQuestion = nil
+            transitivityChoiceOptions = []
             return
         }
         let card = transitivityBank.randomElement()!
         let side = Bool.random() ? "intransitive" : "transitive"
-        currentTransitivityQuestion = TransitivityQuestionViewModel(
+        let question = TransitivityQuestionViewModel(
             card: card,
             type: transitivityQuestionType,
             side: side
         )
+        currentTransitivityQuestion = question
+        transitivityChoiceOptions = makeTransitivityChoices(for: question)
         transitivityAnswerText = ""
         transitivityResult = nil
     }
@@ -228,6 +232,21 @@ final class AppState: ObservableObject {
 
     func skipTransitivity() {
         submitTransitivityAnswer("")
+    }
+
+    private func makeTransitivityChoices(for question: TransitivityQuestionViewModel) -> [String] {
+        if question.type == .identify {
+            return ["自動詞", "他動詞"]
+        }
+
+        let correct = question.answer
+        let answerSide = question.side == "intransitive" ? "transitive" : "intransitive"
+        let distractors = transitivityBank
+            .filter { $0.intransitive != question.card.intransitive }
+            .compactMap { answerSide == "transitive" ? $0.transitive : $0.intransitive }
+            .filter { $0 != correct }
+            .shuffled()
+        return ([correct] + Array(distractors.prefix(3))).shuffled()
     }
 
     func startReview() {
