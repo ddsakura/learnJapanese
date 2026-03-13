@@ -15,6 +15,7 @@ import kotlinx.serialization.json.JsonPrimitive
 data class BankFixtures(
     val verb: List<CardFixture>,
     val adjective: List<CardFixture>,
+    val transitivity: List<TransitivityCardFixture> = emptyList(),
 )
 
 @Serializable
@@ -220,6 +221,16 @@ data class WrongEntry(
 data class WrongToday(
     val date: String,
     val items: List<WrongEntry>,
+)
+
+@Serializable
+data class TransitivityCardFixture(
+    val intransitive: String,
+    val transitive: String,
+    val reading_i: String? = null,
+    val reading_t: String? = null,
+    val zh: String? = null,
+    val group: String,
 )
 
 @Serializable

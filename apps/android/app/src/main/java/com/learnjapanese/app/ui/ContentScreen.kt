@@ -57,6 +57,8 @@ import com.learnjapanese.app.data.AdjectiveScope
 import com.learnjapanese.app.data.AnswerMode
 import com.learnjapanese.app.data.PracticeKind
 import com.learnjapanese.app.data.QuestionType
+import com.learnjapanese.app.data.TopicMode
+import com.learnjapanese.app.data.TransitivityQuestionType
 import com.learnjapanese.app.data.VerbScope
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,30 +94,40 @@ fun ContentScreen(viewModel: AppViewModel) {
                 onClick = { showSettingsSheet = true },
             )
 
-            if (viewModel.currentQuestion != null) {
-                QuestionCard(viewModel = viewModel)
-                AnswerSection(viewModel = viewModel)
-                ResultSection(viewModel = viewModel)
-                StatsSection(viewModel = viewModel)
-                ReviewSection(viewModel = viewModel)
-                AiSection(viewModel = viewModel)
+            if (viewModel.topicMode == TopicMode.TRANSITIVITY) {
+                TransitivitySection(viewModel = viewModel)
+                Button(
+                    onClick = { viewModel.nextTransitivityQuestion() },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("下一題")
+                }
             } else {
-                Text(
-                    text =
-                        if (viewModel.mode == com.learnjapanese.app.data.PracticeMode.REVIEW_WRONG) {
-                            "目前沒有可複習錯題"
-                        } else {
-                            "目前題庫沒有可用題目"
-                        },
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+                if (viewModel.currentQuestion != null) {
+                    QuestionCard(viewModel = viewModel)
+                    AnswerSection(viewModel = viewModel)
+                    ResultSection(viewModel = viewModel)
+                    StatsSection(viewModel = viewModel)
+                    ReviewSection(viewModel = viewModel)
+                    AiSection(viewModel = viewModel)
+                } else {
+                    Text(
+                        text =
+                            if (viewModel.mode == com.learnjapanese.app.data.PracticeMode.REVIEW_WRONG) {
+                                "目前沒有可複習錯題"
+                            } else {
+                                "目前題庫沒有可用題目"
+                            },
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
 
-            Button(
-                onClick = { viewModel.nextQuestion(viewModel.currentPractice) },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("下一題")
+                Button(
+                    onClick = { viewModel.nextQuestion(viewModel.currentPractice) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("下一題")
+                }
             }
 
             viewModel.errorMessage?.let {
@@ -564,6 +576,136 @@ private fun AiSection(viewModel: AppViewModel) {
 }
 
 @Composable
+private fun TransitivitySection(viewModel: AppViewModel) {
+    val question = viewModel.currentTransitivityQuestion
+    val strokeColor = MaterialTheme.colorScheme.outline
+    val softFill = MaterialTheme.colorScheme.surfaceVariant
+    val rowHeight = 44.dp
+
+    if (question == null) {
+        Text("題庫沒有自他動詞資料", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        return
+    }
+
+    ElevatedCard(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(question.prompt, fontSize = 36.sp, fontWeight = FontWeight.SemiBold)
+            question.reading?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            question.card.zh?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Text(
+                if (question.type == TransitivityQuestionType.IDENTIFY) "これは自動詞ですか？他動詞ですか？" else "対になる動詞は何ですか？",
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF2E7D32),
+            )
+        }
+    }
+
+    val result = viewModel.transitivityResult
+    if (result != null) {
+        val (correct, correctAnswer, _) = result
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            color = (if (correct) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error).copy(alpha = 0.1f),
+            border = BorderStroke(1.dp, (if (correct) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error).copy(alpha = 0.5f)),
+        ) {
+            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    if (correct) "正確！" else "不正確",
+                    color = if (correct) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Bold,
+                )
+                if (!correct) Text("正確答案：$correctAnswer")
+                val i = question.card.intransitive
+                val ri = question.card.reading_i ?: ""
+                val t = question.card.transitive
+                val rt = question.card.reading_t ?: ""
+                Text(
+                    "$i（$ri）↔ $t（$rt）",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    } else if (question.type == TransitivityQuestionType.IDENTIFY) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("自動詞", "他動詞").forEach { option ->
+                Button(
+                    onClick = { viewModel.submitTransitivityAnswer(option) },
+                    modifier = Modifier.fillMaxWidth().height(rowHeight),
+                ) {
+                    Text(option)
+                }
+            }
+            OutlinedButton(
+                onClick = { viewModel.skipTransitivity() },
+                modifier = Modifier.fillMaxWidth().height(rowHeight),
+            ) {
+                Text("略過")
+            }
+        }
+    } else if (viewModel.answerMode == AnswerMode.CHOICE) {
+        val choices = viewModel.getTransitivityChoices()
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            choices.forEach { option ->
+                val isSelected = viewModel.transitivityResult?.third == option
+                val isCorrect = viewModel.transitivityResult?.second == option
+                ChoiceButton(
+                    text = option,
+                    strokeColor = strokeColor,
+                    softFill = softFill,
+                    isSelected = isSelected,
+                    isCorrect = isCorrect,
+                    showResult = viewModel.transitivityResult != null,
+                    enabled = viewModel.transitivityResult == null,
+                    onClick = { viewModel.submitTransitivityAnswer(option) },
+                )
+            }
+            OutlinedButton(
+                onClick = { viewModel.skipTransitivity() },
+                modifier = Modifier.fillMaxWidth().height(rowHeight),
+                enabled = viewModel.transitivityResult == null,
+            ) { Text("略過") }
+        }
+    } else {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(1.dp, strokeColor),
+            color = MaterialTheme.colorScheme.surface,
+        ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = viewModel.transitivityAnswerText,
+                    onValueChange = { viewModel.transitivityAnswerText = it },
+                    label = { Text("輸入答案") },
+                    enabled = viewModel.transitivityResult == null,
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = { viewModel.submitTransitivityAnswer(viewModel.transitivityAnswerText) },
+                        modifier = Modifier.weight(1f).height(rowHeight),
+                        enabled = viewModel.transitivityResult == null,
+                    ) { Text("批改") }
+                    OutlinedButton(
+                        onClick = { viewModel.skipTransitivity() },
+                        modifier = Modifier.weight(1f).height(rowHeight),
+                        enabled = viewModel.transitivityResult == null,
+                    ) { Text("略過") }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun BankSheet(
     viewModel: AppViewModel,
     onClose: () -> Unit,
@@ -654,6 +796,8 @@ private fun SettingsSheet(
     var pendingOllamaEnabled by remember { mutableStateOf(viewModel.ollamaEnabled) }
     var pendingOllamaBaseUrl by remember { mutableStateOf(viewModel.ollamaBaseUrl) }
     var pendingOllamaModel by remember { mutableStateOf(viewModel.ollamaModel) }
+    var pendingTopicMode by remember { mutableStateOf(viewModel.topicMode) }
+    var pendingTransitivityType by remember { mutableStateOf(viewModel.selectedTransitivityType) }
 
     Column(
         modifier =
@@ -665,12 +809,76 @@ private fun SettingsSheet(
     ) {
         Text("學習設定", style = MaterialTheme.typography.titleMedium)
 
-        SettingsSection(title = "學習對象") {
+        SettingsSection(title = "學習主題") {
             SegmentedRow(
-                options = listOf(PracticeKind.VERB to "動詞", PracticeKind.ADJECTIVE to "形容詞"),
-                selected = pendingPractice,
-                onSelect = { pendingPractice = it },
+                options = listOf(TopicMode.CONJUGATION to "活用練習", TopicMode.TRANSITIVITY to "自他動詞"),
+                selected = pendingTopicMode,
+                onSelect = { pendingTopicMode = it },
             )
+        }
+
+        if (pendingTopicMode == TopicMode.CONJUGATION) {
+            SettingsSection(title = "學習對象") {
+                SegmentedRow(
+                    options = listOf(PracticeKind.VERB to "動詞", PracticeKind.ADJECTIVE to "形容詞"),
+                    selected = pendingPractice,
+                    onSelect = { pendingPractice = it },
+                )
+            }
+
+            SettingsSection(title = "題型") {
+                val availableTypes =
+                    if (pendingPractice == PracticeKind.VERB) {
+                        QuestionType.entries
+                    } else {
+                        QuestionType.entries.filter { it != QuestionType.POTENTIAL }
+                    }
+                availableTypes.forEachIndexed { index, type ->
+                    SelectableRow(
+                        label = type.label,
+                        selected = pendingQuestionType == type,
+                        onClick = { pendingQuestionType = type },
+                        showDivider = index < availableTypes.lastIndex,
+                    )
+                }
+            }
+
+            if (pendingPractice == PracticeKind.VERB) {
+                SettingsSection(title = "動詞種類") {
+                    VerbScope.entries.forEachIndexed { index, scope ->
+                        SelectableRow(
+                            label = scope.label,
+                            selected = pendingVerbScope == scope,
+                            onClick = { pendingVerbScope = scope },
+                            showDivider = index < VerbScope.entries.lastIndex,
+                        )
+                    }
+                }
+            } else {
+                SettingsSection(title = "形容詞種類") {
+                    AdjectiveScope.entries.forEachIndexed { index, scope ->
+                        SelectableRow(
+                            label = scope.label,
+                            selected = pendingAdjectiveScope == scope,
+                            onClick = { pendingAdjectiveScope = scope },
+                            showDivider = index < AdjectiveScope.entries.lastIndex,
+                        )
+                    }
+                }
+            }
+        }
+
+        if (pendingTopicMode == TopicMode.TRANSITIVITY) {
+            SettingsSection(title = "題型") {
+                TransitivityQuestionType.entries.forEachIndexed { index, type ->
+                    SelectableRow(
+                        label = type.label,
+                        selected = pendingTransitivityType == type,
+                        onClick = { pendingTransitivityType = type },
+                        showDivider = index < TransitivityQuestionType.entries.lastIndex,
+                    )
+                }
+            }
         }
 
         SettingsSection(title = "作答方式") {
@@ -679,47 +887,6 @@ private fun SettingsSheet(
                 selected = pendingAnswerMode,
                 onSelect = { pendingAnswerMode = it },
             )
-        }
-
-        SettingsSection(title = "題型") {
-            val availableTypes =
-                if (pendingPractice == PracticeKind.VERB) {
-                    QuestionType.entries
-                } else {
-                    QuestionType.entries.filter { it != QuestionType.POTENTIAL }
-                }
-            availableTypes.forEachIndexed { index, type ->
-                SelectableRow(
-                    label = type.label,
-                    selected = pendingQuestionType == type,
-                    onClick = { pendingQuestionType = type },
-                    showDivider = index < availableTypes.lastIndex,
-                )
-            }
-        }
-
-        if (pendingPractice == PracticeKind.VERB) {
-            SettingsSection(title = "動詞種類") {
-                VerbScope.entries.forEachIndexed { index, scope ->
-                    SelectableRow(
-                        label = scope.label,
-                        selected = pendingVerbScope == scope,
-                        onClick = { pendingVerbScope = scope },
-                        showDivider = index < VerbScope.entries.lastIndex,
-                    )
-                }
-            }
-        } else {
-            SettingsSection(title = "形容詞種類") {
-                AdjectiveScope.entries.forEachIndexed { index, scope ->
-                    SelectableRow(
-                        label = scope.label,
-                        selected = pendingAdjectiveScope == scope,
-                        onClick = { pendingAdjectiveScope = scope },
-                        showDivider = index < AdjectiveScope.entries.lastIndex,
-                    )
-                }
-            }
         }
 
         SettingsSection(title = "AI（Ollama）") {
@@ -757,6 +924,8 @@ private fun SettingsSheet(
             Spacer(modifier = Modifier.width(8.dp))
             Button(
                 onClick = {
+                    viewModel.updateTopicMode(pendingTopicMode)
+                    viewModel.updateTransitivityType(pendingTransitivityType)
                     viewModel.setPracticeKind(pendingPractice)
                     viewModel.setAnswerMode(pendingAnswerMode)
                     viewModel.setQuestionType(pendingQuestionType)
@@ -767,9 +936,11 @@ private fun SettingsSheet(
                         baseUrl = pendingOllamaBaseUrl,
                         model = pendingOllamaModel,
                     )
-                    viewModel.nextQuestion(pendingPractice)
-                    if (pendingAnswerMode == AnswerMode.CHOICE) {
-                        viewModel.generateChoices()
+                    if (pendingTopicMode == TopicMode.CONJUGATION) {
+                        viewModel.nextQuestion(pendingPractice)
+                        if (pendingAnswerMode == AnswerMode.CHOICE) {
+                            viewModel.generateChoices()
+                        }
                     }
                     onClose()
                 },
@@ -873,6 +1044,9 @@ private fun SelectableRow(
 }
 
 private fun settingsSummary(viewModel: AppViewModel): String {
+    if (viewModel.topicMode == TopicMode.TRANSITIVITY) {
+        return "自他動詞・${viewModel.selectedTransitivityType.label}"
+    }
     val practiceText = if (viewModel.currentPractice == PracticeKind.VERB) "動詞" else "形容詞"
     val modeText = if (viewModel.answerMode == AnswerMode.CHOICE) "四選一" else "文字輸入"
     val typeText = viewModel.selectedQuestionType.label

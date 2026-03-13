@@ -8,6 +8,7 @@ import StatsPanel from "./components/StatsPanel";
 import {
   DAY_MS,
   DEFAULT_ADJECTIVE_BANK,
+  DEFAULT_TRANSITIVITY_BANK,
   DEFAULT_VERB_BANK,
   INCORRECT_DELAY_MS,
   QUESTION_LABELS,
@@ -39,6 +40,11 @@ import {
   buildExamplePrompt,
   buildTranslationPrompt,
 } from "./lib/prompts";
+import {
+  makeTransitivityQuestion,
+  getTransitivityAnswer,
+  getTransitivityChoices,
+} from "./lib/transitivity";
 import type {
   AdjectiveScope,
   AnswerMode,
@@ -53,14 +59,20 @@ import type {
   Settings,
   SrsState,
   Stats,
+  TopicMode,
+  TransitivityCard,
+  TransitivityQuestion,
+  TransitivityQuestionType,
   VerbScope,
   WrongToday,
 } from "./types";
 
 const defaultSettings = (): Settings => ({
+  topicMode: 'conjugation',
   practice: "verb",
   verb: { scope: "all", type: "mixed" },
   adjective: { scope: "all", type: "mixed" },
+  transitivityType: 'find-pair',
 });
 
 type LegacySettings = {
@@ -75,8 +87,9 @@ const OLLAMA_GENERATE_ENDPOINT = import.meta.env.DEV
 function normalizeSettings(value: Settings | LegacySettings): Settings {
   const normalized: Settings =
     "practice" in value
-      ? value
+      ? { ...defaultSettings(), ...value }
       : {
+          ...defaultSettings(),
           practice: "verb",
           verb: { scope: value.scope as VerbScope, type: value.type },
           adjective: { scope: "all", type: "mixed" },
@@ -205,9 +218,20 @@ async function enrichTranslations(cards: Card[], existing: Card[]) {
 }
 
 function App() {
+  const [topicMode, setTopicMode] = useState<TopicMode>(() => {
+    return loadSettings().topicMode ?? 'conjugation';
+  });
   const [practice, setPractice] = useState<PracticeKind>(() => {
     return loadSettings().practice;
   });
+  const [transitivityType, setTransitivityType] = useState<TransitivityQuestionType>(() => {
+    return loadSettings().transitivityType ?? 'find-pair';
+  });
+  const [transitivityBank] = useState<TransitivityCard[]>(DEFAULT_TRANSITIVITY_BANK);
+  const [transitivityQuestion, setTransitivityQuestion] = useState<TransitivityQuestion | null>(null);
+  const [transitivityChoices, setTransitivityChoices] = useState<string[]>([]);
+  const [transitivityResult, setTransitivityResult] = useState<{ correct: boolean; correctAnswer: string; userAnswer: string } | null>(null);
+  const [transitivityAnswer, setTransitivityAnswer] = useState('');
   const [banks, setBanks] = useState<Record<PracticeKind, Card[]>>(() => ({
     verb: normalizeVerbBank(
       loadFromStorage(STORAGE_KEYS.bank.verb, DEFAULT_VERB_BANK),
@@ -374,17 +398,21 @@ function App() {
 
   useEffect(() => {
     const nextSettings: Settings = {
+      topicMode,
       practice,
       verb: { scope: verbScope, type: verbQuestionType },
       adjective: { scope: adjectiveScope, type: adjectiveQuestionType },
+      transitivityType,
     };
     saveToStorage(STORAGE_KEYS.settings, nextSettings);
   }, [
+    topicMode,
     practice,
     verbScope,
     verbQuestionType,
     adjectiveScope,
     adjectiveQuestionType,
+    transitivityType,
   ]);
 
   useEffect(() => {
@@ -471,11 +499,25 @@ function App() {
     setMode("normal");
   }, [practice]);
 
+  // When topicMode or transitivityType changes, reset transitivity state
+  useEffect(() => {
+    if (topicMode === 'transitivity') {
+      const q = makeTransitivityQuestion(transitivityBank, transitivityType);
+      setTransitivityQuestion(q);
+      setTransitivityResult(null);
+      setTransitivityAnswer('');
+      if (q) {
+        const choices = getTransitivityChoices(q, transitivityBank);
+        setTransitivityChoices(choices);
+      }
+    }
+  }, [topicMode, transitivityType, transitivityBank]);
+
   useEffect(() => {
     setExample(null);
     setExampleStatus("idle");
     setExampleMessage("");
-    if (!result || !question) return;
+    if (!result || !question || topicMode !== 'conjugation') return;
     const term = result.correctAnswer;
     const typeLabel = QUESTION_LABELS[result.type];
     const cacheKey = `${practice}:${result.type}:${term}`;
@@ -512,10 +554,10 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [practice, question, result]);
+  }, [practice, question, result, topicMode]);
 
   useEffect(() => {
-    if (!result || !question) return;
+    if (!result || !question || topicMode !== 'conjugation') return;
     const answer = result.correctAnswer;
     let cancelled = false;
     setLiveZh(null);
@@ -528,10 +570,10 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [practice, question, result]);
+  }, [practice, question, result, topicMode]);
 
   useEffect(() => {
-    if (!question || answerMode !== "choice") {
+    if (!question || answerMode !== "choice" || topicMode !== 'conjugation') {
       setChoiceOptions([]);
       setChoiceStatus("idle");
       setChoiceMessage("");
@@ -539,7 +581,7 @@ function App() {
     }
     if (result) return;
     startChoiceGeneration(false);
-  }, [answerMode, practice, question, result]);
+  }, [answerMode, practice, question, result, topicMode]);
 
   useEffect(() => {
     if (canSpeak) {
@@ -631,10 +673,24 @@ function App() {
     });
   }
 
+  function checkTransitivityAnswer(submitted: string, forcedIncorrect = false) {
+    if (!transitivityQuestion) return;
+    const correctAnswer = getTransitivityAnswer(transitivityQuestion);
+    const trimmed = submitted.trim();
+    const isCorrect = !forcedIncorrect && trimmed === correctAnswer;
+    setTransitivityResult({ correct: isCorrect, correctAnswer, userAnswer: trimmed });
+  }
+
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (result || !question) return;
     checkAnswer(answer);
+  }
+
+  function handleTransitivitySubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (transitivityResult || !transitivityQuestion) return;
+    checkTransitivityAnswer(transitivityAnswer);
   }
 
   function handleSkip() {
@@ -642,10 +698,32 @@ function App() {
     checkAnswer("", true);
   }
 
+  function handleTransitivitySkip() {
+    if (!transitivityQuestion || transitivityResult) return;
+    checkTransitivityAnswer("", true);
+  }
+
   function handleNext() {
     setQuestion(makeQuestion());
     setAnswer("");
     setResult(null);
+  }
+
+  function handleTransitivityNext() {
+    const q = makeTransitivityQuestion(transitivityBank, transitivityType);
+    setTransitivityQuestion(q);
+    setTransitivityResult(null);
+    setTransitivityAnswer('');
+    if (q) {
+      const choices = getTransitivityChoices(q, transitivityBank);
+      setTransitivityChoices(choices);
+    }
+  }
+
+  function handleTransitivityChoicePick(option: string) {
+    if (transitivityResult || !transitivityQuestion) return;
+    setTransitivityAnswer(option);
+    checkTransitivityAnswer(option);
   }
 
   function handleStartReview() {
@@ -872,9 +950,138 @@ function App() {
     setMessage("已清空學習紀錄。");
   }
 
+  // Render the transitivity question card
+  const renderTransitivitySection = () => {
+    if (!transitivityQuestion) {
+      return <p className="empty-message">題庫沒有自他動詞資料</p>;
+    }
+    const { card, type, side } = transitivityQuestion;
+    const prompt = side === 'intransitive' ? card.intransitive : card.transitive;
+    const reading = side === 'intransitive' ? card.reading_i : card.reading_t;
+    const isIdentify = type === 'identify';
+    const isChoice = isIdentify || answerMode === 'choice';
+
+    return (
+      <section className="question-card">
+        <div className="question">
+          <div className="prompt">{prompt}</div>
+          {reading && <div className="arrow">{reading}</div>}
+          <div className="target">
+            {isIdentify ? '自動詞 or 他動詞？' : '対になる動詞は？'}
+          </div>
+        </div>
+
+        {isChoice ? (
+          <div className="answer-form">
+            <div className="choice-list">
+              {transitivityChoices.map((option) => {
+                const isCorrect = transitivityResult && option === transitivityResult.correctAnswer;
+                const isWrong =
+                  transitivityResult &&
+                  option === transitivityResult.userAnswer &&
+                  option !== transitivityResult.correctAnswer;
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    className={`choice-button${isCorrect ? " correct" : ""}${isWrong ? " wrong" : ""}`}
+                    onClick={() => handleTransitivityChoicePick(option)}
+                    disabled={Boolean(transitivityResult)}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="actions">
+              <button
+                type="button"
+                className="ghost"
+                onClick={handleTransitivitySkip}
+                disabled={Boolean(transitivityResult)}
+              >
+                略過
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={handleTransitivityNext}
+                disabled={!transitivityResult}
+              >
+                下一題
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form className="answer-form" onSubmit={handleTransitivitySubmit}>
+            <input
+              type="text"
+              value={transitivityAnswer}
+              onChange={(e) => setTransitivityAnswer(e.target.value)}
+              placeholder="輸入答案，Enter 送出"
+              disabled={Boolean(transitivityResult)}
+              autoFocus
+            />
+            <div className="actions">
+              <button type="submit" disabled={Boolean(transitivityResult)}>
+                批改
+              </button>
+              <button
+                type="button"
+                className="ghost"
+                onClick={handleTransitivitySkip}
+                disabled={Boolean(transitivityResult)}
+              >
+                略過
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={handleTransitivityNext}
+                disabled={!transitivityResult}
+              >
+                下一題
+              </button>
+            </div>
+          </form>
+        )}
+
+        <div className="result">
+          {transitivityResult ? (
+            <div className={transitivityResult.correct ? "correct" : "wrong"}>
+              <div className="badge">
+                {transitivityResult.correct ? '✅ 正確' : '❌ 錯誤 / 略過'}
+              </div>
+              <div className="result-row">
+                <span>我的答案</span>
+                <strong>{transitivityResult.userAnswer || '（空白）'}</strong>
+              </div>
+              <div className="result-row">
+                <span>正確答案</span>
+                <strong>{transitivityResult.correctAnswer}</strong>
+              </div>
+              <div className="result-row">
+                <span>配對</span>
+                <strong>
+                  {card.intransitive}（{card.reading_i ?? ''}）↔ {card.transitive}（{card.reading_t ?? ''}）
+                </strong>
+              </div>
+            </div>
+          ) : (
+            <div className="hint">選擇或輸入答案後送出。</div>
+          )}
+        </div>
+      </section>
+    );
+  };
+
+  // suppress unused variable warning
+  void currentCard;
+
   return (
     <div className="app">
       <HeaderControls
+        topicMode={topicMode}
         practice={practice}
         summaryLine={summaryLine}
         questionType={questionType}
@@ -882,6 +1089,10 @@ function App() {
         typeOptions={typeOptions}
         scopeLabels={scopeLabels}
         answerMode={answerMode}
+        transitivityType={transitivityType}
+        onTopicModeChange={(value) => {
+          setTopicMode(value);
+        }}
         onPracticeChange={setPractice}
         onQuestionTypeChange={(value) =>
           practice === "verb"
@@ -894,68 +1105,75 @@ function App() {
             : setAdjectiveScope(value as AdjectiveScope)
         }
         onAnswerModeChange={setAnswerMode}
+        onTransitivityTypeChange={setTransitivityType}
       />
 
       <main className="main">
-        <QuestionCard
-          question={question}
-          emptyMessage={emptyMessage}
-          canSpeak={canSpeak}
-          isSpeaking={isSpeaking}
-          onSpeak={handleSpeak}
-          answerMode={answerMode}
-          answer={answer}
-          onAnswerChange={setAnswer}
-          onSubmit={handleSubmit}
-          onSkip={handleSkip}
-          onNext={handleNext}
-          result={result}
-          choiceStatus={choiceStatus}
-          choiceMessage={choiceMessage}
-          choiceOptions={choiceOptions}
-          onChoicePick={handleChoicePick}
-          onRegenerateChoices={handleRegenerateChoices}
-          liveZh={liveZh}
-          isTranslating={isTranslating}
-          example={example}
-          exampleStatus={exampleStatus}
-          exampleMessage={exampleMessage}
-          isExampleSpeaking={isExampleSpeaking}
-          onExampleSpeak={handleExampleSpeak}
-          dictLabel={dictLabel}
-          practice={practice}
-        />
+        {topicMode === 'transitivity' ? (
+          renderTransitivitySection()
+        ) : (
+          <>
+            <QuestionCard
+              question={question}
+              emptyMessage={emptyMessage}
+              canSpeak={canSpeak}
+              isSpeaking={isSpeaking}
+              onSpeak={handleSpeak}
+              answerMode={answerMode}
+              answer={answer}
+              onAnswerChange={setAnswer}
+              onSubmit={handleSubmit}
+              onSkip={handleSkip}
+              onNext={handleNext}
+              result={result}
+              choiceStatus={choiceStatus}
+              choiceMessage={choiceMessage}
+              choiceOptions={choiceOptions}
+              onChoicePick={handleChoicePick}
+              onRegenerateChoices={handleRegenerateChoices}
+              liveZh={liveZh}
+              isTranslating={isTranslating}
+              example={example}
+              exampleStatus={exampleStatus}
+              exampleMessage={exampleMessage}
+              isExampleSpeaking={isExampleSpeaking}
+              onExampleSpeak={handleExampleSpeak}
+              dictLabel={dictLabel}
+              practice={practice}
+            />
 
-        <StatsPanel
-          activeStats={activeStats}
-          dueCount={dueCount}
-          wrongCount={wrongCount}
-          scopeLabel={scopeLabels[scope]}
-          mode={mode}
-          onStartReview={handleStartReview}
-          onExitReview={handleExitReview}
-        />
+            <StatsPanel
+              activeStats={activeStats}
+              dueCount={dueCount}
+              wrongCount={wrongCount}
+              scopeLabel={scopeLabels[scope]}
+              mode={mode}
+              onStartReview={handleStartReview}
+              onExitReview={handleExitReview}
+            />
 
-        <RulesPanel practice={practice} ruleSummary={ruleSummary} />
+            <RulesPanel practice={practice} ruleSummary={ruleSummary} />
 
-        <BankPanel
-          practice={practice}
-          bankExample={bankExample}
-          groupHint={groupHint}
-          bankCount={bank.length}
-          bankText={bankText}
-          onBankTextChange={setBankText}
-          quickInput={quickInput}
-          onQuickInputChange={setQuickInput}
-          onQuickImport={handleQuickImport}
-          onExport={handleExport}
-          onExportAll={handleExportAll}
-          onImport={handleImport}
-          onReset={handleResetBank}
-          onClearProgress={handleClearProgress}
-          isImporting={isImporting}
-          message={message}
-        />
+            <BankPanel
+              practice={practice}
+              bankExample={bankExample}
+              groupHint={groupHint}
+              bankCount={bank.length}
+              bankText={bankText}
+              onBankTextChange={setBankText}
+              quickInput={quickInput}
+              onQuickInputChange={setQuickInput}
+              onQuickImport={handleQuickImport}
+              onExport={handleExport}
+              onExportAll={handleExportAll}
+              onImport={handleImport}
+              onReset={handleResetBank}
+              onClearProgress={handleClearProgress}
+              isImporting={isImporting}
+              message={message}
+            />
+          </>
+        )}
       </main>
     </div>
   );

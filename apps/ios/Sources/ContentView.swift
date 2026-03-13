@@ -47,278 +47,288 @@ struct ContentView: View {
                         .clipShape(RoundedRectangle(cornerRadius: cardCorner, style: .continuous))
                     }
 
-                    if let question = state.currentQuestion {
-                        HStack {
-                            QuestionCardView(question: question)
-                            Button {
-                                state.speakQuestion()
-                            } label: {
-                                Image(systemName: "speaker.wave.2.fill")
-                            }
-                            .buttonStyle(.bordered)
+                    if state.topicMode == .transitivity {
+                        TransitivityCardView(state: state)
+
+                        Button("下一題") {
+                            state.nextTransitivityQuestion()
                         }
-
-                        if state.answerMode == .input {
-                            VStack(spacing: 10) {
-                                TextField("輸入答案", text: $state.answerText)
-                                    .textFieldStyle(.roundedBorder)
-                                    .disabled(state.result != nil)
-                                HStack {
-                                    Button("批改") {
-                                        state.submitAnswer(state.answerText)
-                                    }
-                                    .buttonStyle(.borderedProminent)
-                                    .tint(primaryTint)
-                                    .frame(minHeight: rowHeight)
-                                    .disabled(state.result != nil)
-                                    Button("略過") {
-                                        state.skip()
-                                    }
-                                    .buttonStyle(.bordered)
-                                    .tint(secondaryTint)
-                                    .frame(minHeight: rowHeight)
-                                    .disabled(state.result != nil)
-                                }
-                            }
-                            .padding(cardPadding)
-                            .background(
-                                RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
-                                    .stroke(cardStroke, lineWidth: 1)
-                            )
-                        } else {
-                            VStack(spacing: 8) {
-                                ForEach(state.choiceOptions, id: \.self) { option in
-                                    let isSelected = state.result?.userAnswer == option
-                                    let isCorrect = state.result?.correctAnswer == option
-                                    Button {
-                                        state.submitAnswer(option)
-                                    } label: {
-                                        Text(option)
-                                            .frame(maxWidth: .infinity, alignment: .center)
-                                    }
-                                    .buttonStyle(ChoiceButtonStyle(
-                                        corner: 14,
-                                        stroke: cardStroke,
-                                        fill: softFill,
-                                        pressedFill: Color.accentColor.opacity(0.15),
-                                        selectedFill: Color.accentColor.opacity(0.18),
-                                        correctFill: Color.green.opacity(0.18),
-                                        wrongFill: Color.red.opacity(0.18),
-                                        minHeight: rowHeight,
-                                        isSelected: isSelected,
-                                        isCorrect: isCorrect,
-                                        showResult: state.result != nil
-                                    ))
-                                    .disabled(state.result != nil)
-                                }
-                                HStack {
-                                    Button("重新產生選項") {
-                                        state.generateChoices()
-                                    }
-                                    .buttonStyle(.bordered)
-                                    .tint(secondaryTint)
-                                    .frame(minHeight: rowHeight)
-                                    .disabled(state.result != nil)
-                                    Button("略過") {
-                                        state.skip()
-                                    }
-                                    .buttonStyle(.bordered)
-                                    .tint(secondaryTint)
-                                    .frame(minHeight: rowHeight)
-                                    .disabled(state.result != nil)
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-
-                    if let result = state.result {
-                        VStack(spacing: 8) {
-                            Text(result.correct ? "✅ 正確" : "❌ 錯誤 / 略過")
-                                .font(.headline)
-                                .foregroundStyle(result.correct ? .green : .red)
-                            VStack(spacing: 0) {
-                                HStack {
-                                    Text("題型")
-                                    Spacer()
-                                    Text(result.type.label)
-                                }
-                                .padding(.vertical, 10)
-
-                                Divider()
-
-                                HStack {
-                                    Text("我的答案")
-                                    Spacer()
-                                    Text(result.userAnswer.isEmpty ? "（空白）" : result.userAnswer)
-                                }
-                                .padding(.vertical, 10)
-
-                                Divider()
-
-                                HStack {
-                                    Text("正確答案")
-                                    Spacer()
-                                    Text(result.correctAnswer)
-                                }
-                                .padding(.vertical, 10)
-                            }
-                            .font(.subheadline)
-                            .padding(.horizontal, cardPadding)
-                            .background(
-                                RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
-                                    .stroke(cardStroke, lineWidth: 1)
-                            )
-                        }
-                        .padding(.top, 8)
-                    }
-
-                    HStack {
-                        VStack(spacing: 2) {
-                            Text("今日答題數")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text("\(state.stats.todayCount)")
-                                .font(.headline)
-                        }
-                        .frame(maxWidth: .infinity)
-                        Divider()
-                            .frame(height: 28)
-                        Spacer()
-                        VStack(spacing: 2) {
-                            Text("連續答對")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text("\(state.stats.streak)")
-                                .font(.headline)
-                        }
-                        .frame(maxWidth: .infinity)
-                        Divider()
-                            .frame(height: 28)
-                        Spacer()
-                        VStack(spacing: 2) {
-                            Text("今日答錯")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text("\(wrongCount)")
-                                .font(.headline)
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                    .padding(.top, 8)
-                    .padding(cardPadding)
-                    .background(
-                        RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
-                            .stroke(cardStroke, lineWidth: 1)
-                    )
-
-                    if state.mode == .reviewWrong {
-                        HStack {
-                            Label("錯題複習中", systemImage: "arrow.triangle.2.circlepath")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            Button("回到正常題庫") {
-                                state.exitReview()
-                            }
-                            .buttonStyle(.bordered)
-                            .tint(secondaryTint)
-                            .frame(minHeight: rowHeight)
-                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(primaryTint)
                     } else {
-                        Button("複習今日答錯") {
-                            state.startReview()
-                        }
-                        .buttonStyle(.bordered)
-                        .tint(secondaryTint)
-                        .frame(minHeight: rowHeight)
-                        .disabled(wrongCount == 0)
-                    }
-
-                        if case .loading = state.aiStatus {
-                            HStack(spacing: 8) {
-                                ProgressView()
-                                    .scaleEffect(0.9)
-                                Text("翻譯與例句產生中…")
-                                    .font(.footnote)
-                                    .foregroundStyle(.secondary)
+                        if let question = state.currentQuestion {
+                            HStack {
+                                QuestionCardView(question: question)
+                                Button {
+                                    state.speakQuestion()
+                                } label: {
+                                    Image(systemName: "speaker.wave.2.fill")
+                                }
+                                .buttonStyle(.bordered)
                             }
-                            .padding(.top, 6)
-                    } else if case .error(let message) = state.aiStatus {
-                        Text(message)
-                            .font(.footnote)
-                            .foregroundStyle(.red)
-                            .multilineTextAlignment(.center)
-                            .padding(.top, 6)
-                    } else {
-                        if state.translationText != nil || state.example != nil {
-                            VStack(alignment: .leading, spacing: 10) {
-                                if let translation = state.translationText {
+
+                            if state.answerMode == .input {
+                                VStack(spacing: 10) {
+                                    TextField("輸入答案", text: $state.answerText)
+                                        .textFieldStyle(.roundedBorder)
+                                        .disabled(state.result != nil)
                                     HStack {
-                                        Text("中文翻譯")
-                                            .font(.subheadline)
-                                            .fontWeight(.semibold)
-                                        Spacer()
-                                        Text(translation)
-                                    }
-                                }
-
-                                if state.translationText != nil && state.example != nil {
-                                    Divider()
-                                }
-
-                                if let example = state.example {
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        Text("例句")
-                                            .font(.subheadline)
-                                            .fontWeight(.semibold)
-                                        Button {
-                                            state.speakExample()
-                                        } label: {
-                                            Label("朗讀例句", systemImage: "speaker.wave.2")
+                                        Button("批改") {
+                                            state.submitAnswer(state.answerText)
+                                        }
+                                        .buttonStyle(.borderedProminent)
+                                        .tint(primaryTint)
+                                        .frame(minHeight: rowHeight)
+                                        .disabled(state.result != nil)
+                                        Button("略過") {
+                                            state.skip()
                                         }
                                         .buttonStyle(.bordered)
                                         .tint(secondaryTint)
                                         .frame(minHeight: rowHeight)
-                                        Text(example.jp)
-                                        Text(example.reading)
-                                            .foregroundStyle(.secondary)
-                                            .font(.footnote)
-                                        Text(example.zh)
-                                            .foregroundStyle(.secondary)
-                                        Text(example.grammar)
-                                            .foregroundStyle(.secondary)
-                                            .font(.footnote)
+                                        .disabled(state.result != nil)
                                     }
                                 }
+                                .padding(cardPadding)
+                                .background(
+                                    RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
+                                        .stroke(cardStroke, lineWidth: 1)
+                                )
+                            } else {
+                                VStack(spacing: 8) {
+                                    ForEach(state.choiceOptions, id: \.self) { option in
+                                        let isSelected = state.result?.userAnswer == option
+                                        let isCorrect = state.result?.correctAnswer == option
+                                        Button {
+                                            state.submitAnswer(option)
+                                        } label: {
+                                            Text(option)
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                        }
+                                        .buttonStyle(ChoiceButtonStyle(
+                                            corner: 14,
+                                            stroke: cardStroke,
+                                            fill: softFill,
+                                            pressedFill: Color.accentColor.opacity(0.15),
+                                            selectedFill: Color.accentColor.opacity(0.18),
+                                            correctFill: Color.green.opacity(0.18),
+                                            wrongFill: Color.red.opacity(0.18),
+                                            minHeight: rowHeight,
+                                            isSelected: isSelected,
+                                            isCorrect: isCorrect,
+                                            showResult: state.result != nil
+                                        ))
+                                        .disabled(state.result != nil)
+                                    }
+                                    HStack {
+                                        Button("重新產生選項") {
+                                            state.generateChoices()
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .tint(secondaryTint)
+                                        .frame(minHeight: rowHeight)
+                                        .disabled(state.result != nil)
+                                        Button("略過") {
+                                            state.skip()
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .tint(secondaryTint)
+                                        .frame(minHeight: rowHeight)
+                                        .disabled(state.result != nil)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
                             }
-                            .padding(cardPadding)
-                            .background(
-                                RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
-                                    .stroke(cardStroke, lineWidth: 1)
-                            )
-                            .padding(.top, 6)
+
+                        if let result = state.result {
+                            VStack(spacing: 8) {
+                                Text(result.correct ? "✅ 正確" : "❌ 錯誤 / 略過")
+                                    .font(.headline)
+                                    .foregroundStyle(result.correct ? .green : .red)
+                                VStack(spacing: 0) {
+                                    HStack {
+                                        Text("題型")
+                                        Spacer()
+                                        Text(result.type.label)
+                                    }
+                                    .padding(.vertical, 10)
+
+                                    Divider()
+
+                                    HStack {
+                                        Text("我的答案")
+                                        Spacer()
+                                        Text(result.userAnswer.isEmpty ? "（空白）" : result.userAnswer)
+                                    }
+                                    .padding(.vertical, 10)
+
+                                    Divider()
+
+                                    HStack {
+                                        Text("正確答案")
+                                        Spacer()
+                                        Text(result.correctAnswer)
+                                    }
+                                    .padding(.vertical, 10)
+                                }
+                                .font(.subheadline)
+                                .padding(.horizontal, cardPadding)
+                                .background(
+                                    RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
+                                        .stroke(cardStroke, lineWidth: 1)
+                                )
+                            }
+                            .padding(.top, 8)
                         }
-                        if state.result != nil {
-                            Button("重新產生翻譯/例句") {
-                                state.regenerateAI()
+
+                        HStack {
+                            VStack(spacing: 2) {
+                                Text("今日答題數")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text("\(state.stats.todayCount)")
+                                    .font(.headline)
+                            }
+                            .frame(maxWidth: .infinity)
+                            Divider()
+                                .frame(height: 28)
+                            Spacer()
+                            VStack(spacing: 2) {
+                                Text("連續答對")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text("\(state.stats.streak)")
+                                    .font(.headline)
+                            }
+                            .frame(maxWidth: .infinity)
+                            Divider()
+                                .frame(height: 28)
+                            Spacer()
+                            VStack(spacing: 2) {
+                                Text("今日答錯")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text("\(wrongCount)")
+                                    .font(.headline)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .padding(.top, 8)
+                        .padding(cardPadding)
+                        .background(
+                            RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
+                                .stroke(cardStroke, lineWidth: 1)
+                        )
+
+                        if state.mode == .reviewWrong {
+                            HStack {
+                                Label("錯題複習中", systemImage: "arrow.triangle.2.circlepath")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Button("回到正常題庫") {
+                                    state.exitReview()
+                                }
+                                .buttonStyle(.bordered)
+                                .tint(secondaryTint)
+                                .frame(minHeight: rowHeight)
+                            }
+                        } else {
+                            Button("複習今日答錯") {
+                                state.startReview()
                             }
                             .buttonStyle(.bordered)
                             .tint(secondaryTint)
                             .frame(minHeight: rowHeight)
-                            .padding(.top, 6)
-                            .disabled(state.aiStatus == .loading)
+                            .disabled(wrongCount == 0)
                         }
-                    }
-                } else {
-                    Text(state.mode == .reviewWrong ? "目前沒有可複習錯題" : "目前題庫沒有可用題目")
-                        .foregroundStyle(.secondary)
-                    }
 
-                    Button("下一題") {
-                        state.nextQuestion(practice: practice)
+                            if case .loading = state.aiStatus {
+                                HStack(spacing: 8) {
+                                    ProgressView()
+                                        .scaleEffect(0.9)
+                                    Text("翻譯與例句產生中…")
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .padding(.top, 6)
+                        } else if case .error(let message) = state.aiStatus {
+                            Text(message)
+                                .font(.footnote)
+                                .foregroundStyle(.red)
+                                .multilineTextAlignment(.center)
+                                .padding(.top, 6)
+                        } else {
+                            if state.translationText != nil || state.example != nil {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    if let translation = state.translationText {
+                                        HStack {
+                                            Text("中文翻譯")
+                                                .font(.subheadline)
+                                                .fontWeight(.semibold)
+                                            Spacer()
+                                            Text(translation)
+                                        }
+                                    }
+
+                                    if state.translationText != nil && state.example != nil {
+                                        Divider()
+                                    }
+
+                                    if let example = state.example {
+                                        VStack(alignment: .leading, spacing: 6) {
+                                            Text("例句")
+                                                .font(.subheadline)
+                                                .fontWeight(.semibold)
+                                            Button {
+                                                state.speakExample()
+                                            } label: {
+                                                Label("朗讀例句", systemImage: "speaker.wave.2")
+                                            }
+                                            .buttonStyle(.bordered)
+                                            .tint(secondaryTint)
+                                            .frame(minHeight: rowHeight)
+                                            Text(example.jp)
+                                            Text(example.reading)
+                                                .foregroundStyle(.secondary)
+                                                .font(.footnote)
+                                            Text(example.zh)
+                                                .foregroundStyle(.secondary)
+                                            Text(example.grammar)
+                                                .foregroundStyle(.secondary)
+                                                .font(.footnote)
+                                        }
+                                    }
+                                }
+                                .padding(cardPadding)
+                                .background(
+                                    RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
+                                        .stroke(cardStroke, lineWidth: 1)
+                                )
+                                .padding(.top, 6)
+                            }
+                            if state.result != nil {
+                                Button("重新產生翻譯/例句") {
+                                    state.regenerateAI()
+                                }
+                                .buttonStyle(.bordered)
+                                .tint(secondaryTint)
+                                .frame(minHeight: rowHeight)
+                                .padding(.top, 6)
+                                .disabled(state.aiStatus == .loading)
+                            }
+                        }
+                    } else {
+                        Text(state.mode == .reviewWrong ? "目前沒有可複習錯題" : "目前題庫沒有可用題目")
+                            .foregroundStyle(.secondary)
+                        }
+
+                        Button("下一題") {
+                            state.nextQuestion(practice: practice)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(primaryTint)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(primaryTint)
 
                     if let error = state.errorMessage {
                         Text(error)
@@ -407,12 +417,18 @@ struct ContentView: View {
                     questionType: $state.selectedQuestionType,
                     verbScope: $state.selectedVerbScope,
                     adjectiveScope: $state.selectedAdjectiveScope,
+                    topicMode: $state.topicMode,
+                    transitivityQuestionType: $state.transitivityQuestionType,
                     onApply: {
-                        state.nextQuestion(practice: practice)
-                        if state.answerMode == .choice {
-                            state.generateChoices()
+                        if state.topicMode == .transitivity {
+                            state.nextTransitivityQuestion()
                         } else {
-                            state.choiceOptions = []
+                            state.nextQuestion(practice: practice)
+                            if state.answerMode == .choice {
+                                state.generateChoices()
+                            } else {
+                                state.choiceOptions = []
+                            }
                         }
                     }
                 )
@@ -421,6 +437,9 @@ struct ContentView: View {
     }
 
     private func settingsSummary(practice: PracticeKind) -> String {
+        if state.topicMode == .transitivity {
+            return "自他動詞・\(state.transitivityQuestionType.label)"
+        }
         let practiceText = practice == .verb ? "動詞" : "形容詞"
         let modeText = state.answerMode == .choice ? "四選一" : "文字輸入"
         let typeText = state.selectedQuestionType.label
@@ -486,6 +505,143 @@ private struct ChoiceButtonStyle: ButtonStyle {
     }
 }
 
+private struct TransitivityCardView: View {
+    @ObservedObject var state: AppState
+    private let cardStroke = Color(uiColor: .separator)
+    private let softFill = Color(uiColor: .secondarySystemBackground)
+    private let cardCorner: CGFloat = 16
+    private let rowHeight: CGFloat = 44
+    private let primaryTint = Color.accentColor
+
+    var body: some View {
+        let question = state.currentTransitivityQuestion
+        if let q = question {
+            VStack(spacing: 12) {
+                VStack(spacing: 8) {
+                    Text(q.prompt)
+                        .font(.system(size: 40, weight: .semibold))
+                    if let reading = q.reading {
+                        Text(reading)
+                            .foregroundStyle(.secondary)
+                    }
+                    if let zh = q.card.zh {
+                        Text(zh)
+                            .foregroundStyle(.secondary)
+                            .font(.footnote)
+                    }
+                    Text(q.type == .identify
+                         ? "これは自動詞ですか？他動詞ですか？"
+                         : "対になる動詞は何ですか？")
+                    .foregroundStyle(Color.green)
+                    .fontWeight(.semibold)
+                    .padding(.top, 4)
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
+                        .stroke(cardStroke, lineWidth: 1)
+                )
+
+                if let res = state.transitivityResult {
+                    VStack(spacing: 6) {
+                        Text(res.correct ? "✅ 正確" : "❌ 錯誤")
+                            .font(.headline)
+                            .foregroundStyle(res.correct ? .green : .red)
+                        if !res.correct {
+                            Text("正確答案：\(res.correctAnswer)")
+                        }
+                        let i = q.card.intransitive
+                        let ri = q.card.reading_i ?? ""
+                        let t = q.card.transitive
+                        let rt = q.card.reading_t ?? ""
+                        Text("\(i)（\(ri)）↔ \(t)（\(rt)）")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
+                            .stroke(cardStroke, lineWidth: 1)
+                    )
+                } else if q.type == .identify {
+                    VStack(spacing: 8) {
+                        ForEach(["自動詞", "他動詞"], id: \.self) { option in
+                            Button {
+                                state.submitTransitivityAnswer(option)
+                            } label: {
+                                Text(option).frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            .frame(minHeight: rowHeight)
+                        }
+                        Button("略過") { state.skipTransitivity() }
+                            .buttonStyle(.bordered)
+                            .frame(minHeight: rowHeight)
+                    }
+                } else if state.answerMode == .choice {
+                    let choices = getTransitivityChoicesSwift(q: q, bank: state.transitivityBank)
+                    VStack(spacing: 8) {
+                        ForEach(choices, id: \.self) { option in
+                            Button {
+                                state.submitTransitivityAnswer(option)
+                            } label: {
+                                Text(option).frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            .frame(minHeight: rowHeight)
+                        }
+                        Button("略過") { state.skipTransitivity() }
+                            .buttonStyle(.bordered)
+                            .frame(minHeight: rowHeight)
+                    }
+                } else {
+                    VStack(spacing: 8) {
+                        TextField("輸入答案", text: $state.transitivityAnswerText)
+                            .textFieldStyle(.roundedBorder)
+                        HStack {
+                            Button("批改") {
+                                state.submitTransitivityAnswer(state.transitivityAnswerText)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(primaryTint)
+                            .frame(minHeight: rowHeight)
+                            Button("略過") {
+                                state.skipTransitivity()
+                            }
+                            .buttonStyle(.bordered)
+                            .frame(minHeight: rowHeight)
+                        }
+                    }
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
+                            .stroke(cardStroke, lineWidth: 1)
+                    )
+                }
+            }
+        } else {
+            Text("題庫沒有自他動詞資料")
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func getTransitivityChoicesSwift(q: TransitivityQuestionViewModel, bank: [TransitivityCardFixture]) -> [String] {
+        let correct = q.answer
+        let answerSide = q.side == "intransitive" ? "transitive" : "intransitive"
+        var distractors: [String] = bank
+            .filter { $0.intransitive != q.card.intransitive }
+            .compactMap { answerSide == "transitive" ? $0.transitive : $0.intransitive }
+            .filter { $0 != correct }
+        distractors.shuffle()
+        let wrong = Array(distractors.prefix(3))
+        var options = [correct] + wrong
+        options.shuffle()
+        return options
+    }
+}
+
 private struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var practice: PracticeKind
@@ -493,17 +649,107 @@ private struct SettingsView: View {
     @Binding var questionType: QuestionType
     @Binding var verbScope: VerbScope
     @Binding var adjectiveScope: AdjectiveScope
+    @Binding var topicMode: TopicMode
+    @Binding var transitivityQuestionType: TransitivityQuestionType
     let onApply: () -> Void
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("學習對象") {
-                    Picker("學習對象", selection: $practice) {
-                        Text("動詞").tag(PracticeKind.verb)
-                        Text("形容詞").tag(PracticeKind.adjective)
+                Section("學習主題") {
+                    Picker("學習主題", selection: $topicMode) {
+                        Text("活用練習").tag(TopicMode.conjugation)
+                        Text("自他動詞").tag(TopicMode.transitivity)
                     }
                     .pickerStyle(.segmented)
+                }
+
+                if topicMode == .conjugation {
+                    Section("學習對象") {
+                        Picker("學習對象", selection: $practice) {
+                            Text("動詞").tag(PracticeKind.verb)
+                            Text("形容詞").tag(PracticeKind.adjective)
+                        }
+                        .pickerStyle(.segmented)
+                    }
+
+                    Section("作答方式") {
+                        Picker("作答方式", selection: $answerMode) {
+                            Text("文字輸入").tag(AnswerMode.input)
+                            Text("四選一").tag(AnswerMode.choice)
+                        }
+                        .pickerStyle(.segmented)
+                    }
+
+                    Section("題型") {
+                        ForEach(QuestionType.allCases, id: \.self) { type in
+                            HStack {
+                                Text(type.label)
+                                Spacer()
+                                if questionType == type {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.tint)
+                                }
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                questionType = type
+                            }
+                        }
+                    }
+
+                    if practice == .verb {
+                        Section("動詞種類") {
+                            ForEach(VerbScope.allCases, id: \.self) { scope in
+                                HStack {
+                                    Text(scope.label)
+                                    Spacer()
+                                    if verbScope == scope {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.tint)
+                                    }
+                                }
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    verbScope = scope
+                                }
+                            }
+                        }
+                    } else {
+                        Section("形容詞種類") {
+                            ForEach(AdjectiveScope.allCases, id: \.self) { scope in
+                                HStack {
+                                    Text(scope.label)
+                                    Spacer()
+                                    if adjectiveScope == scope {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.tint)
+                                    }
+                                }
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    adjectiveScope = scope
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if topicMode == .transitivity {
+                    Section("題型") {
+                        ForEach(TransitivityQuestionType.allCases, id: \.self) { type in
+                            HStack {
+                                Text(type.label)
+                                Spacer()
+                                if transitivityQuestionType == type {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.tint)
+                                }
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture { transitivityQuestionType = type }
+                        }
+                    }
                 }
 
                 Section("作答方式") {
@@ -512,59 +758,6 @@ private struct SettingsView: View {
                         Text("四選一").tag(AnswerMode.choice)
                     }
                     .pickerStyle(.segmented)
-                }
-
-                Section("題型") {
-                    ForEach(QuestionType.allCases, id: \.self) { type in
-                        HStack {
-                            Text(type.label)
-                            Spacer()
-                            if questionType == type {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(.tint)
-                            }
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            questionType = type
-                        }
-                    }
-                }
-
-                if practice == .verb {
-                    Section("動詞種類") {
-                        ForEach(VerbScope.allCases, id: \.self) { scope in
-                            HStack {
-                                Text(scope.label)
-                                Spacer()
-                                if verbScope == scope {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(.tint)
-                                }
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                verbScope = scope
-                            }
-                        }
-                    }
-                } else {
-                    Section("形容詞種類") {
-                        ForEach(AdjectiveScope.allCases, id: \.self) { scope in
-                            HStack {
-                                Text(scope.label)
-                                Spacer()
-                                if adjectiveScope == scope {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(.tint)
-                                }
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                adjectiveScope = scope
-                            }
-                        }
-                    }
                 }
             }
             .navigationTitle("學習設定")

@@ -49,6 +49,13 @@ enum class AdjectiveScope(
 
 enum class PracticeMode { NORMAL, REVIEW_WRONG }
 
+enum class TopicMode { CONJUGATION, TRANSITIVITY }
+
+enum class TransitivityQuestionType(val label: String) {
+    FIND_PAIR("找配對"),
+    IDENTIFY("判斷自他"),
+}
+
 object Importing {
     fun normalizeImport(
         items: List<ImportItem>,

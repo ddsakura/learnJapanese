@@ -31,10 +31,31 @@ export type PracticeSettings<TScope extends Scope> = {
   type: QuestionType
 }
 
+export type TopicMode = 'conjugation' | 'transitivity'
+
+export type TransitivityCard = {
+  intransitive: string
+  transitive: string
+  reading_i?: string
+  reading_t?: string
+  zh?: string
+  group: 'pair'
+}
+
+export type TransitivityQuestionType = 'find-pair' | 'identify'
+
+export type TransitivityQuestion = {
+  card: TransitivityCard
+  type: TransitivityQuestionType
+  side: 'intransitive' | 'transitive'
+}
+
 export type Settings = {
+  topicMode: TopicMode
   practice: PracticeKind
   verb: PracticeSettings<VerbScope>
   adjective: PracticeSettings<AdjectiveScope>
+  transitivityType: TransitivityQuestionType
 }
 
 export type Stats = {

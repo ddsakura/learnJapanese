@@ -30,6 +30,9 @@ import com.learnjapanese.app.data.Srs
 import com.learnjapanese.app.data.SrsState
 import com.learnjapanese.app.data.SrsStore
 import com.learnjapanese.app.data.Stats
+import com.learnjapanese.app.data.TopicMode
+import com.learnjapanese.app.data.TransitivityCardFixture
+import com.learnjapanese.app.data.TransitivityQuestionType
 import com.learnjapanese.app.data.VerbScope
 import com.learnjapanese.app.data.WrongEntry
 import com.learnjapanese.app.data.WrongToday
@@ -64,6 +67,19 @@ data class AnswerResult(
     val type: QuestionType,
 )
 
+data class TransitivityQuestionViewModel(
+    val card: TransitivityCardFixture,
+    val type: TransitivityQuestionType,
+    val side: String, // "intransitive" or "transitive"
+) {
+    val prompt: String get() = if (side == "intransitive") card.intransitive else card.transitive
+    val reading: String? get() = if (side == "intransitive") card.reading_i else card.reading_t
+    val answer: String get() = when (type) {
+        TransitivityQuestionType.IDENTIFY -> if (side == "intransitive") "自動詞" else "他動詞"
+        TransitivityQuestionType.FIND_PAIR -> if (side == "intransitive") card.transitive else card.intransitive
+    }
+}
+
 class AppViewModel(
     application: Application,
 ) : AndroidViewModel(application) {
@@ -88,16 +104,29 @@ class AppViewModel(
         const val OLLAMA_ENABLED = "learnJapanese.ollama.enabled"
         const val OLLAMA_BASE_URL = "learnJapanese.ollama.baseUrl"
         const val OLLAMA_MODEL = "learnJapanese.ollama.model"
+        const val TOPIC_MODE = "learnJapanese.topicMode"
+        const val TRANSITIVITY_QUESTION_TYPE = "learnJapanese.transitivityQuestionType"
     }
 
     var verbBank by mutableStateOf(listOf<CardFixture>())
         private set
     var adjectiveBank by mutableStateOf(listOf<CardFixture>())
         private set
+    var transitivityBank by mutableStateOf(listOf<TransitivityCardFixture>())
+        private set
     var currentQuestion by mutableStateOf<QuestionViewModel?>(null)
         private set
     var currentPractice by mutableStateOf(PracticeKind.VERB)
         private set
+    var topicMode by mutableStateOf(TopicMode.CONJUGATION)
+        private set
+    var selectedTransitivityType by mutableStateOf(TransitivityQuestionType.FIND_PAIR)
+        private set
+    var currentTransitivityQuestion by mutableStateOf<TransitivityQuestionViewModel?>(null)
+        private set
+    var transitivityResult by mutableStateOf<Triple<Boolean, String, String>?>(null)
+        private set
+    var transitivityAnswerText by mutableStateOf("")
     var selectedQuestionType by mutableStateOf(QuestionType.MIXED)
         private set
     var selectedVerbScope by mutableStateOf(VerbScope.ALL)
@@ -163,6 +192,7 @@ class AppViewModel(
             val bankFixtures = FixtureLoader.load<BankFixtures>(getApplication(), "bank")
             verbBank = bankFixtures.verb
             adjectiveBank = bankFixtures.adjective
+            transitivityBank = bankFixtures.transitivity
         } catch (error: Exception) {
             errorMessage = error.message
         }
@@ -183,6 +213,12 @@ class AppViewModel(
         }
         prefs.getString(DefaultsKey.PRACTICE_KIND, null)?.let { raw ->
             currentPractice = if (raw == PracticeKind.ADJECTIVE.raw) PracticeKind.ADJECTIVE else PracticeKind.VERB
+        }
+        prefs.getString(DefaultsKey.TOPIC_MODE, null)?.let { raw ->
+            topicMode = runCatching { TopicMode.valueOf(raw) }.getOrDefault(topicMode)
+        }
+        prefs.getString(DefaultsKey.TRANSITIVITY_QUESTION_TYPE, null)?.let { raw ->
+            selectedTransitivityType = runCatching { TransitivityQuestionType.valueOf(raw) }.getOrDefault(selectedTransitivityType)
         }
         ollamaEnabled = prefs.getBoolean(DefaultsKey.OLLAMA_ENABLED, BuildConfig.OLLAMA_ENABLED)
         ollamaBaseUrl =
@@ -357,6 +393,60 @@ class AppViewModel(
     fun exitReview() {
         mode = PracticeMode.NORMAL
         nextQuestion(currentPractice)
+    }
+
+    fun updateTopicMode(value: TopicMode) {
+        topicMode = value
+        prefs.edit().putString(DefaultsKey.TOPIC_MODE, value.name).apply()
+        if (value == TopicMode.TRANSITIVITY) {
+            nextTransitivityQuestion()
+        }
+    }
+
+    fun updateTransitivityType(value: TransitivityQuestionType) {
+        selectedTransitivityType = value
+        prefs.edit().putString(DefaultsKey.TRANSITIVITY_QUESTION_TYPE, value.name).apply()
+    }
+
+    fun nextTransitivityQuestion() {
+        val bank = transitivityBank
+        if (bank.isEmpty()) {
+            currentTransitivityQuestion = null
+            return
+        }
+        val card = bank.random()
+        val side = listOf("intransitive", "transitive").random()
+        currentTransitivityQuestion = TransitivityQuestionViewModel(
+            card = card,
+            type = selectedTransitivityType,
+            side = side,
+        )
+        transitivityAnswerText = ""
+        transitivityResult = null
+    }
+
+    fun submitTransitivityAnswer(value: String) {
+        val question = currentTransitivityQuestion ?: return
+        val trimmed = value.trim()
+        val correct = trimmed == question.answer
+        transitivityResult = Triple(correct, question.answer, trimmed)
+    }
+
+    fun skipTransitivity() {
+        submitTransitivityAnswer("")
+    }
+
+    fun getTransitivityChoices(): List<String> {
+        val question = currentTransitivityQuestion ?: return emptyList()
+        val correct = question.answer
+        val answerSide = if (question.side == "intransitive") "transitive" else "intransitive"
+        val distractors = transitivityBank
+            .filter { it.intransitive != question.card.intransitive }
+            .map { if (answerSide == "transitive") it.transitive else it.intransitive }
+            .filter { it != correct }
+            .shuffled()
+            .take(3)
+        return (listOf(correct) + distractors).shuffled()
     }
 
     fun speakQuestion() {

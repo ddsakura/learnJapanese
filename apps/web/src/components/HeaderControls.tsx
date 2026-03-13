@@ -3,6 +3,8 @@ import type {
   PracticeKind,
   QuestionType,
   Scope,
+  TopicMode,
+  TransitivityQuestionType,
 } from "../types";
 
 const PRACTICE_LABELS: Record<PracticeKind, string> = {
@@ -11,6 +13,7 @@ const PRACTICE_LABELS: Record<PracticeKind, string> = {
 };
 
 type HeaderControlsProps = {
+  topicMode: TopicMode;
   practice: PracticeKind;
   summaryLine: string;
   questionType: QuestionType;
@@ -18,13 +21,17 @@ type HeaderControlsProps = {
   typeOptions: { value: QuestionType; label: string }[];
   scopeLabels: Record<Scope, string>;
   answerMode: AnswerMode;
+  transitivityType: TransitivityQuestionType;
+  onTopicModeChange: (value: TopicMode) => void;
   onPracticeChange: (value: PracticeKind) => void;
   onQuestionTypeChange: (value: QuestionType) => void;
   onScopeChange: (value: Scope) => void;
   onAnswerModeChange: (value: AnswerMode) => void;
+  onTransitivityTypeChange: (value: TransitivityQuestionType) => void;
 };
 
 export default function HeaderControls({
+  topicMode,
   practice,
   summaryLine,
   questionType,
@@ -32,60 +39,96 @@ export default function HeaderControls({
   typeOptions,
   scopeLabels,
   answerMode,
+  transitivityType,
+  onTopicModeChange,
   onPracticeChange,
   onQuestionTypeChange,
   onScopeChange,
   onAnswerModeChange,
+  onTransitivityTypeChange,
 }: HeaderControlsProps) {
-  const practiceLabel = PRACTICE_LABELS[practice];
+  const practiceLabel = topicMode === 'conjugation' ? PRACTICE_LABELS[practice] : '自他動詞';
+  const title = topicMode === 'conjugation'
+    ? `JLPT N4 普通形${practiceLabel}變化練習`
+    : 'JLPT N4 自動詞・他動詞練習';
 
   return (
     <header className="header">
       <div>
-        <h1>JLPT N4 普通形{practiceLabel}變化練習</h1>
-        <p>{summaryLine}</p>
+        <h1>{title}</h1>
+        <p>{topicMode === 'conjugation' ? summaryLine : '自動詞・他動詞・找配對＋判斷自他'}</p>
       </div>
       <div className="controls">
         <label>
-          類型
+          主題
           <select
-            value={practice}
+            value={topicMode}
             onChange={(event) =>
-              onPracticeChange(event.target.value as PracticeKind)
+              onTopicModeChange(event.target.value as TopicMode)
             }
           >
-            <option value="verb">動詞</option>
-            <option value="adjective">形容詞</option>
+            <option value="conjugation">活用練習</option>
+            <option value="transitivity">自他動詞</option>
           </select>
         </label>
-        <label>
-          題型
-          <select
-            value={questionType}
-            onChange={(event) =>
-              onQuestionTypeChange(event.target.value as QuestionType)
-            }
-          >
-            {typeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          範圍
-          <select
-            value={scope}
-            onChange={(event) => onScopeChange(event.target.value as Scope)}
-          >
-            {Object.entries(scopeLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
+        {topicMode === 'conjugation' && (
+          <>
+            <label>
+              類型
+              <select
+                value={practice}
+                onChange={(event) =>
+                  onPracticeChange(event.target.value as PracticeKind)
+                }
+              >
+                <option value="verb">動詞</option>
+                <option value="adjective">形容詞</option>
+              </select>
+            </label>
+            <label>
+              題型
+              <select
+                value={questionType}
+                onChange={(event) =>
+                  onQuestionTypeChange(event.target.value as QuestionType)
+                }
+              >
+                {typeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              範圍
+              <select
+                value={scope}
+                onChange={(event) => onScopeChange(event.target.value as Scope)}
+              >
+                {Object.entries(scopeLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        )}
+        {topicMode === 'transitivity' && (
+          <label>
+            題型
+            <select
+              value={transitivityType}
+              onChange={(event) =>
+                onTransitivityTypeChange(event.target.value as TransitivityQuestionType)
+              }
+            >
+              <option value="find-pair">找配對</option>
+              <option value="identify">判斷自他</option>
+            </select>
+          </label>
+        )}
         <label>
           作答方式
           <select
