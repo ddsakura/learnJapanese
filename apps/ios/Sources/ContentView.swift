@@ -565,21 +565,6 @@ private struct TransitivityCardView: View {
                         RoundedRectangle(cornerRadius: cardCorner, style: .continuous)
                             .stroke(cardStroke, lineWidth: 1)
                     )
-                } else if q.type == .identify {
-                    VStack(spacing: 8) {
-                        ForEach(["自動詞", "他動詞"], id: \.self) { option in
-                            Button {
-                                state.submitTransitivityAnswer(option)
-                            } label: {
-                                Text(option).frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.bordered)
-                            .frame(minHeight: rowHeight)
-                        }
-                        Button("略過") { state.skipTransitivity() }
-                            .buttonStyle(.bordered)
-                            .frame(minHeight: rowHeight)
-                    }
                 } else if state.answerMode == .choice {
                     VStack(spacing: 8) {
                         ForEach(state.transitivityChoiceOptions, id: \.self) { option in

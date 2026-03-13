@@ -953,7 +953,7 @@ function App() {
     const prompt = side === 'intransitive' ? card.intransitive : card.transitive;
     const reading = side === 'intransitive' ? card.reading_i : card.reading_t;
     const isIdentify = type === 'identify';
-    const isChoice = isIdentify || answerMode === 'choice';
+    const isChoice = answerMode === 'choice';
 
     return (
       <section className="question-card">

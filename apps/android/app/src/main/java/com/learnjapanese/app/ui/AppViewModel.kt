@@ -179,7 +179,11 @@ class AppViewModel(
         stats = srsStore.loadStats()
         stats.normalizeForToday()
         wrongToday = srsStore.loadWrongToday()
-        nextQuestion(currentPractice)
+        if (topicMode == TopicMode.TRANSITIVITY) {
+            nextTransitivityQuestion()
+        } else {
+            nextQuestion(currentPractice)
+        }
     }
 
     private fun loadDefaults() {

@@ -65,7 +65,11 @@ final class AppState: ObservableObject {
         stats = srsStore.loadStats()
         stats.normalizeForToday()
         wrongToday = srsStore.loadWrongToday()
-        nextQuestion(practice: .verb)
+        if topicMode == .transitivity {
+            nextTransitivityQuestion()
+        } else {
+            nextQuestion(practice: .verb)
+        }
     }
 
     func loadDefaults() {

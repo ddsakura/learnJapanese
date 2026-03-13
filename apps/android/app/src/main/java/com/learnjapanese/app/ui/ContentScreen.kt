@@ -633,23 +633,6 @@ private fun TransitivitySection(viewModel: AppViewModel) {
                 )
             }
         }
-    } else if (question.type == TransitivityQuestionType.IDENTIFY) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("自動詞", "他動詞").forEach { option ->
-                Button(
-                    onClick = { viewModel.submitTransitivityAnswer(option) },
-                    modifier = Modifier.fillMaxWidth().height(rowHeight),
-                ) {
-                    Text(option)
-                }
-            }
-            OutlinedButton(
-                onClick = { viewModel.skipTransitivity() },
-                modifier = Modifier.fillMaxWidth().height(rowHeight),
-            ) {
-                Text("略過")
-            }
-        }
     } else if (viewModel.answerMode == AnswerMode.CHOICE) {
         val choices = viewModel.transitivityChoiceOptions
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
