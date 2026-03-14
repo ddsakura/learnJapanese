@@ -260,19 +260,11 @@ function App() {
       loadFromStorage(STORAGE_KEYS.wrong.adjective, defaultWrongToday()),
     ),
   }));
-  const [verbScope, setVerbScope] = useState<VerbScope>(() => {
-    return loadSettings().verb.scope;
-  });
-  const [adjectiveScope, setAdjectiveScope] = useState<AdjectiveScope>(() => {
-    return loadSettings().adjective.scope;
-  });
-  const [verbQuestionType, setVerbQuestionType] = useState<QuestionType>(() => {
-    return loadSettings().verb.type;
-  });
+  const [verbScope, setVerbScope] = useState<VerbScope>(initialSettings.verb.scope);
+  const [adjectiveScope, setAdjectiveScope] = useState<AdjectiveScope>(initialSettings.adjective.scope);
+  const [verbQuestionType, setVerbQuestionType] = useState<QuestionType>(initialSettings.verb.type);
   const [adjectiveQuestionType, setAdjectiveQuestionType] =
-    useState<QuestionType>(() => {
-      return loadSettings().adjective.type;
-    });
+    useState<QuestionType>(initialSettings.adjective.type);
   const [question, setQuestion] = useState<Question | null>(null);
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState<AnswerResult | null>(null);

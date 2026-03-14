@@ -6,6 +6,7 @@ import type {
   TopicMode,
   TransitivityQuestionType,
 } from "../types";
+import { TRANSITIVITY_QUESTION_LABELS } from "../data/constants";
 
 const PRACTICE_LABELS: Record<PracticeKind, string> = {
   verb: "動詞",
@@ -124,8 +125,11 @@ export default function HeaderControls({
                 onTransitivityTypeChange(event.target.value as TransitivityQuestionType)
               }
             >
-              <option value="find-pair">找配對</option>
-              <option value="identify">判斷自他</option>
+              {Object.entries(TRANSITIVITY_QUESTION_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </select>
           </label>
         )}
