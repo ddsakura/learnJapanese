@@ -55,6 +55,7 @@ struct ContentView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(primaryTint)
+                        .disabled(state.transitivityResult == nil)
                     } else {
                         if let question = state.currentQuestion {
                             HStack {

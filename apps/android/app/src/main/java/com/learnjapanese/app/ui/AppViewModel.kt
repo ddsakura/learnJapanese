@@ -417,7 +417,19 @@ class AppViewModel(
         topicMode = value
         prefs.edit().putString(DefaultsKey.TOPIC_MODE, value.name).apply()
         if (value == TopicMode.TRANSITIVITY) {
+            currentQuestion = null
+            answerText = ""
+            result = null
+            translationText = null
+            example = null
+            choiceOptions = emptyList()
             nextTransitivityQuestion()
+        } else {
+            currentTransitivityQuestion = null
+            transitivityChoiceOptions = emptyList()
+            transitivityResult = null
+            transitivityAnswerText = ""
+            nextQuestion(currentPractice)
         }
     }
 

@@ -61,8 +61,10 @@ import type {
   Stats,
   TopicMode,
   TransitivityCard,
+  TransitivityAnswerResult,
   TransitivityQuestion,
   TransitivityQuestionType,
+  TransitivityWrongEntry,
   VerbScope,
   WrongToday,
 } from "./types";
@@ -226,11 +228,29 @@ function App() {
   const [topicMode, setTopicMode] = useState<TopicMode>(initialSettings.topicMode);
   const [practice, setPractice] = useState<PracticeKind>(initialSettings.practice);
   const [transitivityType, setTransitivityType] = useState<TransitivityQuestionType>(initialSettings.transitivityType);
-  const [transitivityBank] = useState<TransitivityCard[]>(DEFAULT_TRANSITIVITY_BANK);
+  const [transitivityBank] = useState<TransitivityCard[]>(
+    () => loadFromStorage(STORAGE_KEYS.bank.transitivity, DEFAULT_TRANSITIVITY_BANK),
+  );
   const [transitivityQuestion, setTransitivityQuestion] = useState<TransitivityQuestion | null>(null);
   const [transitivityChoices, setTransitivityChoices] = useState<string[]>([]);
-  const [transitivityResult, setTransitivityResult] = useState<{ correct: boolean; correctAnswer: string; userAnswer: string } | null>(null);
+  const [transitivityResult, setTransitivityResult] = useState<TransitivityAnswerResult | null>(null);
   const [transitivityAnswer, setTransitivityAnswer] = useState('');
+  const [transitivitySrs, setTransitivitySrs] = useState<Record<string, SrsState>>(
+    () => loadFromStorage(STORAGE_KEYS.srs.transitivity, {}),
+  );
+  const [transitivityStats, setTransitivityStats] = useState<Stats>(
+    () => normalizeStats(loadFromStorage(STORAGE_KEYS.stats.transitivity, defaultStats())),
+  );
+  const [transitivityWrongToday, setTransitivityWrongToday] = useState<
+    WrongToday<TransitivityWrongEntry>
+  >(() =>
+    normalizeWrongToday(
+      loadFromStorage(
+        STORAGE_KEYS.wrong.transitivity,
+        defaultWrongToday<TransitivityWrongEntry>(),
+      ),
+    ),
+  );
   const [banks, setBanks] = useState<Record<PracticeKind, Card[]>>(() => ({
     verb: normalizeVerbBank(
       loadFromStorage(STORAGE_KEYS.bank.verb, DEFAULT_VERB_BANK),
@@ -354,12 +374,20 @@ function App() {
   }, [banks.adjective]);
 
   useEffect(() => {
+    saveToStorage(STORAGE_KEYS.bank.transitivity, transitivityBank);
+  }, [transitivityBank]);
+
+  useEffect(() => {
     saveToStorage(STORAGE_KEYS.srs.verb, srs.verb);
   }, [srs.verb]);
 
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.srs.adjective, srs.adjective);
   }, [srs.adjective]);
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.srs.transitivity, transitivitySrs);
+  }, [transitivitySrs]);
 
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.stats.verb, stats.verb);
@@ -370,12 +398,20 @@ function App() {
   }, [stats.adjective]);
 
   useEffect(() => {
+    saveToStorage(STORAGE_KEYS.stats.transitivity, transitivityStats);
+  }, [transitivityStats]);
+
+  useEffect(() => {
     saveToStorage(STORAGE_KEYS.wrong.verb, wrongToday.verb);
   }, [wrongToday.verb]);
 
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.wrong.adjective, wrongToday.adjective);
   }, [wrongToday.adjective]);
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.wrong.transitivity, transitivityWrongToday);
+  }, [transitivityWrongToday]);
 
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.answerMode, answerMode);
@@ -409,6 +445,8 @@ function App() {
       verb: normalizeWrongToday(prev.verb),
       adjective: normalizeWrongToday(prev.adjective),
     }));
+    setTransitivityStats((prev) => normalizeStats(prev));
+    setTransitivityWrongToday((prev) => normalizeWrongToday(prev));
   }, []);
 
   const pool = useMemo(() => getPool(bank, scope), [bank, scope]);
@@ -665,6 +703,51 @@ function App() {
     const correctAnswer = getTransitivityAnswer(transitivityQuestion);
     const trimmed = submitted.trim();
     const isCorrect = !forcedIncorrect && trimmed === correctAnswer;
+    const dict = transitivityQuestion.card.intransitive;
+    setTransitivitySrs((prev) => {
+      const current = prev[dict];
+      const intervalDays = isCorrect
+        ? Math.max(1, (current?.intervalDays ?? 0) * 2 || 1)
+        : 0;
+      const due = isCorrect
+        ? Date.now() + intervalDays * DAY_MS
+        : Date.now() + INCORRECT_DELAY_MS;
+      return {
+        ...prev,
+        [dict]: { intervalDays, due },
+      };
+    });
+    setTransitivityStats((prev) => {
+      const normalized = normalizeStats(prev);
+      return {
+        ...normalized,
+        todayCount: normalized.todayCount + 1,
+        streak: isCorrect ? normalized.streak + 1 : 0,
+      };
+    });
+    setTransitivityWrongToday((prev) => {
+      const normalized = normalizeWrongToday(prev);
+      const entry = { dict, type: transitivityQuestion.type };
+      if (isCorrect) {
+        return {
+          ...normalized,
+          items: normalized.items.filter(
+            (item) => !(item.dict === entry.dict && item.type === entry.type),
+          ),
+        };
+      }
+      if (
+        normalized.items.some(
+          (item) => item.dict === entry.dict && item.type === entry.type,
+        )
+      ) {
+        return normalized;
+      }
+      return {
+        ...normalized,
+        items: [...normalized.items, entry],
+      };
+    });
     setTransitivityResult({ correct: isCorrect, correctAnswer, userAnswer: trimmed });
   }
 

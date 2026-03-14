@@ -16,7 +16,7 @@ export function defaultStats(): Stats {
   };
 }
 
-export function defaultWrongToday(): WrongToday {
+export function defaultWrongToday<TEntry>(): WrongToday<TEntry> {
   return {
     date: getTodayKey(),
     items: [],
@@ -31,7 +31,7 @@ export function normalizeStats(stats: Stats) {
   return stats;
 }
 
-export function normalizeWrongToday(data: WrongToday) {
+export function normalizeWrongToday<TEntry>(data: WrongToday<TEntry>) {
   const today = getTodayKey();
   if (data.date !== today) {
     return { date: today, items: [] };

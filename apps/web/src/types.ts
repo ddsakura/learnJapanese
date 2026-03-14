@@ -69,9 +69,14 @@ export type WrongEntry = {
   type: Exclude<QuestionType, 'mixed'>
 }
 
-export type WrongToday = {
+export type WrongToday<TEntry = WrongEntry> = {
   date: string
-  items: WrongEntry[]
+  items: TEntry[]
+}
+
+export type TransitivityWrongEntry = {
+  dict: string
+  type: TransitivityQuestionType
 }
 
 export type ExampleEntry = {
@@ -89,6 +94,12 @@ export type AnswerResult = {
   correctAnswer: string
   userAnswer: string
   type: Exclude<QuestionType, 'mixed'>
+}
+
+export type TransitivityAnswerResult = {
+  correct: boolean
+  correctAnswer: string
+  userAnswer: string
 }
 
 export type Question = {

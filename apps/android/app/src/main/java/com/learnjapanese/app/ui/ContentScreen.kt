@@ -99,6 +99,7 @@ fun ContentScreen(viewModel: AppViewModel) {
                 Button(
                     onClick = { viewModel.nextTransitivityQuestion() },
                     modifier = Modifier.fillMaxWidth(),
+                    enabled = viewModel.transitivityResult != null,
                 ) {
                     Text("下一題")
                 }
@@ -918,9 +919,6 @@ private fun SettingsSheet(
                         baseUrl = pendingOllamaBaseUrl,
                         model = pendingOllamaModel,
                     )
-                    if (pendingTopicMode == TopicMode.CONJUGATION) {
-                        viewModel.nextQuestion(pendingPractice)
-                    }
                     onClose()
                 },
             ) {
