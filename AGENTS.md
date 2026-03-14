@@ -13,3 +13,15 @@ Read `docs/ai-context.md` first for shared project context.
   - android: targeted `./gradlew` task
   - iOS: regenerate with `xcodegen generate` when `project.yml` changes, then run the relevant Xcode test/build flow
 - Follow the authoritative specs in `packages/core/docs/` when changing conjugation logic, SRS behavior, or import formats.
+
+## Branch Naming
+
+- When creating git branches, use these prefixes:
+  - `feature/` or `feat/`: new features
+  - `bugfix/` or `fix/`: bug fixes
+  - `hotfix/`: urgent fixes
+  - `release/`: release preparation
+  - `chore/`: docs, tooling, maintenance, dependency, or other non-feature updates
+- Choose the narrowest accurate prefix.
+- Do not use tool-specific prefixes such as `codex/`.
+- For documentation-only changes, prefer `chore/`.
