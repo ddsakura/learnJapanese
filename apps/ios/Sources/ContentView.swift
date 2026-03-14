@@ -508,7 +508,6 @@ private struct ChoiceButtonStyle: ButtonStyle {
 private struct TransitivityCardView: View {
     @ObservedObject var state: AppState
     private let cardStroke = Color(uiColor: .separator)
-    private let softFill = Color(uiColor: .secondarySystemBackground)
     private let cardCorner: CGFloat = 16
     private let rowHeight: CGFloat = 44
     private let primaryTint = Color.accentColor

@@ -1,4 +1,11 @@
-import type { AdjectiveScope, QuestionType, VerbScope, Card, TransitivityCard } from "../types";
+import type {
+  AdjectiveScope,
+  Card,
+  QuestionType,
+  TransitivityCard,
+  TransitivityQuestionType,
+  VerbScope,
+} from "../types";
 import defaultBank from "./bank.json";
 
 export const STORAGE_KEYS = {
@@ -74,12 +81,16 @@ export const TYPE_KEYS: Exclude<QuestionType, "mixed">[] = [
   "potential",
 ];
 
-export const DEFAULT_TRANSITIVITY_BANK: TransitivityCard[] = (defaultBank as { transitivity?: TransitivityCard[] }).transitivity ?? []
+export const DEFAULT_TRANSITIVITY_BANK: TransitivityCard[] =
+  (defaultBank as { transitivity?: TransitivityCard[] }).transitivity ?? [];
 
-export const TRANSITIVITY_QUESTION_LABELS: Record<'find-pair' | 'identify', string> = {
-  'find-pair': '找配對',
-  'identify': '判斷自他',
-}
+export const TRANSITIVITY_QUESTION_LABELS: Record<
+  TransitivityQuestionType,
+  string
+> = {
+  "find-pair": "找配對",
+  identify: "判斷自他",
+};
 
 export const GODAN_RU_EXCEPTIONS = new Set([
   "帰る",

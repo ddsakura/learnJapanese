@@ -73,21 +73,24 @@ final class AppState: ObservableObject {
     }
 
     func loadDefaults() {
+        let savedVerbs = bankStore.loadVerbBank()
+        let savedAdjectives = bankStore.loadAdjectiveBank()
+        if !savedVerbs.isEmpty || !savedAdjectives.isEmpty {
+            verbBank = savedVerbs
+            adjectiveBank = savedAdjectives
+        }
+
         do {
             let bankFixtures = try FixtureLoader.load("bank", as: BankFixtures.self)
             transitivityBank = bankFixtures.transitivity ?? []
-
-            let savedVerbs = bankStore.loadVerbBank()
-            let savedAdjectives = bankStore.loadAdjectiveBank()
-            if !savedVerbs.isEmpty || !savedAdjectives.isEmpty {
-                verbBank = savedVerbs
-                adjectiveBank = savedAdjectives
-                return
+            if verbBank.isEmpty && adjectiveBank.isEmpty {
+                verbBank = bankFixtures.verb
+                adjectiveBank = bankFixtures.adjective
             }
-            verbBank = bankFixtures.verb
-            adjectiveBank = bankFixtures.adjective
         } catch {
-            errorMessage = String(describing: error)
+            if verbBank.isEmpty && adjectiveBank.isEmpty {
+                errorMessage = String(describing: error)
+            }
         }
     }
 
@@ -216,7 +219,7 @@ final class AppState: ObservableObject {
             return
         }
         let card = transitivityBank.randomElement()!
-        let side = Bool.random() ? "intransitive" : "transitive"
+        let side: TransitivitySide = Bool.random() ? .intransitive : .transitive
         let question = TransitivityQuestionViewModel(
             card: card,
             type: transitivityQuestionType,
@@ -245,10 +248,10 @@ final class AppState: ObservableObject {
         }
 
         let correct = question.answer
-        let answerSide = question.side == "intransitive" ? "transitive" : "intransitive"
+        let answerSide: TransitivitySide = question.side == .intransitive ? .transitive : .intransitive
         let distractors = transitivityBank
             .filter { $0.intransitive != question.card.intransitive }
-            .compactMap { answerSide == "transitive" ? $0.transitive : $0.intransitive }
+            .compactMap { answerSide == .transitive ? $0.transitive : $0.intransitive }
             .filter { $0 != correct }
             .shuffled()
         return ([correct] + Array(distractors.prefix(3))).shuffled()
@@ -593,23 +596,28 @@ enum TransitivityQuestionType: String, CaseIterable {
     }
 }
 
+enum TransitivitySide {
+    case intransitive
+    case transitive
+}
+
 struct TransitivityQuestionViewModel {
     let card: TransitivityCardFixture
     let type: TransitivityQuestionType
-    let side: String  // "intransitive" or "transitive"
+    let side: TransitivitySide
 
     var prompt: String {
-        side == "intransitive" ? card.intransitive : card.transitive
+        side == .intransitive ? card.intransitive : card.transitive
     }
 
     var reading: String? {
-        side == "intransitive" ? card.reading_i : card.reading_t
+        side == .intransitive ? card.reading_i : card.reading_t
     }
 
     var answer: String {
         if type == .identify {
-            return side == "intransitive" ? "自動詞" : "他動詞"
+            return side == .intransitive ? "自動詞" : "他動詞"
         }
-        return side == "intransitive" ? card.transitive : card.intransitive
+        return side == .intransitive ? card.transitive : card.intransitive
     }
 }

@@ -70,14 +70,19 @@ data class AnswerResult(
 data class TransitivityQuestionViewModel(
     val card: TransitivityCardFixture,
     val type: TransitivityQuestionType,
-    val side: String, // "intransitive" or "transitive"
+    val side: TransitivitySide,
 ) {
-    val prompt: String get() = if (side == "intransitive") card.intransitive else card.transitive
-    val reading: String? get() = if (side == "intransitive") card.reading_i else card.reading_t
+    val prompt: String get() = if (side == TransitivitySide.INTRANSITIVE) card.intransitive else card.transitive
+    val reading: String? get() = if (side == TransitivitySide.INTRANSITIVE) card.reading_i else card.reading_t
     val answer: String get() = when (type) {
-        TransitivityQuestionType.IDENTIFY -> if (side == "intransitive") "自動詞" else "他動詞"
-        TransitivityQuestionType.FIND_PAIR -> if (side == "intransitive") card.transitive else card.intransitive
+        TransitivityQuestionType.IDENTIFY -> if (side == TransitivitySide.INTRANSITIVE) "自動詞" else "他動詞"
+        TransitivityQuestionType.FIND_PAIR -> if (side == TransitivitySide.INTRANSITIVE) card.transitive else card.intransitive
     }
+}
+
+enum class TransitivitySide {
+    INTRANSITIVE,
+    TRANSITIVE,
 }
 
 class AppViewModel(
@@ -187,20 +192,23 @@ class AppViewModel(
     }
 
     private fun loadDefaults() {
+        val savedVerbs = bankStore.loadVerbBank()
+        val savedAdjectives = bankStore.loadAdjectiveBank()
+        if (savedVerbs.isNotEmpty() || savedAdjectives.isNotEmpty()) {
+            verbBank = savedVerbs
+            adjectiveBank = savedAdjectives
+        }
         try {
             val bankFixtures = FixtureLoader.load<BankFixtures>(getApplication(), "bank")
             transitivityBank = bankFixtures.transitivity
-            val savedVerbs = bankStore.loadVerbBank()
-            val savedAdjectives = bankStore.loadAdjectiveBank()
-            if (savedVerbs.isNotEmpty() || savedAdjectives.isNotEmpty()) {
-                verbBank = savedVerbs
-                adjectiveBank = savedAdjectives
-                return
+            if (verbBank.isEmpty() && adjectiveBank.isEmpty()) {
+                verbBank = bankFixtures.verb
+                adjectiveBank = bankFixtures.adjective
             }
-            verbBank = bankFixtures.verb
-            adjectiveBank = bankFixtures.adjective
         } catch (error: Exception) {
-            errorMessage = error.message
+            if (verbBank.isEmpty() && adjectiveBank.isEmpty()) {
+                errorMessage = error.message
+            }
         }
     }
 
@@ -422,7 +430,7 @@ class AppViewModel(
             return
         }
         val card = bank.random()
-        val side = listOf("intransitive", "transitive").random()
+        val side = listOf(TransitivitySide.INTRANSITIVE, TransitivitySide.TRANSITIVE).random()
         val question =
             TransitivityQuestionViewModel(
             card = card,
@@ -451,10 +459,10 @@ class AppViewModel(
             return listOf("自動詞", "他動詞")
         }
         val correct = question.answer
-        val answerSide = if (question.side == "intransitive") "transitive" else "intransitive"
+        val answerSide = if (question.side == TransitivitySide.INTRANSITIVE) TransitivitySide.TRANSITIVE else TransitivitySide.INTRANSITIVE
         val distractors = transitivityBank
             .filter { it.intransitive != question.card.intransitive }
-            .map { if (answerSide == "transitive") it.transitive else it.intransitive }
+            .map { if (answerSide == TransitivitySide.TRANSITIVE) it.transitive else it.intransitive }
             .filter { it != correct }
             .shuffled()
             .take(3)
