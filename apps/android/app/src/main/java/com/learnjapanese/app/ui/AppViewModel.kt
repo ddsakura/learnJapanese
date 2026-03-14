@@ -187,18 +187,18 @@ class AppViewModel(
     }
 
     private fun loadDefaults() {
-        val savedVerbs = bankStore.loadVerbBank()
-        val savedAdjectives = bankStore.loadAdjectiveBank()
-        if (savedVerbs.isNotEmpty() || savedAdjectives.isNotEmpty()) {
-            verbBank = savedVerbs
-            adjectiveBank = savedAdjectives
-            return
-        }
         try {
             val bankFixtures = FixtureLoader.load<BankFixtures>(getApplication(), "bank")
+            transitivityBank = bankFixtures.transitivity
+            val savedVerbs = bankStore.loadVerbBank()
+            val savedAdjectives = bankStore.loadAdjectiveBank()
+            if (savedVerbs.isNotEmpty() || savedAdjectives.isNotEmpty()) {
+                verbBank = savedVerbs
+                adjectiveBank = savedAdjectives
+                return
+            }
             verbBank = bankFixtures.verb
             adjectiveBank = bankFixtures.adjective
-            transitivityBank = bankFixtures.transitivity
         } catch (error: Exception) {
             errorMessage = error.message
         }

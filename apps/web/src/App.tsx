@@ -218,15 +218,10 @@ async function enrichTranslations(cards: Card[], existing: Card[]) {
 }
 
 function App() {
-  const [topicMode, setTopicMode] = useState<TopicMode>(() => {
-    return loadSettings().topicMode ?? 'conjugation';
-  });
-  const [practice, setPractice] = useState<PracticeKind>(() => {
-    return loadSettings().practice;
-  });
-  const [transitivityType, setTransitivityType] = useState<TransitivityQuestionType>(() => {
-    return loadSettings().transitivityType ?? 'find-pair';
-  });
+  const [initialSettings] = useState<Settings>(() => loadSettings());
+  const [topicMode, setTopicMode] = useState<TopicMode>(initialSettings.topicMode);
+  const [practice, setPractice] = useState<PracticeKind>(initialSettings.practice);
+  const [transitivityType, setTransitivityType] = useState<TransitivityQuestionType>(initialSettings.transitivityType);
   const [transitivityBank] = useState<TransitivityCard[]>(DEFAULT_TRANSITIVITY_BANK);
   const [transitivityQuestion, setTransitivityQuestion] = useState<TransitivityQuestion | null>(null);
   const [transitivityChoices, setTransitivityChoices] = useState<string[]>([]);

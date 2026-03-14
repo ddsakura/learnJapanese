@@ -74,6 +74,9 @@ final class AppState: ObservableObject {
 
     func loadDefaults() {
         do {
+            let bankFixtures = try FixtureLoader.load("bank", as: BankFixtures.self)
+            transitivityBank = bankFixtures.transitivity ?? []
+
             let savedVerbs = bankStore.loadVerbBank()
             let savedAdjectives = bankStore.loadAdjectiveBank()
             if !savedVerbs.isEmpty || !savedAdjectives.isEmpty {
@@ -81,10 +84,8 @@ final class AppState: ObservableObject {
                 adjectiveBank = savedAdjectives
                 return
             }
-            let bankFixtures = try FixtureLoader.load("bank", as: BankFixtures.self)
             verbBank = bankFixtures.verb
             adjectiveBank = bankFixtures.adjective
-            transitivityBank = bankFixtures.transitivity ?? []
         } catch {
             errorMessage = String(describing: error)
         }
