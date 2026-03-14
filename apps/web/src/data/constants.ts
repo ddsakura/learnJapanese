@@ -12,23 +12,19 @@ export const STORAGE_KEYS = {
   bank: {
     verb: "jlpt-n4-verb-bank",
     adjective: "jlpt-n4-adjective-bank",
-    transitivity: "jlpt-n4-transitivity-bank",
   },
   srs: {
     verb: "jlpt-n4-verb-srs",
     adjective: "jlpt-n4-adjective-srs",
-    transitivity: "jlpt-n4-transitivity-srs",
   },
   stats: {
     verb: "jlpt-n4-verb-stats",
     adjective: "jlpt-n4-adjective-stats",
-    transitivity: "jlpt-n4-transitivity-stats",
   },
   settings: "jlpt-n4-practice-settings",
   wrong: {
     verb: "jlpt-n4-verb-wrong-today",
     adjective: "jlpt-n4-adjective-wrong-today",
-    transitivity: "jlpt-n4-transitivity-wrong-today",
   },
   examples: "jlpt-n4-example-cache",
   answerMode: "jlpt-n4-answer-mode",
