@@ -201,10 +201,8 @@ class AppViewModel(
         try {
             val bankFixtures = FixtureLoader.load<BankFixtures>(getApplication(), "bank")
             transitivityBank = bankFixtures.transitivity
-            if (verbBank.isEmpty() && adjectiveBank.isEmpty()) {
-                verbBank = bankFixtures.verb
-                adjectiveBank = bankFixtures.adjective
-            }
+            if (verbBank.isEmpty()) verbBank = bankFixtures.verb
+            if (adjectiveBank.isEmpty()) adjectiveBank = bankFixtures.adjective
         } catch (error: Exception) {
             if (verbBank.isEmpty() && adjectiveBank.isEmpty()) {
                 errorMessage = error.message

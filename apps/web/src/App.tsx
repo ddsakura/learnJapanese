@@ -494,6 +494,8 @@ function App() {
       if (q) {
         const choices = getTransitivityChoices(q, transitivityBank);
         setTransitivityChoices(choices);
+      } else {
+        setTransitivityChoices([]);
       }
     }
   }, [topicMode, transitivityType, transitivityBank]);
@@ -702,6 +704,8 @@ function App() {
     if (q) {
       const choices = getTransitivityChoices(q, transitivityBank);
       setTransitivityChoices(choices);
+    } else {
+      setTransitivityChoices([]);
     }
   }
 

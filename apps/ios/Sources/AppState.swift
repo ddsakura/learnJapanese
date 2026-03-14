@@ -83,10 +83,8 @@ final class AppState: ObservableObject {
         do {
             let bankFixtures = try FixtureLoader.load("bank", as: BankFixtures.self)
             transitivityBank = bankFixtures.transitivity ?? []
-            if verbBank.isEmpty && adjectiveBank.isEmpty {
-                verbBank = bankFixtures.verb
-                adjectiveBank = bankFixtures.adjective
-            }
+            if verbBank.isEmpty { verbBank = bankFixtures.verb }
+            if adjectiveBank.isEmpty { adjectiveBank = bankFixtures.adjective }
         } catch {
             if verbBank.isEmpty && adjectiveBank.isEmpty {
                 errorMessage = String(describing: error)
