@@ -67,6 +67,12 @@ data class AnswerResult(
     val type: QuestionType,
 )
 
+data class TransitivityAnswerResult(
+    val correct: Boolean,
+    val correctAnswer: String,
+    val userAnswer: String,
+)
+
 data class TransitivityQuestionViewModel(
     val card: TransitivityCardFixture,
     val type: TransitivityQuestionType,
@@ -131,7 +137,7 @@ class AppViewModel(
         private set
     var transitivityChoiceOptions by mutableStateOf(listOf<String>())
         private set
-    var transitivityResult by mutableStateOf<Triple<Boolean, String, String>?>(null)
+    var transitivityResult by mutableStateOf<TransitivityAnswerResult?>(null)
         private set
     var transitivityAnswerText by mutableStateOf("")
     var selectedQuestionType by mutableStateOf(QuestionType.MIXED)
@@ -445,7 +451,11 @@ class AppViewModel(
         val question = currentTransitivityQuestion ?: return
         val trimmed = value.trim()
         val correct = trimmed == question.answer
-        transitivityResult = Triple(correct, question.answer, trimmed)
+        transitivityResult = TransitivityAnswerResult(
+            correct = correct,
+            correctAnswer = question.answer,
+            userAnswer = trimmed,
+        )
     }
 
     fun skipTransitivity() {

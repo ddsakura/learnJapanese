@@ -2163,35 +2163,245 @@
     }
   ],
   "transitivity": [
-    { "intransitive": "開く", "transitive": "開ける", "reading_i": "あく", "reading_t": "あける", "zh": "開", "group": "pair" },
-    { "intransitive": "閉まる", "transitive": "閉める", "reading_i": "しまる", "reading_t": "しめる", "zh": "關", "group": "pair" },
-    { "intransitive": "起きる", "transitive": "起こす", "reading_i": "おきる", "reading_t": "おこす", "zh": "起床／叫醒", "group": "pair" },
-    { "intransitive": "出る", "transitive": "出す", "reading_i": "でる", "reading_t": "だす", "zh": "出去／取出", "group": "pair" },
-    { "intransitive": "入る", "transitive": "入れる", "reading_i": "はいる", "reading_t": "いれる", "zh": "進入／放入", "group": "pair" },
-    { "intransitive": "壊れる", "transitive": "壊す", "reading_i": "こわれる", "reading_t": "こわす", "zh": "壞掉／弄壞", "group": "pair" },
-    { "intransitive": "消える", "transitive": "消す", "reading_i": "きえる", "reading_t": "けす", "zh": "消失／關掉", "group": "pair" },
-    { "intransitive": "落ちる", "transitive": "落とす", "reading_i": "おちる", "reading_t": "おとす", "zh": "掉落／弄掉", "group": "pair" },
-    { "intransitive": "始まる", "transitive": "始める", "reading_i": "はじまる", "reading_t": "はじめる", "zh": "開始", "group": "pair" },
-    { "intransitive": "終わる", "transitive": "終える", "reading_i": "おわる", "reading_t": "おえる", "zh": "結束", "group": "pair" },
-    { "intransitive": "変わる", "transitive": "変える", "reading_i": "かわる", "reading_t": "かえる", "zh": "改變", "group": "pair" },
-    { "intransitive": "決まる", "transitive": "決める", "reading_i": "きまる", "reading_t": "きめる", "zh": "決定", "group": "pair" },
-    { "intransitive": "上がる", "transitive": "上げる", "reading_i": "あがる", "reading_t": "あげる", "zh": "上升／舉起", "group": "pair" },
-    { "intransitive": "下がる", "transitive": "下げる", "reading_i": "さがる", "reading_t": "さげる", "zh": "下降／降低", "group": "pair" },
-    { "intransitive": "止まる", "transitive": "止める", "reading_i": "とまる", "reading_t": "とめる", "zh": "停止", "group": "pair" },
-    { "intransitive": "集まる", "transitive": "集める", "reading_i": "あつまる", "reading_t": "あつめる", "zh": "聚集／收集", "group": "pair" },
-    { "intransitive": "並ぶ", "transitive": "並べる", "reading_i": "ならぶ", "reading_t": "ならべる", "zh": "排列", "group": "pair" },
-    { "intransitive": "続く", "transitive": "続ける", "reading_i": "つづく", "reading_t": "つづける", "zh": "繼續", "group": "pair" },
-    { "intransitive": "見つかる", "transitive": "見つける", "reading_i": "みつかる", "reading_t": "みつける", "zh": "被找到／找到", "group": "pair" },
-    { "intransitive": "付く", "transitive": "付ける", "reading_i": "つく", "reading_t": "つける", "zh": "附著／貼上", "group": "pair" },
-    { "intransitive": "乾く", "transitive": "乾かす", "reading_i": "かわく", "reading_t": "かわかす", "zh": "變乾／弄乾", "group": "pair" },
-    { "intransitive": "溶ける", "transitive": "溶かす", "reading_i": "とける", "reading_t": "とかす", "zh": "融化／溶解", "group": "pair" },
-    { "intransitive": "冷える", "transitive": "冷やす", "reading_i": "ひえる", "reading_t": "ひやす", "zh": "變冷／冷卻", "group": "pair" },
-    { "intransitive": "汚れる", "transitive": "汚す", "reading_i": "よごれる", "reading_t": "よごす", "zh": "變髒／弄髒", "group": "pair" },
-    { "intransitive": "増える", "transitive": "増やす", "reading_i": "ふえる", "reading_t": "ふやす", "zh": "增加", "group": "pair" },
-    { "intransitive": "減る", "transitive": "減らす", "reading_i": "へる", "reading_t": "へらす", "zh": "減少", "group": "pair" },
-    { "intransitive": "助かる", "transitive": "助ける", "reading_i": "たすかる", "reading_t": "たすける", "zh": "得救／拯救", "group": "pair" },
-    { "intransitive": "動く", "transitive": "動かす", "reading_i": "うごく", "reading_t": "うごかす", "zh": "移動", "group": "pair" },
-    { "intransitive": "焼ける", "transitive": "焼く", "reading_i": "やける", "reading_t": "やく", "zh": "烤焦／烤", "group": "pair" },
-    { "intransitive": "驚く", "transitive": "驚かす", "reading_i": "おどろく", "reading_t": "おどろかす", "zh": "吃驚／嚇人", "group": "pair" }
+    {
+      "intransitive": "開く",
+      "transitive": "開ける",
+      "reading_i": "あく",
+      "reading_t": "あける",
+      "zh": "開",
+      "group": "pair"
+    },
+    {
+      "intransitive": "閉まる",
+      "transitive": "閉める",
+      "reading_i": "しまる",
+      "reading_t": "しめる",
+      "zh": "關",
+      "group": "pair"
+    },
+    {
+      "intransitive": "起きる",
+      "transitive": "起こす",
+      "reading_i": "おきる",
+      "reading_t": "おこす",
+      "zh": "起床／叫醒",
+      "group": "pair"
+    },
+    {
+      "intransitive": "出る",
+      "transitive": "出す",
+      "reading_i": "でる",
+      "reading_t": "だす",
+      "zh": "出去／取出",
+      "group": "pair"
+    },
+    {
+      "intransitive": "入る",
+      "transitive": "入れる",
+      "reading_i": "はいる",
+      "reading_t": "いれる",
+      "zh": "進入／放入",
+      "group": "pair"
+    },
+    {
+      "intransitive": "壊れる",
+      "transitive": "壊す",
+      "reading_i": "こわれる",
+      "reading_t": "こわす",
+      "zh": "壞掉／弄壞",
+      "group": "pair"
+    },
+    {
+      "intransitive": "消える",
+      "transitive": "消す",
+      "reading_i": "きえる",
+      "reading_t": "けす",
+      "zh": "消失／關掉",
+      "group": "pair"
+    },
+    {
+      "intransitive": "落ちる",
+      "transitive": "落とす",
+      "reading_i": "おちる",
+      "reading_t": "おとす",
+      "zh": "掉落／弄掉",
+      "group": "pair"
+    },
+    {
+      "intransitive": "始まる",
+      "transitive": "始める",
+      "reading_i": "はじまる",
+      "reading_t": "はじめる",
+      "zh": "開始",
+      "group": "pair"
+    },
+    {
+      "intransitive": "終わる",
+      "transitive": "終える",
+      "reading_i": "おわる",
+      "reading_t": "おえる",
+      "zh": "結束",
+      "group": "pair"
+    },
+    {
+      "intransitive": "変わる",
+      "transitive": "変える",
+      "reading_i": "かわる",
+      "reading_t": "かえる",
+      "zh": "改變",
+      "group": "pair"
+    },
+    {
+      "intransitive": "決まる",
+      "transitive": "決める",
+      "reading_i": "きまる",
+      "reading_t": "きめる",
+      "zh": "決定",
+      "group": "pair"
+    },
+    {
+      "intransitive": "上がる",
+      "transitive": "上げる",
+      "reading_i": "あがる",
+      "reading_t": "あげる",
+      "zh": "上升／舉起",
+      "group": "pair"
+    },
+    {
+      "intransitive": "下がる",
+      "transitive": "下げる",
+      "reading_i": "さがる",
+      "reading_t": "さげる",
+      "zh": "下降／降低",
+      "group": "pair"
+    },
+    {
+      "intransitive": "止まる",
+      "transitive": "止める",
+      "reading_i": "とまる",
+      "reading_t": "とめる",
+      "zh": "停止",
+      "group": "pair"
+    },
+    {
+      "intransitive": "集まる",
+      "transitive": "集める",
+      "reading_i": "あつまる",
+      "reading_t": "あつめる",
+      "zh": "聚集／收集",
+      "group": "pair"
+    },
+    {
+      "intransitive": "並ぶ",
+      "transitive": "並べる",
+      "reading_i": "ならぶ",
+      "reading_t": "ならべる",
+      "zh": "排列",
+      "group": "pair"
+    },
+    {
+      "intransitive": "続く",
+      "transitive": "続ける",
+      "reading_i": "つづく",
+      "reading_t": "つづける",
+      "zh": "繼續",
+      "group": "pair"
+    },
+    {
+      "intransitive": "見つかる",
+      "transitive": "見つける",
+      "reading_i": "みつかる",
+      "reading_t": "みつける",
+      "zh": "被找到／找到",
+      "group": "pair"
+    },
+    {
+      "intransitive": "付く",
+      "transitive": "付ける",
+      "reading_i": "つく",
+      "reading_t": "つける",
+      "zh": "附著／貼上",
+      "group": "pair"
+    },
+    {
+      "intransitive": "乾く",
+      "transitive": "乾かす",
+      "reading_i": "かわく",
+      "reading_t": "かわかす",
+      "zh": "變乾／弄乾",
+      "group": "pair"
+    },
+    {
+      "intransitive": "溶ける",
+      "transitive": "溶かす",
+      "reading_i": "とける",
+      "reading_t": "とかす",
+      "zh": "融化／溶解",
+      "group": "pair"
+    },
+    {
+      "intransitive": "冷える",
+      "transitive": "冷やす",
+      "reading_i": "ひえる",
+      "reading_t": "ひやす",
+      "zh": "變冷／冷卻",
+      "group": "pair"
+    },
+    {
+      "intransitive": "汚れる",
+      "transitive": "汚す",
+      "reading_i": "よごれる",
+      "reading_t": "よごす",
+      "zh": "變髒／弄髒",
+      "group": "pair"
+    },
+    {
+      "intransitive": "増える",
+      "transitive": "増やす",
+      "reading_i": "ふえる",
+      "reading_t": "ふやす",
+      "zh": "增加",
+      "group": "pair"
+    },
+    {
+      "intransitive": "減る",
+      "transitive": "減らす",
+      "reading_i": "へる",
+      "reading_t": "へらす",
+      "zh": "減少",
+      "group": "pair"
+    },
+    {
+      "intransitive": "助かる",
+      "transitive": "助ける",
+      "reading_i": "たすかる",
+      "reading_t": "たすける",
+      "zh": "得救／拯救",
+      "group": "pair"
+    },
+    {
+      "intransitive": "動く",
+      "transitive": "動かす",
+      "reading_i": "うごく",
+      "reading_t": "うごかす",
+      "zh": "移動",
+      "group": "pair"
+    },
+    {
+      "intransitive": "焼ける",
+      "transitive": "焼く",
+      "reading_i": "やける",
+      "reading_t": "やく",
+      "zh": "烤焦／烤",
+      "group": "pair"
+    },
+    {
+      "intransitive": "驚く",
+      "transitive": "驚かす",
+      "reading_i": "おどろく",
+      "reading_t": "おどろかす",
+      "zh": "吃驚／嚇人",
+      "group": "pair"
+    }
   ]
 }

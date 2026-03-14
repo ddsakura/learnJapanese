@@ -545,7 +545,7 @@ private struct TransitivityCardView: View {
                         if !res.correct {
                             Text("正確答案：\(res.correctAnswer)")
                         }
-                        Text("\(formattedTerm(q.card.intransitive, reading: q.card.reading_i))↔ \(formattedTerm(q.card.transitive, reading: q.card.reading_t))")
+                        Text("\(formattedTerm(q.card.intransitive, reading: q.card.readingI))↔ \(formattedTerm(q.card.transitive, reading: q.card.readingT))")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }

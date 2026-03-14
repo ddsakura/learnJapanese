@@ -9,10 +9,19 @@ struct BankFixtures: Codable {
 struct TransitivityCardFixture: Codable {
     let intransitive: String
     let transitive: String
-    let reading_i: String?
-    let reading_t: String?
+    let readingI: String?
+    let readingT: String?
     let zh: String?
     let group: String
+
+    enum CodingKeys: String, CodingKey {
+        case intransitive
+        case transitive
+        case readingI = "reading_i"
+        case readingT = "reading_t"
+        case zh
+        case group
+    }
 }
 
 struct ConjugationFixtures: Codable {

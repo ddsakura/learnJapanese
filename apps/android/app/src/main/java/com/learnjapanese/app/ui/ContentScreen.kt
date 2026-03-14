@@ -608,20 +608,19 @@ private fun TransitivitySection(viewModel: AppViewModel) {
 
     val result = viewModel.transitivityResult
     if (result != null) {
-        val (correct, correctAnswer, _) = result
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
-            color = (if (correct) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error).copy(alpha = 0.1f),
-            border = BorderStroke(1.dp, (if (correct) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error).copy(alpha = 0.5f)),
+            color = (if (result.correct) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error).copy(alpha = 0.1f),
+            border = BorderStroke(1.dp, (if (result.correct) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error).copy(alpha = 0.5f)),
         ) {
             Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    if (correct) "正確！" else "不正確",
-                    color = if (correct) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+                    if (result.correct) "正確！" else "不正確",
+                    color = if (result.correct) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.Bold,
                 )
-                if (!correct) Text("正確答案：$correctAnswer")
+                if (!result.correct) Text("正確答案：${result.correctAnswer}")
                 Text(
                     "${formatTransitivityTerm(question.card.intransitive, question.card.reading_i)}↔ ${formatTransitivityTerm(question.card.transitive, question.card.reading_t)}",
                     style = MaterialTheme.typography.bodySmall,
@@ -633,8 +632,8 @@ private fun TransitivitySection(viewModel: AppViewModel) {
         val choices = viewModel.transitivityChoiceOptions
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             choices.forEach { option ->
-                val isSelected = viewModel.transitivityResult?.third == option
-                val isCorrect = viewModel.transitivityResult?.second == option
+                val isSelected = viewModel.transitivityResult?.userAnswer == option
+                val isCorrect = viewModel.transitivityResult?.correctAnswer == option
                 ChoiceButton(
                     text = option,
                     strokeColor = strokeColor,

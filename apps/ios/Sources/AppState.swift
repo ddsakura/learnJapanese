@@ -609,7 +609,7 @@ struct TransitivityQuestionViewModel {
     }
 
     var reading: String? {
-        side == .intransitive ? card.reading_i : card.reading_t
+        side == .intransitive ? card.readingI : card.readingT
     }
 
     var answer: String {
