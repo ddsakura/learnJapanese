@@ -921,9 +921,6 @@ private fun SettingsSheet(
                     )
                     if (pendingTopicMode == TopicMode.CONJUGATION) {
                         viewModel.nextQuestion(pendingPractice)
-                        if (pendingAnswerMode == AnswerMode.CHOICE) {
-                            viewModel.generateChoices()
-                        }
                     }
                     onClose()
                 },

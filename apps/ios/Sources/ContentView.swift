@@ -424,11 +424,6 @@ struct ContentView: View {
                             state.nextTransitivityQuestion()
                         } else {
                             state.nextQuestion(practice: practice)
-                            if state.answerMode == .choice {
-                                state.generateChoices()
-                            } else {
-                                state.choiceOptions = []
-                            }
                         }
                     }
                 )
