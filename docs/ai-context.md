@@ -4,6 +4,8 @@
 
 A cross-platform JLPT N4 Japanese verb/adjective conjugation learning app (monorepo) with three native implementations: web (React), iOS (SwiftUI), and Android (Jetpack Compose). The platforms share a core TypeScript specification and fixture data.
 
+Read `docs/agent-editing-guide.md` before making cross-platform feature changes or addressing review comments. It captures repository-specific guardrails learned from PR #22.
+
 ## Commands
 
 ### Web (`apps/web/`)
