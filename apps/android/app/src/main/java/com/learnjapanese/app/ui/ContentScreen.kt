@@ -622,12 +622,8 @@ private fun TransitivitySection(viewModel: AppViewModel) {
                     fontWeight = FontWeight.Bold,
                 )
                 if (!correct) Text("正確答案：$correctAnswer")
-                val i = question.card.intransitive
-                val ri = question.card.reading_i ?: ""
-                val t = question.card.transitive
-                val rt = question.card.reading_t ?: ""
                 Text(
-                    "$i（$ri）↔ $t（$rt）",
+                    "${formatTransitivityTerm(question.card.intransitive, question.card.reading_i)}↔ ${formatTransitivityTerm(question.card.transitive, question.card.reading_t)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -686,6 +682,10 @@ private fun TransitivitySection(viewModel: AppViewModel) {
             }
         }
     }
+}
+
+private fun formatTransitivityTerm(term: String, reading: String?): String {
+    return if (reading.isNullOrEmpty()) term else "$term（$reading）"
 }
 
 @Composable

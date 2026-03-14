@@ -545,11 +545,7 @@ private struct TransitivityCardView: View {
                         if !res.correct {
                             Text("正確答案：\(res.correctAnswer)")
                         }
-                        let i = q.card.intransitive
-                        let ri = q.card.reading_i ?? ""
-                        let t = q.card.transitive
-                        let rt = q.card.reading_t ?? ""
-                        Text("\(i)（\(ri)）↔ \(t)（\(rt)）")
+                        Text("\(formattedTerm(q.card.intransitive, reading: q.card.reading_i))↔ \(formattedTerm(q.card.transitive, reading: q.card.reading_t))")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
@@ -603,6 +599,11 @@ private struct TransitivityCardView: View {
             Text("題庫沒有自他動詞資料")
                 .foregroundStyle(.secondary)
         }
+    }
+
+    private func formattedTerm(_ term: String, reading: String?) -> String {
+        guard let reading, !reading.isEmpty else { return term }
+        return "\(term)（\(reading)）"
     }
 }
 

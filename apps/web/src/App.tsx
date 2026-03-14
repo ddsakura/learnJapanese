@@ -148,6 +148,10 @@ function saveExampleCache(next: Record<string, ExampleEntry>) {
   saveToStorage(STORAGE_KEYS.examples, next);
 }
 
+function formatTransitivityTerm(term: string, reading?: string) {
+  return reading ? `${term}（${reading}）` : term;
+}
+
 async function generateExample(term: string, typeLabel: string) {
   const response = await fetch(OLLAMA_GENERATE_ENDPOINT, {
     method: "POST",
@@ -1044,7 +1048,8 @@ function App() {
               <div className="result-row">
                 <span>配對</span>
                 <strong>
-                  {card.intransitive}（{card.reading_i ?? ''}）↔ {card.transitive}（{card.reading_t ?? ''}）
+                  {formatTransitivityTerm(card.intransitive, card.reading_i)}↔{" "}
+                  {formatTransitivityTerm(card.transitive, card.reading_t)}
                 </strong>
               </div>
             </div>
