@@ -1,23 +1,34 @@
-import type { AdjectiveScope, QuestionType, VerbScope, Card } from "../types";
+import type {
+  AdjectiveScope,
+  Card,
+  QuestionType,
+  TransitivityCard,
+  TransitivityQuestionType,
+  VerbScope,
+} from "../types";
 import defaultBank from "./bank.json";
 
 export const STORAGE_KEYS = {
   bank: {
     verb: "jlpt-n4-verb-bank",
     adjective: "jlpt-n4-adjective-bank",
+    transitivity: "jlpt-n4-transitivity-bank",
   },
   srs: {
     verb: "jlpt-n4-verb-srs",
     adjective: "jlpt-n4-adjective-srs",
+    transitivity: "jlpt-n4-transitivity-srs",
   },
   stats: {
     verb: "jlpt-n4-verb-stats",
     adjective: "jlpt-n4-adjective-stats",
+    transitivity: "jlpt-n4-transitivity-stats",
   },
   settings: "jlpt-n4-practice-settings",
   wrong: {
     verb: "jlpt-n4-verb-wrong-today",
     adjective: "jlpt-n4-adjective-wrong-today",
+    transitivity: "jlpt-n4-transitivity-wrong-today",
   },
   examples: "jlpt-n4-example-cache",
   answerMode: "jlpt-n4-answer-mode",
@@ -69,6 +80,17 @@ export const TYPE_KEYS: Exclude<QuestionType, "mixed">[] = [
   "te",
   "potential",
 ];
+
+export const DEFAULT_TRANSITIVITY_BANK: TransitivityCard[] =
+  (defaultBank as { transitivity?: TransitivityCard[] }).transitivity ?? [];
+
+export const TRANSITIVITY_QUESTION_LABELS: Record<
+  TransitivityQuestionType,
+  string
+> = {
+  "find-pair": "找配對",
+  identify: "判斷自他",
+};
 
 export const GODAN_RU_EXCEPTIONS = new Set([
   "帰る",

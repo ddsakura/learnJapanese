@@ -13,12 +13,25 @@ final class AppState: ObservableObject {
         static let questionType = "learnJapanese.questionType"
         static let verbScope = "learnJapanese.verbScope"
         static let adjectiveScope = "learnJapanese.adjectiveScope"
+        static let topicMode = "learnJapanese.topicMode"
+        static let transitivityQuestionType = "learnJapanese.transitivityQuestionType"
     }
 
     @Published var verbBank: [CardFixture] = []
     @Published var adjectiveBank: [CardFixture] = []
+    @Published var transitivityBank: [TransitivityCardFixture] = []
     @Published var currentQuestion: QuestionViewModel?
     @Published var currentPractice: PracticeKind = .verb
+    @Published var topicMode: TopicMode = .conjugation {
+        didSet { defaults.set(topicMode.rawValue, forKey: DefaultsKey.topicMode) }
+    }
+    @Published var transitivityQuestionType: TransitivityQuestionType = .findPair {
+        didSet { defaults.set(transitivityQuestionType.rawValue, forKey: DefaultsKey.transitivityQuestionType) }
+    }
+    @Published var currentTransitivityQuestion: TransitivityQuestionViewModel?
+    @Published var transitivityChoiceOptions: [String] = []
+    @Published var transitivityResult: (correct: Bool, correctAnswer: String, userAnswer: String)?
+    @Published var transitivityAnswerText: String = ""
     @Published var selectedQuestionType: QuestionType = .mixed {
         didSet { defaults.set(selectedQuestionType.rawValue, forKey: DefaultsKey.questionType) }
     }
@@ -52,23 +65,30 @@ final class AppState: ObservableObject {
         stats = srsStore.loadStats()
         stats.normalizeForToday()
         wrongToday = srsStore.loadWrongToday()
-        nextQuestion(practice: .verb)
+        if topicMode == .transitivity {
+            nextTransitivityQuestion()
+        } else {
+            nextQuestion(practice: .verb)
+        }
     }
 
     func loadDefaults() {
+        let savedVerbs = bankStore.loadVerbBank()
+        let savedAdjectives = bankStore.loadAdjectiveBank()
+        if !savedVerbs.isEmpty || !savedAdjectives.isEmpty {
+            verbBank = savedVerbs
+            adjectiveBank = savedAdjectives
+        }
+
         do {
-            let savedVerbs = bankStore.loadVerbBank()
-            let savedAdjectives = bankStore.loadAdjectiveBank()
-            if !savedVerbs.isEmpty || !savedAdjectives.isEmpty {
-                verbBank = savedVerbs
-                adjectiveBank = savedAdjectives
-                return
-            }
             let bankFixtures = try FixtureLoader.load("bank", as: BankFixtures.self)
-            verbBank = bankFixtures.verb
-            adjectiveBank = bankFixtures.adjective
+            transitivityBank = bankFixtures.transitivity ?? []
+            if verbBank.isEmpty { verbBank = bankFixtures.verb }
+            if adjectiveBank.isEmpty { adjectiveBank = bankFixtures.adjective }
         } catch {
-            errorMessage = String(describing: error)
+            if verbBank.isEmpty && adjectiveBank.isEmpty {
+                errorMessage = String(describing: error)
+            }
         }
     }
 
@@ -180,6 +200,59 @@ final class AppState: ObservableObject {
            let scope = AdjectiveScope(rawValue: raw) {
             selectedAdjectiveScope = scope
         }
+        if let raw = defaults.string(forKey: DefaultsKey.topicMode),
+           let mode = TopicMode(rawValue: raw) {
+            topicMode = mode
+        }
+        if let raw = defaults.string(forKey: DefaultsKey.transitivityQuestionType),
+           let type = TransitivityQuestionType(rawValue: raw) {
+            transitivityQuestionType = type
+        }
+    }
+
+    func nextTransitivityQuestion() {
+        guard !transitivityBank.isEmpty else {
+            currentTransitivityQuestion = nil
+            transitivityChoiceOptions = []
+            return
+        }
+        let card = transitivityBank.randomElement()!
+        let side: TransitivitySide = Bool.random() ? .intransitive : .transitive
+        let question = TransitivityQuestionViewModel(
+            card: card,
+            type: transitivityQuestionType,
+            side: side
+        )
+        currentTransitivityQuestion = question
+        transitivityChoiceOptions = makeTransitivityChoices(for: question)
+        transitivityAnswerText = ""
+        transitivityResult = nil
+    }
+
+    func submitTransitivityAnswer(_ value: String) {
+        guard let question = currentTransitivityQuestion else { return }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        let correct = trimmed == question.answer
+        transitivityResult = (correct: correct, correctAnswer: question.answer, userAnswer: trimmed)
+    }
+
+    func skipTransitivity() {
+        submitTransitivityAnswer("")
+    }
+
+    private func makeTransitivityChoices(for question: TransitivityQuestionViewModel) -> [String] {
+        if question.type == .identify {
+            return ["自動詞", "他動詞"]
+        }
+
+        let correct = question.answer
+        let answerSide: TransitivitySide = question.side == .intransitive ? .transitive : .intransitive
+        let distractors = transitivityBank
+            .filter { $0.intransitive != question.card.intransitive }
+            .compactMap { answerSide == .transitive ? $0.transitive : $0.intransitive }
+            .filter { $0 != correct }
+            .shuffled()
+        return ([correct] + Array(distractors.prefix(3))).shuffled()
     }
 
     func startReview() {
@@ -501,5 +574,48 @@ enum AdjectiveScope: String, CaseIterable {
         case .i: return "い形"
         case .na: return "な形"
         }
+    }
+}
+
+enum TopicMode: String {
+    case conjugation
+    case transitivity
+}
+
+enum TransitivityQuestionType: String, CaseIterable {
+    case findPair = "find-pair"
+    case identify
+
+    var label: String {
+        switch self {
+        case .findPair: return "找配對"
+        case .identify: return "判斷自他"
+        }
+    }
+}
+
+enum TransitivitySide {
+    case intransitive
+    case transitive
+}
+
+struct TransitivityQuestionViewModel {
+    let card: TransitivityCardFixture
+    let type: TransitivityQuestionType
+    let side: TransitivitySide
+
+    var prompt: String {
+        side == .intransitive ? card.intransitive : card.transitive
+    }
+
+    var reading: String? {
+        side == .intransitive ? card.readingI : card.readingT
+    }
+
+    var answer: String {
+        if type == .identify {
+            return side == .intransitive ? "自動詞" : "他動詞"
+        }
+        return side == .intransitive ? card.transitive : card.intransitive
     }
 }

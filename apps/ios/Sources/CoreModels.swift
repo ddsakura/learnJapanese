@@ -3,6 +3,25 @@ import Foundation
 struct BankFixtures: Codable {
     let verb: [CardFixture]
     let adjective: [CardFixture]
+    let transitivity: [TransitivityCardFixture]?
+}
+
+struct TransitivityCardFixture: Codable {
+    let intransitive: String
+    let transitive: String
+    let readingI: String?
+    let readingT: String?
+    let zh: String?
+    let group: String
+
+    enum CodingKeys: String, CodingKey {
+        case intransitive
+        case transitive
+        case readingI = "reading_i"
+        case readingT = "reading_t"
+        case zh
+        case group
+    }
 }
 
 struct ConjugationFixtures: Codable {
