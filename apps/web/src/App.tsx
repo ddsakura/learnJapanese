@@ -621,7 +621,7 @@ function App() {
     }
     if (result) return;
     startChoiceGeneration(false);
-  }, [answerMode, practice, question, result, topicMode]);
+  }, [answerMode, practice, question, result, topicMode, startChoiceGeneration]);
 
   useEffect(() => {
     if (canSpeak) {
@@ -859,7 +859,7 @@ function App() {
     checkAnswer(option);
   }
 
-  function startChoiceGeneration(force: boolean) {
+  const startChoiceGeneration = useCallback(function startChoiceGeneration(force: boolean) {
     if (!question) return;
     const correctAnswer = getAnswer(question.card, question.type);
     if (!correctAnswer.trim()) {
@@ -898,7 +898,7 @@ function App() {
         setChoiceStatus("error");
         setChoiceMessage("選項產生失敗，請確認 Ollama 已啟動且模型可用。");
       });
-  }
+  }, [question, practice]);
 
   function handleRegenerateChoices() {
     if (!question || result) return;
