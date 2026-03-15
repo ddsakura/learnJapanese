@@ -45,7 +45,11 @@ export default function StatsPanel({
             回到正常題庫
           </button>
         ) : (
-          <button type="button" onClick={onStartReview} disabled={wrongCount === 0}>
+          <button
+            type="button"
+            onClick={onStartReview}
+            disabled={wrongCount === 0}
+          >
             複習今日答錯
           </button>
         )}

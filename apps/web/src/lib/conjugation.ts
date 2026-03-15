@@ -1,5 +1,8 @@
 import type { AdjectiveGroup, Card, VerbGroup } from "../types";
-import { GODAN_RU_EXCEPTIONS, NA_ADJECTIVE_I_EXCEPTIONS } from "../data/constants";
+import {
+  GODAN_RU_EXCEPTIONS,
+  NA_ADJECTIVE_I_EXCEPTIONS,
+} from "../data/constants";
 
 export function isKana(char: string) {
   return /[ぁ-ゖァ-ヺ]/.test(char);
@@ -11,9 +14,7 @@ export function isIchidan(dict: string) {
   const before = dict.slice(-2, -1);
   if (!before) return false;
   if (!isKana(before)) return false;
-  return /[いきぎしじちぢにひびぴみりえけげせぜてでねへべぺめれ]/.test(
-    before,
-  );
+  return /[いきぎしじちぢにひびぴみりえけげせぜてでねへべぺめれ]/.test(before);
 }
 
 export function inferVerbGroup(dict: string): VerbGroup {

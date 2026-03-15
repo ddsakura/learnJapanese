@@ -57,7 +57,8 @@ export default function BankPanel({
               <span>3.</span> 點「匯入題庫」立即生效。
             </div>
             <div className="step">
-              <span>4.</span> 點「匯出全部題庫」可下載 bank-export.json（跨平台用）。
+              <span>4.</span> 點「匯出全部題庫」可下載
+              bank-export.json（跨平台用）。
             </div>
           </div>
           <div className="group-hint">{groupHint}</div>

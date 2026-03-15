@@ -6,7 +6,6 @@ import type {
   ExampleEntry,
   PracticeKind,
   Question,
-  QuestionType,
 } from "../types";
 import { QUESTION_LABELS } from "../data/constants";
 
@@ -183,7 +182,9 @@ export default function QuestionCard({
               type="button"
               className="ghost"
               onClick={onRegenerateChoices}
-              disabled={!question || Boolean(result) || choiceStatus === "loading"}
+              disabled={
+                !question || Boolean(result) || choiceStatus === "loading"
+              }
             >
               重新產生選項
             </button>

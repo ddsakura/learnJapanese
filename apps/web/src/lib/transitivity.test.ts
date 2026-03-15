@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest"
-import type { TransitivityCard, TransitivityQuestion } from "../types"
+import { describe, expect, it } from "vitest";
+import type { TransitivityCard, TransitivityQuestion } from "../types";
 import {
   getTransitivityAnswer,
   getTransitivityChoices,
   makeTransitivityQuestion,
-} from "./transitivity"
+} from "./transitivity";
 
 const bank: TransitivityCard[] = [
   {
@@ -28,68 +28,71 @@ const bank: TransitivityCard[] = [
     reading_t: "つける",
     group: "pair",
   },
-]
+];
 
 describe("transitivity", () => {
   it("returns null when bank is empty", () => {
-    expect(makeTransitivityQuestion([], "find-pair")).toBeNull()
-  })
+    expect(makeTransitivityQuestion([], "find-pair")).toBeNull();
+  });
 
   it("creates a question using the requested type", () => {
-    const question = makeTransitivityQuestion(bank, "identify")
-    expect(question).not.toBeNull()
-    expect(question?.type).toBe("identify")
-    expect(["intransitive", "transitive"]).toContain(question?.side)
-  })
+    const question = makeTransitivityQuestion(bank, "identify");
+    expect(question).not.toBeNull();
+    expect(question?.type).toBe("identify");
+    expect(["intransitive", "transitive"]).toContain(question?.side);
+  });
 
   it("gets identify answers from the shown side", () => {
     const question: TransitivityQuestion = {
       card: bank[0],
       type: "identify",
       side: "intransitive",
-    }
-    expect(getTransitivityAnswer(question)).toBe("自動詞")
-  })
+    };
+    expect(getTransitivityAnswer(question)).toBe("自動詞");
+  });
 
   it("gets find-pair answers from the opposite side", () => {
     const question: TransitivityQuestion = {
       card: bank[0],
       type: "find-pair",
       side: "transitive",
-    }
-    expect(getTransitivityAnswer(question)).toBe("開く")
-  })
+    };
+    expect(getTransitivityAnswer(question)).toBe("開く");
+  });
 
   it("returns the fixed identify choices", () => {
     const question: TransitivityQuestion = {
       card: bank[0],
       type: "identify",
       side: "transitive",
-    }
-    expect(getTransitivityChoices(question, bank)).toEqual(["自動詞", "他動詞"])
-  })
+    };
+    expect(getTransitivityChoices(question, bank)).toEqual([
+      "自動詞",
+      "他動詞",
+    ]);
+  });
 
   it("includes the correct answer without duplicates for pair questions", () => {
     const question: TransitivityQuestion = {
       card: bank[0],
       type: "find-pair",
       side: "intransitive",
-    }
-    const choices = getTransitivityChoices(question, bank)
-    expect(choices).toContain("開ける")
-    expect(new Set(choices).size).toBe(choices.length)
-    expect(choices.length).toBeLessThanOrEqual(4)
-  })
+    };
+    const choices = getTransitivityChoices(question, bank);
+    expect(choices).toContain("開ける");
+    expect(new Set(choices).size).toBe(choices.length);
+    expect(choices.length).toBeLessThanOrEqual(4);
+  });
 
   it("handles small banks when generating distractors", () => {
     const question: TransitivityQuestion = {
       card: bank[0],
       type: "find-pair",
       side: "intransitive",
-    }
-    const choices = getTransitivityChoices(question, [bank[0], bank[1]])
-    expect(choices).toContain("開ける")
-    expect(new Set(choices).size).toBe(choices.length)
-    expect(choices.length).toBe(2)
-  })
-})
+    };
+    const choices = getTransitivityChoices(question, [bank[0], bank[1]]);
+    expect(choices).toContain("開ける");
+    expect(new Set(choices).size).toBe(choices.length);
+    expect(choices.length).toBe(2);
+  });
+});

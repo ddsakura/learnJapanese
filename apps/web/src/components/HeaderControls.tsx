@@ -48,16 +48,22 @@ export default function HeaderControls({
   onAnswerModeChange,
   onTransitivityTypeChange,
 }: HeaderControlsProps) {
-  const practiceLabel = topicMode === 'conjugation' ? PRACTICE_LABELS[practice] : '自他動詞';
-  const title = topicMode === 'conjugation'
-    ? `JLPT N4 普通形${practiceLabel}變化練習`
-    : 'JLPT N4 自動詞・他動詞練習';
+  const practiceLabel =
+    topicMode === "conjugation" ? PRACTICE_LABELS[practice] : "自他動詞";
+  const title =
+    topicMode === "conjugation"
+      ? `JLPT N4 普通形${practiceLabel}變化練習`
+      : "JLPT N4 自動詞・他動詞練習";
 
   return (
     <header className="header">
       <div>
         <h1>{title}</h1>
-        <p>{topicMode === 'conjugation' ? summaryLine : '自動詞・他動詞・找配對＋判斷自他'}</p>
+        <p>
+          {topicMode === "conjugation"
+            ? summaryLine
+            : "自動詞・他動詞・找配對＋判斷自他"}
+        </p>
       </div>
       <div className="controls">
         <label>
@@ -72,7 +78,7 @@ export default function HeaderControls({
             <option value="transitivity">自他動詞</option>
           </select>
         </label>
-        {topicMode === 'conjugation' && (
+        {topicMode === "conjugation" && (
           <>
             <label>
               類型
@@ -116,20 +122,24 @@ export default function HeaderControls({
             </label>
           </>
         )}
-        {topicMode === 'transitivity' && (
+        {topicMode === "transitivity" && (
           <label>
             題型
             <select
               value={transitivityType}
               onChange={(event) =>
-                onTransitivityTypeChange(event.target.value as TransitivityQuestionType)
+                onTransitivityTypeChange(
+                  event.target.value as TransitivityQuestionType,
+                )
               }
             >
-              {Object.entries(TRANSITIVITY_QUESTION_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
+              {Object.entries(TRANSITIVITY_QUESTION_LABELS).map(
+                ([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ),
+              )}
             </select>
           </label>
         )}

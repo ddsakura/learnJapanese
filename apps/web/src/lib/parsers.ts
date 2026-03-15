@@ -40,6 +40,6 @@ export function parseChoiceResponse(text: string) {
   if (!normalized) return [];
   return normalized
     .split("\n")
-    .map((line) => line.replace(/^[\s*\d.\)\(-]+/, "").trim())
+    .map((line) => line.replace(/^[\s*\d.()-]+/, "").trim())
     .filter(Boolean);
 }
