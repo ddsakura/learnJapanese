@@ -70,11 +70,11 @@ import type {
 } from "./types";
 
 const defaultSettings = (): Settings => ({
-  topicMode: 'conjugation',
+  topicMode: "conjugation",
   practice: "verb",
   verb: { scope: "all", type: "mixed" },
   adjective: { scope: "all", type: "mixed" },
-  transitivityType: 'find-pair',
+  transitivityType: "find-pair",
 });
 
 type LegacySettings = {
@@ -225,21 +225,30 @@ async function enrichTranslations(cards: Card[], existing: Card[]) {
 
 function App() {
   const [initialSettings] = useState<Settings>(() => loadSettings());
-  const [topicMode, setTopicMode] = useState<TopicMode>(initialSettings.topicMode);
-  const [practice, setPractice] = useState<PracticeKind>(initialSettings.practice);
-  const [transitivityType, setTransitivityType] = useState<TransitivityQuestionType>(initialSettings.transitivityType);
-  const [transitivityBank] = useState<TransitivityCard[]>(
-    () => loadFromStorage(STORAGE_KEYS.bank.transitivity, DEFAULT_TRANSITIVITY_BANK),
+  const [topicMode, setTopicMode] = useState<TopicMode>(
+    initialSettings.topicMode,
   );
-  const [transitivityQuestion, setTransitivityQuestion] = useState<TransitivityQuestion | null>(null);
+  const [practice, setPractice] = useState<PracticeKind>(
+    initialSettings.practice,
+  );
+  const [transitivityType, setTransitivityType] =
+    useState<TransitivityQuestionType>(initialSettings.transitivityType);
+  const [transitivityBank] = useState<TransitivityCard[]>(() =>
+    loadFromStorage(STORAGE_KEYS.bank.transitivity, DEFAULT_TRANSITIVITY_BANK),
+  );
+  const [transitivityQuestion, setTransitivityQuestion] =
+    useState<TransitivityQuestion | null>(null);
   const [transitivityChoices, setTransitivityChoices] = useState<string[]>([]);
-  const [transitivityResult, setTransitivityResult] = useState<TransitivityAnswerResult | null>(null);
-  const [transitivityAnswer, setTransitivityAnswer] = useState('');
-  const [transitivitySrs, setTransitivitySrs] = useState<Record<string, SrsState>>(
-    () => loadFromStorage(STORAGE_KEYS.srs.transitivity, {}),
-  );
-  const [transitivityStats, setTransitivityStats] = useState<Stats>(
-    () => normalizeStats(loadFromStorage(STORAGE_KEYS.stats.transitivity, defaultStats())),
+  const [transitivityResult, setTransitivityResult] =
+    useState<TransitivityAnswerResult | null>(null);
+  const [transitivityAnswer, setTransitivityAnswer] = useState("");
+  const [transitivitySrs, setTransitivitySrs] = useState<
+    Record<string, SrsState>
+  >(() => loadFromStorage(STORAGE_KEYS.srs.transitivity, {}));
+  const [transitivityStats, setTransitivityStats] = useState<Stats>(() =>
+    normalizeStats(
+      loadFromStorage(STORAGE_KEYS.stats.transitivity, defaultStats()),
+    ),
   );
   const [transitivityWrongToday, setTransitivityWrongToday] = useState<
     WrongToday<TransitivityWrongEntry>
@@ -284,9 +293,15 @@ function App() {
       loadFromStorage(STORAGE_KEYS.wrong.adjective, defaultWrongToday()),
     ),
   }));
-  const [verbScope, setVerbScope] = useState<VerbScope>(initialSettings.verb.scope);
-  const [adjectiveScope, setAdjectiveScope] = useState<AdjectiveScope>(initialSettings.adjective.scope);
-  const [verbQuestionType, setVerbQuestionType] = useState<QuestionType>(initialSettings.verb.type);
+  const [verbScope, setVerbScope] = useState<VerbScope>(
+    initialSettings.verb.scope,
+  );
+  const [adjectiveScope, setAdjectiveScope] = useState<AdjectiveScope>(
+    initialSettings.adjective.scope,
+  );
+  const [verbQuestionType, setVerbQuestionType] = useState<QuestionType>(
+    initialSettings.verb.type,
+  );
   const [adjectiveQuestionType, setAdjectiveQuestionType] =
     useState<QuestionType>(initialSettings.adjective.type);
   const [question, setQuestion] = useState<Question | null>(null);
@@ -524,11 +539,11 @@ function App() {
 
   // When topicMode or transitivityType changes, reset transitivity state
   useEffect(() => {
-    if (topicMode === 'transitivity') {
+    if (topicMode === "transitivity") {
       const q = makeTransitivityQuestion(transitivityBank, transitivityType);
       setTransitivityQuestion(q);
       setTransitivityResult(null);
-      setTransitivityAnswer('');
+      setTransitivityAnswer("");
       if (q) {
         const choices = getTransitivityChoices(q, transitivityBank);
         setTransitivityChoices(choices);
@@ -542,7 +557,7 @@ function App() {
     setExample(null);
     setExampleStatus("idle");
     setExampleMessage("");
-    if (!result || !question || topicMode !== 'conjugation') return;
+    if (!result || !question || topicMode !== "conjugation") return;
     const term = result.correctAnswer;
     const typeLabel = QUESTION_LABELS[result.type];
     const cacheKey = `${practice}:${result.type}:${term}`;
@@ -582,7 +597,7 @@ function App() {
   }, [practice, question, result, topicMode]);
 
   useEffect(() => {
-    if (!result || !question || topicMode !== 'conjugation') return;
+    if (!result || !question || topicMode !== "conjugation") return;
     const answer = result.correctAnswer;
     let cancelled = false;
     setLiveZh(null);
@@ -598,7 +613,7 @@ function App() {
   }, [practice, question, result, topicMode]);
 
   useEffect(() => {
-    if (!question || answerMode !== "choice" || topicMode !== 'conjugation') {
+    if (!question || answerMode !== "choice" || topicMode !== "conjugation") {
       setChoiceOptions([]);
       setChoiceStatus("idle");
       setChoiceMessage("");
@@ -748,7 +763,11 @@ function App() {
         items: [...normalized.items, entry],
       };
     });
-    setTransitivityResult({ correct: isCorrect, correctAnswer, userAnswer: trimmed });
+    setTransitivityResult({
+      correct: isCorrect,
+      correctAnswer,
+      userAnswer: trimmed,
+    });
   }
 
   function handleSubmit(event: React.FormEvent) {
@@ -783,7 +802,7 @@ function App() {
     const q = makeTransitivityQuestion(transitivityBank, transitivityType);
     setTransitivityQuestion(q);
     setTransitivityResult(null);
-    setTransitivityAnswer('');
+    setTransitivityAnswer("");
     if (q) {
       const choices = getTransitivityChoices(q, transitivityBank);
       setTransitivityChoices(choices);
@@ -1028,10 +1047,11 @@ function App() {
       return <p className="empty-message">題庫沒有自他動詞資料</p>;
     }
     const { card, type, side } = transitivityQuestion;
-    const prompt = side === 'intransitive' ? card.intransitive : card.transitive;
-    const reading = side === 'intransitive' ? card.reading_i : card.reading_t;
-    const isIdentify = type === 'identify';
-    const isChoice = answerMode === 'choice';
+    const prompt =
+      side === "intransitive" ? card.intransitive : card.transitive;
+    const reading = side === "intransitive" ? card.reading_i : card.reading_t;
+    const isIdentify = type === "identify";
+    const isChoice = answerMode === "choice";
 
     return (
       <section className="question-card">
@@ -1039,7 +1059,7 @@ function App() {
           <div className="prompt">{prompt}</div>
           {reading && <div className="arrow">{reading}</div>}
           <div className="target">
-            {isIdentify ? '自動詞 or 他動詞？' : '対になる動詞は？'}
+            {isIdentify ? "自動詞 or 他動詞？" : "対になる動詞は？"}
           </div>
         </div>
 
@@ -1047,7 +1067,9 @@ function App() {
           <div className="answer-form">
             <div className="choice-list">
               {transitivityChoices.map((option) => {
-                const isCorrect = transitivityResult && option === transitivityResult.correctAnswer;
+                const isCorrect =
+                  transitivityResult &&
+                  option === transitivityResult.correctAnswer;
                 const isWrong =
                   transitivityResult &&
                   option === transitivityResult.userAnswer &&
@@ -1122,11 +1144,11 @@ function App() {
           {transitivityResult ? (
             <div className={transitivityResult.correct ? "correct" : "wrong"}>
               <div className="badge">
-                {transitivityResult.correct ? '✅ 正確' : '❌ 錯誤 / 略過'}
+                {transitivityResult.correct ? "✅ 正確" : "❌ 錯誤 / 略過"}
               </div>
               <div className="result-row">
                 <span>我的答案</span>
-                <strong>{transitivityResult.userAnswer || '（空白）'}</strong>
+                <strong>{transitivityResult.userAnswer || "（空白）"}</strong>
               </div>
               <div className="result-row">
                 <span>正確答案</span>
@@ -1178,7 +1200,7 @@ function App() {
       />
 
       <main className="main">
-        {topicMode === 'transitivity' ? (
+        {topicMode === "transitivity" ? (
           renderTransitivitySection()
         ) : (
           <>

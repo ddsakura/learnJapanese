@@ -12,9 +12,10 @@ describe("importing", () => {
   });
 
   it("normalizes adjective objects with overrides", () => {
-    const result = normalizeImport([
-      { dict: "静か", group: "na", nai: "静かじゃない" },
-    ], "adjective");
+    const result = normalizeImport(
+      [{ dict: "静か", group: "na", nai: "静かじゃない" }],
+      "adjective",
+    );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.bank[0].nai).toBe("静かじゃない");
@@ -50,8 +51,8 @@ describe("importing", () => {
 
   it("pruneSrs removes missing cards", () => {
     const srs: Record<string, SrsState> = {
-      "書く": { intervalDays: 1, due: 1 },
-      "消す": { intervalDays: 1, due: 1 },
+      書く: { intervalDays: 1, due: 1 },
+      消す: { intervalDays: 1, due: 1 },
     };
     const bank: Card[] = [
       {

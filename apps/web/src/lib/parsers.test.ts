@@ -7,8 +7,7 @@ import {
 
 describe("parsers", () => {
   it("parses example response", () => {
-    const raw =
-      "JP: 行った\nReading: いった\nZH: 去了\nGrammar: た形";
+    const raw = "JP: 行った\nReading: いった\nZH: 去了\nGrammar: た形";
     const parsed = parseExampleResponse(raw);
     expect(parsed).toEqual({
       jp: "行った",
@@ -19,10 +18,8 @@ describe("parsers", () => {
   });
 
   it("normalizes translation labels/quotes", () => {
-    expect(normalizeTranslation("zh: \"可愛\""))
-      .toBe("可愛");
-    expect(normalizeTranslation("translation: 很棒"))
-      .toBe("很棒");
+    expect(normalizeTranslation('zh: "可愛"')).toBe("可愛");
+    expect(normalizeTranslation("translation: 很棒")).toBe("很棒");
   });
 
   it("parses choice response lines", () => {
