@@ -174,6 +174,31 @@ async function generateExample(term: string, typeLabel: string) {
 const translationCache = new Map<string, string>();
 const choiceCache = new Map<string, string[]>();
 
+async function buildWrongChoices(
+  correctAnswer: string,
+  dict: string,
+  type: Exclude<QuestionType, "mixed">,
+) {
+  const response = await fetch(OLLAMA_GENERATE_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: DEFAULT_OLLAMA_MODEL,
+      prompt: buildChoicePrompt(correctAnswer, dict, type),
+      stream: false,
+    }),
+  });
+  if (!response.ok) return null;
+  const data = (await response.json()) as { response?: string };
+  const raw = data.response?.trim();
+  if (!raw) return null;
+  const items = parseChoiceResponse(raw);
+  const unique = Array.from(new Set(items)).filter(
+    (item) => item !== correctAnswer,
+  );
+  return unique.slice(0, 3);
+}
+
 async function fetchZhTranslation(dict: string) {
   try {
     const response = await fetch(OLLAMA_GENERATE_ENDPOINT, {
@@ -612,6 +637,47 @@ function App() {
     };
   }, [practice, question, result, topicMode]);
 
+  const startChoiceGeneration = useCallback(function (force: boolean) {
+    if (!question) return;
+    const correctAnswer = getAnswer(question.card, question.type);
+    if (!correctAnswer.trim()) {
+      setChoiceStatus("error");
+      setChoiceMessage("選項產生失敗：正確答案為空。");
+      return;
+    }
+    const cacheKey = `${practice}:${question.type}:${question.card.dict}:${correctAnswer}`;
+    if (!force) {
+      const cached = choiceCache.get(cacheKey);
+      if (cached) {
+        setChoiceOptions(cached);
+        setChoiceStatus("idle");
+        setChoiceMessage("");
+        return;
+      }
+    }
+    const requestId = (choiceRequestId.current += 1);
+    setChoiceStatus("loading");
+    setChoiceMessage("");
+    buildWrongChoices(correctAnswer, question.card.dict, question.type)
+      .then((wrong) => {
+        if (choiceRequestId.current !== requestId) return;
+        if (!wrong || wrong.length < 3) {
+          setChoiceStatus("error");
+          setChoiceMessage("選項產生失敗，請確認 Ollama 已啟動且模型可用。");
+          return;
+        }
+        const options = shuffle([correctAnswer, ...wrong.slice(0, 3)]);
+        choiceCache.set(cacheKey, options);
+        setChoiceOptions(options);
+        setChoiceStatus("idle");
+      })
+      .catch(() => {
+        if (choiceRequestId.current !== requestId) return;
+        setChoiceStatus("error");
+        setChoiceMessage("選項產生失敗，請確認 Ollama 已啟動且模型可用。");
+      });
+  }, [question, practice]);
+
   useEffect(() => {
     if (!question || answerMode !== "choice" || topicMode !== "conjugation") {
       setChoiceOptions([]);
@@ -621,7 +687,14 @@ function App() {
     }
     if (result) return;
     startChoiceGeneration(false);
-  }, [answerMode, practice, question, result, topicMode]);
+  }, [
+    answerMode,
+    practice,
+    question,
+    result,
+    startChoiceGeneration,
+    topicMode,
+  ]);
 
   useEffect(() => {
     if (canSpeak) {
@@ -859,75 +932,9 @@ function App() {
     checkAnswer(option);
   }
 
-  function startChoiceGeneration(force: boolean) {
-    if (!question) return;
-    const correctAnswer = getAnswer(question.card, question.type);
-    if (!correctAnswer.trim()) {
-      setChoiceStatus("error");
-      setChoiceMessage("選項產生失敗：正確答案為空。");
-      return;
-    }
-    const cacheKey = `${practice}:${question.type}:${question.card.dict}:${correctAnswer}`;
-    if (!force) {
-      const cached = choiceCache.get(cacheKey);
-      if (cached) {
-        setChoiceOptions(cached);
-        setChoiceStatus("idle");
-        setChoiceMessage("");
-        return;
-      }
-    }
-    const requestId = (choiceRequestId.current += 1);
-    setChoiceStatus("loading");
-    setChoiceMessage("");
-    buildWrongChoices(correctAnswer, question.card.dict, question.type)
-      .then((wrong) => {
-        if (choiceRequestId.current !== requestId) return;
-        if (!wrong || wrong.length < 3) {
-          setChoiceStatus("error");
-          setChoiceMessage("選項產生失敗，請確認 Ollama 已啟動且模型可用。");
-          return;
-        }
-        const options = shuffle([correctAnswer, ...wrong.slice(0, 3)]);
-        choiceCache.set(cacheKey, options);
-        setChoiceOptions(options);
-        setChoiceStatus("idle");
-      })
-      .catch(() => {
-        if (choiceRequestId.current !== requestId) return;
-        setChoiceStatus("error");
-        setChoiceMessage("選項產生失敗，請確認 Ollama 已啟動且模型可用。");
-      });
-  }
-
   function handleRegenerateChoices() {
     if (!question || result) return;
     startChoiceGeneration(true);
-  }
-
-  async function buildWrongChoices(
-    correctAnswer: string,
-    dict: string,
-    type: Exclude<QuestionType, "mixed">,
-  ) {
-    const response = await fetch(OLLAMA_GENERATE_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: DEFAULT_OLLAMA_MODEL,
-        prompt: buildChoicePrompt(correctAnswer, dict, type),
-        stream: false,
-      }),
-    });
-    if (!response.ok) return null;
-    const data = (await response.json()) as { response?: string };
-    const raw = data.response?.trim();
-    if (!raw) return null;
-    const items = parseChoiceResponse(raw);
-    const unique = Array.from(new Set(items)).filter(
-      (item) => item !== correctAnswer,
-    );
-    return unique.slice(0, 3);
   }
 
   function handleExport() {
