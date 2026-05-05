@@ -201,7 +201,7 @@ docs/screenshots/
 
 4. **執行截圖**
    ```bash
-   node scripts/capture-web-screenshots.js
+   node ../../scripts/capture-web-screenshots.js
    ```
 
 ### 注意事項

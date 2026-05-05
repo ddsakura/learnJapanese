@@ -38,6 +38,10 @@ build/
 *.xcscmblueprint
 .swiftpm/
 
+# Generated scripts
+scripts/capture-web-screenshots.js
+scripts/capture-web-screenshots.mjs
+
 # Android/Gradle
 **/.gradle/
 **/build/
