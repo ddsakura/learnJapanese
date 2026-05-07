@@ -11,6 +11,7 @@ export function getPool(bank: Card[], scope: Scope) {
 
 export function getAnswer(card: Card, type: Exclude<QuestionType, "mixed">) {
   if (type === "potential") return card.potential ?? "";
+  if (type === "causative") return card.causative ?? "";
   return card[type];
 }
 

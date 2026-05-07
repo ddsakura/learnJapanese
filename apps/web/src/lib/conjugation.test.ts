@@ -20,12 +20,23 @@ describe("conjugation", () => {
     expect(card?.ta).toBe("書いた");
     expect(card?.te).toBe("書いて");
     expect(card?.potential).toBe("書ける");
+    expect(card?.causative).toBe("書かせる");
   });
 
   it("handles 行く exception", () => {
     const card = conjugateVerb("行く", "godan");
     expect(card?.ta).toBe("行った");
     expect(card?.te).toBe("行って");
+    expect(card?.causative).toBe("行かせる");
+  });
+
+  it("conjugates causative forms for ichidan and irregular verbs", () => {
+    expect(conjugateVerb("食べる", "ichidan")?.causative).toBe("食べさせる");
+    expect(conjugateVerb("勉強する", "irregular")?.causative).toBe(
+      "勉強させる",
+    );
+    expect(conjugateVerb("くる", "irregular")?.causative).toBe("こさせる");
+    expect(conjugateVerb("来る", "irregular")?.causative).toBe("来させる");
   });
 
   it("conjugates i/na adjectives and いい exception", () => {
