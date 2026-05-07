@@ -53,24 +53,35 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
         nakatta: `${base}しなかった`,
         te: `${base}して`,
         potential: `${base}できる`,
+        causative: `${base}させる`,
         group,
       };
     }
-    if (dict.endsWith("くる") || dict.endsWith("来る")) {
-      const base = dict.endsWith("くる")
-        ? dict.slice(0, -2)
-        : dict.slice(0, -1);
+    if (dict.endsWith("くる")) {
+      const base = dict.slice(0, -2);
       const nai = `${base}こない`;
-      const potential = dict.endsWith("くる")
-        ? `${base}こられる`
-        : `${base}られる`;
       return {
         dict,
         nai,
         ta: `${base}きた`,
         nakatta: `${base}こなかった`,
         te: `${base}きて`,
-        potential,
+        potential: `${base}こられる`,
+        causative: `${base}こさせる`,
+        group,
+      };
+    }
+    if (dict.endsWith("来る")) {
+      const base = dict.slice(0, -1);
+      const nai = `${base}ない`;
+      return {
+        dict,
+        nai,
+        ta: `${base}た`,
+        nakatta: `${base}なかった`,
+        te: `${base}て`,
+        potential: `${base}られる`,
+        causative: `${base}させる`,
         group,
       };
     }
@@ -88,6 +99,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
       nakatta: `${stem}なかった`,
       te: `${stem}て`,
       potential: `${stem}られる`,
+      causative: `${stem}させる`,
       group,
     };
   }
@@ -98,6 +110,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
   let ta = "";
   let te = "";
   let potential = "";
+  let causative = "";
 
   switch (last) {
     case "う":
@@ -105,36 +118,42 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
       ta = `${stem}った`;
       te = `${stem}って`;
       potential = `${stem}える`;
+      causative = `${stem}わせる`;
       break;
     case "つ":
       nai = `${stem}たない`;
       ta = `${stem}った`;
       te = `${stem}って`;
       potential = `${stem}てる`;
+      causative = `${stem}たせる`;
       break;
     case "る":
       nai = `${stem}らない`;
       ta = `${stem}った`;
       te = `${stem}って`;
       potential = `${stem}れる`;
+      causative = `${stem}らせる`;
       break;
     case "ぶ":
       nai = `${stem}ばない`;
       ta = `${stem}んだ`;
       te = `${stem}んで`;
       potential = `${stem}べる`;
+      causative = `${stem}ばせる`;
       break;
     case "む":
       nai = `${stem}まない`;
       ta = `${stem}んだ`;
       te = `${stem}んで`;
       potential = `${stem}める`;
+      causative = `${stem}ませる`;
       break;
     case "ぬ":
       nai = `${stem}なない`;
       ta = `${stem}んだ`;
       te = `${stem}んで`;
       potential = `${stem}ねる`;
+      causative = `${stem}なせる`;
       break;
     case "く":
       nai = `${stem}かない`;
@@ -146,18 +165,21 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
         te = `${stem}いて`;
       }
       potential = `${stem}ける`;
+      causative = `${stem}かせる`;
       break;
     case "ぐ":
       nai = `${stem}がない`;
       ta = `${stem}いだ`;
       te = `${stem}いで`;
       potential = `${stem}げる`;
+      causative = `${stem}がせる`;
       break;
     case "す":
       nai = `${stem}さない`;
       ta = `${stem}した`;
       te = `${stem}して`;
       potential = `${stem}せる`;
+      causative = `${stem}させる`;
       break;
     default:
       return null;
@@ -170,6 +192,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
     nakatta: buildNakatta(nai),
     te,
     potential,
+    causative,
     group,
   };
 }
@@ -223,9 +246,14 @@ export function normalizeVerbBank(bank: Card[]) {
     ) {
       return card;
     }
-    if (card.potential?.trim()) return card;
     const generated = conjugateVerb(card.dict, card.group);
-    if (!generated?.potential) return card;
-    return { ...card, potential: generated.potential };
+    if (!generated) return card;
+    const potential = card.potential?.trim();
+    const causative = card.causative?.trim();
+    return {
+      ...card,
+      potential: potential || generated.potential,
+      causative: causative || generated.causative,
+    };
   });
 }

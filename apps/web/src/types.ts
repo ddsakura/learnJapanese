@@ -11,6 +11,7 @@ export type Card = {
   nakatta: string;
   te: string;
   potential?: string;
+  causative?: string;
   group: Group;
   zh?: string;
 };
@@ -21,6 +22,7 @@ export type QuestionType =
   | "nakatta"
   | "te"
   | "potential"
+  | "causative"
   | "mixed";
 
 export type VerbScope = "all" | VerbGroup;

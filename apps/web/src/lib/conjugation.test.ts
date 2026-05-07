@@ -4,6 +4,7 @@ import {
   conjugateAdjective,
   conjugateVerb,
   inferVerbGroup,
+  normalizeVerbBank,
 } from "./conjugation";
 
 describe("conjugation", () => {
@@ -20,12 +21,49 @@ describe("conjugation", () => {
     expect(card?.ta).toBe("書いた");
     expect(card?.te).toBe("書いて");
     expect(card?.potential).toBe("書ける");
+    expect(card?.causative).toBe("書かせる");
   });
 
   it("handles 行く exception", () => {
     const card = conjugateVerb("行く", "godan");
     expect(card?.ta).toBe("行った");
     expect(card?.te).toBe("行って");
+    expect(card?.causative).toBe("行かせる");
+  });
+
+  it("conjugates causative forms for ichidan and irregular verbs", () => {
+    expect(conjugateVerb("食べる", "ichidan")?.causative).toBe("食べさせる");
+    expect(conjugateVerb("勉強する", "irregular")?.causative).toBe(
+      "勉強させる",
+    );
+    expect(conjugateVerb("くる", "irregular")?.causative).toBe("こさせる");
+  });
+
+  it("conjugates 来る with kanji forms", () => {
+    const card = conjugateVerb("来る", "irregular");
+    expect(card?.nai).toBe("来ない");
+    expect(card?.ta).toBe("来た");
+    expect(card?.nakatta).toBe("来なかった");
+    expect(card?.te).toBe("来て");
+    expect(card?.potential).toBe("来られる");
+    expect(card?.causative).toBe("来させる");
+  });
+
+  it("trims stored optional verb forms when normalizing", () => {
+    const [card] = normalizeVerbBank([
+      {
+        dict: "書く",
+        nai: "書かない",
+        ta: "書いた",
+        nakatta: "書かなかった",
+        te: "書いて",
+        potential: " 書ける ",
+        causative: " 書かせる ",
+        group: "godan",
+      },
+    ]);
+    expect(card.potential).toBe("書ける");
+    expect(card.causative).toBe("書かせる");
   });
 
   it("conjugates i/na adjectives and いい exception", () => {

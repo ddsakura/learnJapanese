@@ -96,7 +96,10 @@ function normalizeSettings(value: Settings | LegacySettings): Settings {
           verb: { scope: value.scope as VerbScope, type: value.type },
           adjective: { scope: "all", type: "mixed" },
         };
-  if (normalized.adjective.type === "potential") {
+  if (
+    normalized.adjective.type === "potential" ||
+    normalized.adjective.type === "causative"
+  ) {
     return {
       ...normalized,
       adjective: { ...normalized.adjective, type: "mixed" },
@@ -370,22 +373,29 @@ function App() {
     () =>
       practice === "verb"
         ? TYPE_OPTIONS
-        : TYPE_OPTIONS.filter((option) => option.value !== "potential"),
+        : TYPE_OPTIONS.filter(
+            (option) =>
+              option.value !== "potential" && option.value !== "causative",
+          ),
     [practice],
   );
   const typeKeys = useMemo(
     () =>
       practice === "verb"
         ? TYPE_KEYS
-        : TYPE_KEYS.filter((type) => type !== "potential"),
+        : TYPE_KEYS.filter(
+            (type) => type !== "potential" && type !== "causative",
+          ),
     [practice],
   );
   const summaryLine =
     practice === "verb"
-      ? "ない形／た形／なかった形／て形／可能形・快速刷題 + 簡易 SRS"
+      ? "ない形／た形／なかった形／て形／可能形／使役形・快速刷題 + 簡易 SRS"
       : "ない形／た形／なかった形／て形・快速刷題 + 簡易 SRS";
   const ruleSummary =
-    practice === "verb" ? "た形・て形・可能形 變形規則" : "形容詞變化規則";
+    practice === "verb"
+      ? "た形・て形・可能形・使役形 變形規則"
+      : "形容詞變化規則";
   const bankExample =
     practice === "verb"
       ? `[
@@ -522,7 +532,8 @@ function App() {
     const card =
       dueCards.length > 0 ? pickRandom(dueCards) : pickRandom(candidatePool);
     const sanitizedType =
-      practice === "adjective" && questionType === "potential"
+      practice === "adjective" &&
+      (questionType === "potential" || questionType === "causative")
         ? "mixed"
         : questionType;
     const actualType =

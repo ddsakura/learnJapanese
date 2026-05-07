@@ -85,6 +85,7 @@ export function normalizeImport(
         "nakatta",
         "te",
         "potential",
+        "causative",
         "zh",
       ]);
 
@@ -120,12 +121,17 @@ export function normalizeImport(
   return { ok: true, bank };
 }
 
-function buildOverrides(record: Record<string, unknown>, fields: string[]) {
-  const overrides: Partial<Card> = {};
+type CardOverrideField = Exclude<keyof Card, "group">;
+
+function buildOverrides(
+  record: Record<string, unknown>,
+  fields: CardOverrideField[],
+) {
+  const overrides: Partial<Record<CardOverrideField, string>> = {};
   fields.forEach((field) => {
     const value = record[field];
     if (typeof value === "string" && value.trim()) {
-      overrides[field as keyof Card] = value.trim();
+      overrides[field] = value.trim();
     }
   });
   return overrides;

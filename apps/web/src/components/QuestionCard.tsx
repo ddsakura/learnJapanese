@@ -297,6 +297,8 @@ export default function QuestionCard({
                     <>
                       <span>可能形</span>
                       <strong>{question.card.potential || "（未提供）"}</strong>
+                      <span>使役形</span>
+                      <strong>{question.card.causative || "（未提供）"}</strong>
                     </>
                   )}
                 </div>

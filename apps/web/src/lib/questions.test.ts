@@ -11,6 +11,7 @@ describe("questions", () => {
       nakatta: "書かなかった",
       te: "書いて",
       potential: "書ける",
+      causative: "書かせる",
       group: "godan",
     },
     {
@@ -20,12 +21,17 @@ describe("questions", () => {
       nakatta: "食べなかった",
       te: "食べて",
       potential: "食べられる",
+      causative: "食べさせる",
       group: "ichidan",
     },
   ];
 
   it("gets answer for potential", () => {
     expect(getAnswer(cards[0], "potential")).toBe("書ける");
+  });
+
+  it("gets answer for causative", () => {
+    expect(getAnswer(cards[0], "causative")).toBe("書かせる");
   });
 
   it("filters pool by scope", () => {
