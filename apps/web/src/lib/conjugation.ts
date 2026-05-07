@@ -57,25 +57,31 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
         group,
       };
     }
-    if (dict.endsWith("くる") || dict.endsWith("来る")) {
-      const base = dict.endsWith("くる")
-        ? dict.slice(0, -2)
-        : dict.slice(0, -1);
+    if (dict.endsWith("くる")) {
+      const base = dict.slice(0, -2);
       const nai = `${base}こない`;
-      const potential = dict.endsWith("くる")
-        ? `${base}こられる`
-        : `${base}られる`;
-      const causative = dict.endsWith("くる")
-        ? `${base}こさせる`
-        : `${base}させる`;
       return {
         dict,
         nai,
         ta: `${base}きた`,
         nakatta: `${base}こなかった`,
         te: `${base}きて`,
-        potential,
-        causative,
+        potential: `${base}こられる`,
+        causative: `${base}こさせる`,
+        group,
+      };
+    }
+    if (dict.endsWith("来る")) {
+      const base = dict.slice(0, -1);
+      const nai = `${base}ない`;
+      return {
+        dict,
+        nai,
+        ta: `${base}た`,
+        nakatta: `${base}なかった`,
+        te: `${base}て`,
+        potential: `${base}られる`,
+        causative: `${base}させる`,
         group,
       };
     }
@@ -242,12 +248,12 @@ export function normalizeVerbBank(bank: Card[]) {
     }
     const generated = conjugateVerb(card.dict, card.group);
     if (!generated) return card;
+    const potential = card.potential?.trim();
+    const causative = card.causative?.trim();
     return {
       ...card,
-      potential: card.potential?.trim() ? card.potential : generated.potential,
-      causative: card.causative?.trim()
-        ? card.causative
-        : generated.causative,
+      potential: potential || generated.potential,
+      causative: causative || generated.causative,
     };
   });
 }

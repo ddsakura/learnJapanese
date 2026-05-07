@@ -4,6 +4,7 @@ import {
   conjugateAdjective,
   conjugateVerb,
   inferVerbGroup,
+  normalizeVerbBank,
 } from "./conjugation";
 
 describe("conjugation", () => {
@@ -36,7 +37,33 @@ describe("conjugation", () => {
       "勉強させる",
     );
     expect(conjugateVerb("くる", "irregular")?.causative).toBe("こさせる");
-    expect(conjugateVerb("来る", "irregular")?.causative).toBe("来させる");
+  });
+
+  it("conjugates 来る with kanji forms", () => {
+    const card = conjugateVerb("来る", "irregular");
+    expect(card?.nai).toBe("来ない");
+    expect(card?.ta).toBe("来た");
+    expect(card?.nakatta).toBe("来なかった");
+    expect(card?.te).toBe("来て");
+    expect(card?.potential).toBe("来られる");
+    expect(card?.causative).toBe("来させる");
+  });
+
+  it("trims stored optional verb forms when normalizing", () => {
+    const [card] = normalizeVerbBank([
+      {
+        dict: "書く",
+        nai: "書かない",
+        ta: "書いた",
+        nakatta: "書かなかった",
+        te: "書いて",
+        potential: " 書ける ",
+        causative: " 書かせる ",
+        group: "godan",
+      },
+    ]);
+    expect(card.potential).toBe("書ける");
+    expect(card.causative).toBe("書かせる");
   });
 
   it("conjugates i/na adjectives and いい exception", () => {
