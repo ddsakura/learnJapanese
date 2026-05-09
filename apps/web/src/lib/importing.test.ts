@@ -62,6 +62,35 @@ describe("importing", () => {
     expect(result.bank[0].volitional).toBe("書こう");
   });
 
+  it("trims complete verb objects before validating and backfilling", () => {
+    const result = normalizeImport(
+      [
+        {
+          dict: " 書く ",
+          nai: " 書かない ",
+          ta: " 書いた ",
+          nakatta: " 書かなかった ",
+          te: " 書いて ",
+          potential: " 書ける ",
+          group: " godan ",
+        },
+      ],
+      "verb",
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.bank[0]).toMatchObject({
+      dict: "書く",
+      nai: "書かない",
+      ta: "書いた",
+      nakatta: "書かなかった",
+      te: "書いて",
+      potential: "書ける",
+      volitional: "書こう",
+      group: "godan",
+    });
+  });
+
   it("mergeBank keeps existing zh if incoming missing", () => {
     const existing: Card[] = [
       {

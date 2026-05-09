@@ -60,7 +60,7 @@ export function normalizeImport(
       return { ok: false, error: "題庫項目格式錯誤。" };
     }
 
-    const record = item as Record<string, unknown>;
+    const record = trimStringValues(item as Record<string, unknown>);
     const dict = typeof record.dict === "string" ? record.dict.trim() : "";
     if (!dict) return { ok: false, error: "每筆資料需包含 dict。" };
     if (practice === "verb") {
@@ -137,6 +137,15 @@ function buildOverrides(
     }
   });
   return overrides;
+}
+
+function trimStringValues(record: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(record).map(([key, value]) => [
+      key,
+      typeof value === "string" ? value.trim() : value,
+    ]),
+  );
 }
 
 export function mergeBank(existing: Card[], incoming: Card[]) {
