@@ -15,7 +15,7 @@
    - 否則以 dict + group 推導，再用提供欄位覆寫
 
 ## 可覆寫欄位
-- 動詞：nai, ta, nakatta, te, potential, causative, zh
+- 動詞：nai, ta, nakatta, te, potential, causative, volitional, zh
 - 形容詞：nai, ta, nakatta, te, zh
 
 ## 錯誤情境（需回傳錯誤）

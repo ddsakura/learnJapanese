@@ -56,9 +56,15 @@ export default function RulesPanel({ practice, ruleSummary }: RulesPanelProps) {
             <div className="rule-line">う → わせる</div>
           </div>
           <div className="rule-card">
+            <div className="rule-title">五段動詞（意向形）</div>
+            <div className="rule-line">語尾改 o 段＋う</div>
+            <div className="rule-line">例：書く → 書こう</div>
+          </div>
+          <div className="rule-card">
             <div className="rule-title">二段動詞</div>
             <div className="rule-line">可能形：語幹＋られる</div>
             <div className="rule-line">使役形：語幹＋させる</div>
+            <div className="rule-line">意向形：語幹＋よう</div>
           </div>
           <div className="rule-card">
             <div className="rule-title">する／くる</div>
@@ -66,6 +72,7 @@ export default function RulesPanel({ practice, ruleSummary }: RulesPanelProps) {
             <div className="rule-line">て形：して／きて</div>
             <div className="rule-line">可能形：できる／こられる</div>
             <div className="rule-line">使役形：させる／こさせる</div>
+            <div className="rule-line">意向形：しよう／こよう</div>
           </div>
         </div>
       </div>

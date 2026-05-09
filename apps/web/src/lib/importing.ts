@@ -4,6 +4,7 @@ import {
   conjugateVerb,
   inferAdjectiveGroup,
   inferVerbGroup,
+  normalizeVerbBank,
 } from "./conjugation";
 
 export function validateBank(
@@ -73,7 +74,7 @@ export function normalizeImport(
           : inferVerbGroup(dict);
 
       if (validateBank([record as Card], practice)) {
-        bank.push(record as Card);
+        bank.push(normalizeVerbBank([record as Card])[0]);
         continue;
       }
 
@@ -86,6 +87,7 @@ export function normalizeImport(
         "te",
         "potential",
         "causative",
+        "volitional",
         "zh",
       ]);
 

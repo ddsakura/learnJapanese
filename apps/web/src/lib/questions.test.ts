@@ -12,6 +12,7 @@ describe("questions", () => {
       te: "書いて",
       potential: "書ける",
       causative: "書かせる",
+      volitional: "書こう",
       group: "godan",
     },
     {
@@ -22,6 +23,7 @@ describe("questions", () => {
       te: "食べて",
       potential: "食べられる",
       causative: "食べさせる",
+      volitional: "食べよう",
       group: "ichidan",
     },
   ];
@@ -32,6 +34,10 @@ describe("questions", () => {
 
   it("gets answer for causative", () => {
     expect(getAnswer(cards[0], "causative")).toBe("書かせる");
+  });
+
+  it("gets answer for volitional", () => {
+    expect(getAnswer(cards[0], "volitional")).toBe("書こう");
   });
 
   it("filters pool by scope", () => {

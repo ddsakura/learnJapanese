@@ -98,7 +98,8 @@ function normalizeSettings(value: Settings | LegacySettings): Settings {
         };
   if (
     normalized.adjective.type === "potential" ||
-    normalized.adjective.type === "causative"
+    normalized.adjective.type === "causative" ||
+    normalized.adjective.type === "volitional"
   ) {
     return {
       ...normalized,
@@ -375,7 +376,9 @@ function App() {
         ? TYPE_OPTIONS
         : TYPE_OPTIONS.filter(
             (option) =>
-              option.value !== "potential" && option.value !== "causative",
+              option.value !== "potential" &&
+              option.value !== "causative" &&
+              option.value !== "volitional",
           ),
     [practice],
   );
@@ -384,17 +387,20 @@ function App() {
       practice === "verb"
         ? TYPE_KEYS
         : TYPE_KEYS.filter(
-            (type) => type !== "potential" && type !== "causative",
+            (type) =>
+              type !== "potential" &&
+              type !== "causative" &&
+              type !== "volitional",
           ),
     [practice],
   );
   const summaryLine =
     practice === "verb"
-      ? "ない形／た形／なかった形／て形／可能形／使役形・快速刷題 + 簡易 SRS"
+      ? "ない形／た形／なかった形／て形／可能形／使役形／意向形・快速刷題 + 簡易 SRS"
       : "ない形／た形／なかった形／て形・快速刷題 + 簡易 SRS";
   const ruleSummary =
     practice === "verb"
-      ? "た形・て形・可能形・使役形 變形規則"
+      ? "た形・て形・可能形・使役形・意向形 變形規則"
       : "形容詞變化規則";
   const bankExample =
     practice === "verb"
@@ -533,7 +539,9 @@ function App() {
       dueCards.length > 0 ? pickRandom(dueCards) : pickRandom(candidatePool);
     const sanitizedType =
       practice === "adjective" &&
-      (questionType === "potential" || questionType === "causative")
+      (questionType === "potential" ||
+        questionType === "causative" ||
+        questionType === "volitional")
         ? "mixed"
         : questionType;
     const actualType =
