@@ -31,6 +31,7 @@ import {
   normalizeWrongToday,
 } from "./lib/stats";
 import {
+  exampleMatchesQuestion,
   normalizeTranslation,
   parseChoiceResponse,
   parseExampleResponse,
@@ -158,21 +159,29 @@ function formatTransitivityTerm(term: string, reading?: string) {
   return reading ? `${term}（${reading}）` : term;
 }
 
-async function generateExample(term: string, typeLabel: string) {
-  const response = await fetch(OLLAMA_GENERATE_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: DEFAULT_OLLAMA_MODEL,
-      prompt: buildExamplePrompt(term, typeLabel),
-      stream: false,
-    }),
-  });
-  if (!response.ok) return null;
-  const data = (await response.json()) as { response?: string };
-  const raw = data.response?.trim();
-  if (!raw) return null;
-  return parseExampleResponse(raw);
+async function generateExample(dict: string, term: string, typeLabel: string) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await fetch(OLLAMA_GENERATE_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: DEFAULT_OLLAMA_MODEL,
+          prompt: buildExamplePrompt(dict, term, typeLabel, attempt > 0),
+          stream: false,
+        }),
+      });
+      if (!response.ok) continue;
+      const data = (await response.json()) as { response?: string };
+      const raw = data.response?.trim();
+      if (!raw) continue;
+      const entry = parseExampleResponse(raw);
+      if (entry && exampleMatchesQuestion(entry, dict, term)) return entry;
+    } catch {
+      continue;
+    }
+  }
+  return null;
 }
 
 const translationCache = new Map<string, string>();
@@ -602,18 +611,24 @@ function App() {
     setExampleStatus("idle");
     setExampleMessage("");
     if (!result || !question || topicMode !== "conjugation") return;
+    const dict = question.card.dict;
     const term = result.correctAnswer;
     const typeLabel = QUESTION_LABELS[result.type];
-    const cacheKey = `${practice}:${result.type}:${term}`;
+    const cacheKey = `${practice}:${result.type}:${dict}:${term}`;
     const cache = loadExampleCache();
     const cached = cache[cacheKey];
-    if (cached) {
+    if (cached && exampleMatchesQuestion(cached, dict, term)) {
       setExample(cached);
       return;
     }
+    if (cached) {
+      const nextCache = { ...cache };
+      delete nextCache[cacheKey];
+      saveExampleCache(nextCache);
+    }
     let cancelled = false;
     setExampleStatus("loading");
-    generateExample(term, typeLabel)
+    generateExample(dict, term, typeLabel)
       .then((entry) => {
         if (cancelled) return;
         if (!entry) {
