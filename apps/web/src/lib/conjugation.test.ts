@@ -22,6 +22,7 @@ describe("conjugation", () => {
     expect(card?.te).toBe("書いて");
     expect(card?.potential).toBe("書ける");
     expect(card?.causative).toBe("書かせる");
+    expect(card?.volitional).toBe("書こう");
   });
 
   it("handles 行く exception", () => {
@@ -29,14 +30,20 @@ describe("conjugation", () => {
     expect(card?.ta).toBe("行った");
     expect(card?.te).toBe("行って");
     expect(card?.causative).toBe("行かせる");
+    expect(card?.volitional).toBe("行こう");
   });
 
-  it("conjugates causative forms for ichidan and irregular verbs", () => {
+  it("conjugates causative and volitional forms for ichidan and irregular verbs", () => {
     expect(conjugateVerb("食べる", "ichidan")?.causative).toBe("食べさせる");
+    expect(conjugateVerb("食べる", "ichidan")?.volitional).toBe("食べよう");
     expect(conjugateVerb("勉強する", "irregular")?.causative).toBe(
       "勉強させる",
     );
+    expect(conjugateVerb("勉強する", "irregular")?.volitional).toBe(
+      "勉強しよう",
+    );
     expect(conjugateVerb("くる", "irregular")?.causative).toBe("こさせる");
+    expect(conjugateVerb("くる", "irregular")?.volitional).toBe("こよう");
   });
 
   it("conjugates 来る with kanji forms", () => {
@@ -47,6 +54,7 @@ describe("conjugation", () => {
     expect(card?.te).toBe("来て");
     expect(card?.potential).toBe("来られる");
     expect(card?.causative).toBe("来させる");
+    expect(card?.volitional).toBe("来よう");
   });
 
   it("trims stored optional verb forms when normalizing", () => {
@@ -59,11 +67,29 @@ describe("conjugation", () => {
         te: "書いて",
         potential: " 書ける ",
         causative: " 書かせる ",
+        volitional: " 書こう ",
         group: "godan",
       },
     ]);
     expect(card.potential).toBe("書ける");
     expect(card.causative).toBe("書かせる");
+    expect(card.volitional).toBe("書こう");
+  });
+
+  it("fills missing stored volitional forms when normalizing", () => {
+    const [card] = normalizeVerbBank([
+      {
+        dict: "書く",
+        nai: "書かない",
+        ta: "書いた",
+        nakatta: "書かなかった",
+        te: "書いて",
+        potential: "書ける",
+        causative: "書かせる",
+        group: "godan",
+      },
+    ]);
+    expect(card.volitional).toBe("書こう");
   });
 
   it("conjugates i/na adjectives and いい exception", () => {

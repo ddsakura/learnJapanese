@@ -50,6 +50,7 @@ export const QUESTION_LABELS: Record<Exclude<QuestionType, "mixed">, string> = {
   te: "て形",
   potential: "可能形",
   causative: "使役形",
+  volitional: "意向形",
 };
 
 export const VERB_SCOPE_LABELS: Record<VerbScope, string> = {
@@ -73,6 +74,7 @@ export const TYPE_OPTIONS: { value: QuestionType; label: string }[] = [
   { value: "te", label: "て形" },
   { value: "potential", label: "可能形" },
   { value: "causative", label: "使役形" },
+  { value: "volitional", label: "意向形" },
 ];
 
 export const TYPE_KEYS: Exclude<QuestionType, "mixed">[] = [
@@ -82,6 +84,7 @@ export const TYPE_KEYS: Exclude<QuestionType, "mixed">[] = [
   "te",
   "potential",
   "causative",
+  "volitional",
 ];
 
 export const DEFAULT_TRANSITIVITY_BANK: TransitivityCard[] =

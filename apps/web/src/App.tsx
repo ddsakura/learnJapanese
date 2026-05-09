@@ -31,6 +31,7 @@ import {
   normalizeWrongToday,
 } from "./lib/stats";
 import {
+  exampleMatchesQuestion,
   normalizeTranslation,
   parseChoiceResponse,
   parseExampleResponse,
@@ -98,7 +99,8 @@ function normalizeSettings(value: Settings | LegacySettings): Settings {
         };
   if (
     normalized.adjective.type === "potential" ||
-    normalized.adjective.type === "causative"
+    normalized.adjective.type === "causative" ||
+    normalized.adjective.type === "volitional"
   ) {
     return {
       ...normalized,
@@ -157,21 +159,29 @@ function formatTransitivityTerm(term: string, reading?: string) {
   return reading ? `${term}（${reading}）` : term;
 }
 
-async function generateExample(term: string, typeLabel: string) {
-  const response = await fetch(OLLAMA_GENERATE_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: DEFAULT_OLLAMA_MODEL,
-      prompt: buildExamplePrompt(term, typeLabel),
-      stream: false,
-    }),
-  });
-  if (!response.ok) return null;
-  const data = (await response.json()) as { response?: string };
-  const raw = data.response?.trim();
-  if (!raw) return null;
-  return parseExampleResponse(raw);
+async function generateExample(dict: string, term: string, typeLabel: string) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await fetch(OLLAMA_GENERATE_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: DEFAULT_OLLAMA_MODEL,
+          prompt: buildExamplePrompt(dict, term, typeLabel, attempt > 0),
+          stream: false,
+        }),
+      });
+      if (!response.ok) continue;
+      const data = (await response.json()) as { response?: string };
+      const raw = data.response?.trim();
+      if (!raw) continue;
+      const entry = parseExampleResponse(raw);
+      if (entry && exampleMatchesQuestion(entry, dict, term)) return entry;
+    } catch {
+      continue;
+    }
+  }
+  return null;
 }
 
 const translationCache = new Map<string, string>();
@@ -375,7 +385,9 @@ function App() {
         ? TYPE_OPTIONS
         : TYPE_OPTIONS.filter(
             (option) =>
-              option.value !== "potential" && option.value !== "causative",
+              option.value !== "potential" &&
+              option.value !== "causative" &&
+              option.value !== "volitional",
           ),
     [practice],
   );
@@ -384,17 +396,20 @@ function App() {
       practice === "verb"
         ? TYPE_KEYS
         : TYPE_KEYS.filter(
-            (type) => type !== "potential" && type !== "causative",
+            (type) =>
+              type !== "potential" &&
+              type !== "causative" &&
+              type !== "volitional",
           ),
     [practice],
   );
   const summaryLine =
     practice === "verb"
-      ? "ない形／た形／なかった形／て形／可能形／使役形・快速刷題 + 簡易 SRS"
+      ? "ない形／た形／なかった形／て形／可能形／使役形／意向形・快速刷題 + 簡易 SRS"
       : "ない形／た形／なかった形／て形・快速刷題 + 簡易 SRS";
   const ruleSummary =
     practice === "verb"
-      ? "た形・て形・可能形・使役形 變形規則"
+      ? "た形・て形・可能形・使役形・意向形 變形規則"
       : "形容詞變化規則";
   const bankExample =
     practice === "verb"
@@ -533,7 +548,9 @@ function App() {
       dueCards.length > 0 ? pickRandom(dueCards) : pickRandom(candidatePool);
     const sanitizedType =
       practice === "adjective" &&
-      (questionType === "potential" || questionType === "causative")
+      (questionType === "potential" ||
+        questionType === "causative" ||
+        questionType === "volitional")
         ? "mixed"
         : questionType;
     const actualType =
@@ -594,18 +611,24 @@ function App() {
     setExampleStatus("idle");
     setExampleMessage("");
     if (!result || !question || topicMode !== "conjugation") return;
+    const dict = question.card.dict;
     const term = result.correctAnswer;
     const typeLabel = QUESTION_LABELS[result.type];
-    const cacheKey = `${practice}:${result.type}:${term}`;
+    const cacheKey = `${practice}:${result.type}:${dict}:${term}`;
     const cache = loadExampleCache();
     const cached = cache[cacheKey];
-    if (cached) {
+    if (cached && exampleMatchesQuestion(cached, dict, term)) {
       setExample(cached);
       return;
     }
+    if (cached) {
+      const nextCache = { ...cache };
+      delete nextCache[cacheKey];
+      saveExampleCache(nextCache);
+    }
     let cancelled = false;
     setExampleStatus("loading");
-    generateExample(term, typeLabel)
+    generateExample(dict, term, typeLabel)
       .then((entry) => {
         if (cancelled) return;
         if (!entry) {

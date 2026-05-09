@@ -4,6 +4,7 @@ import {
   conjugateVerb,
   inferAdjectiveGroup,
   inferVerbGroup,
+  normalizeVerbBank,
 } from "./conjugation";
 
 export function validateBank(
@@ -59,7 +60,7 @@ export function normalizeImport(
       return { ok: false, error: "題庫項目格式錯誤。" };
     }
 
-    const record = item as Record<string, unknown>;
+    const record = trimStringValues(item as Record<string, unknown>);
     const dict = typeof record.dict === "string" ? record.dict.trim() : "";
     if (!dict) return { ok: false, error: "每筆資料需包含 dict。" };
     if (practice === "verb") {
@@ -73,7 +74,7 @@ export function normalizeImport(
           : inferVerbGroup(dict);
 
       if (validateBank([record as Card], practice)) {
-        bank.push(record as Card);
+        bank.push(normalizeVerbBank([record as Card])[0]);
         continue;
       }
 
@@ -86,6 +87,7 @@ export function normalizeImport(
         "te",
         "potential",
         "causative",
+        "volitional",
         "zh",
       ]);
 
@@ -135,6 +137,15 @@ function buildOverrides(
     }
   });
   return overrides;
+}
+
+function trimStringValues(record: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(record).map(([key, value]) => [
+      key,
+      typeof value === "string" ? value.trim() : value,
+    ]),
+  );
 }
 
 export function mergeBank(existing: Card[], incoming: Card[]) {

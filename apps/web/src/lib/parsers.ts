@@ -20,6 +20,32 @@ export function parseExampleResponse(text: string): ExampleEntry | null {
   return null;
 }
 
+export function exampleMatchesQuestion(
+  entry: ExampleEntry,
+  dict: string | string[],
+  term: string,
+) {
+  const normalizedJp = normalizeForTermCheck(entry.jp);
+  const normalizedGrammar = normalizeForTermCheck(entry.grammar);
+  const normalizedDicts = (Array.isArray(dict) ? dict : [dict])
+    .map(normalizeForTermCheck)
+    .filter(Boolean);
+  const normalizedTerm = normalizeForTermCheck(term);
+  return Boolean(
+    normalizedDicts.length > 0 &&
+      normalizedTerm &&
+      normalizedJp.includes(normalizedTerm) &&
+      normalizedDicts.some((normalizedDict) =>
+        normalizedGrammar.includes(normalizedDict),
+      ) &&
+      normalizedGrammar.includes(normalizedTerm),
+  );
+}
+
+function normalizeForTermCheck(value: string) {
+  return value.replace(/[\s\u3000「」『』"'`]/g, "").trim();
+}
+
 export function normalizeTranslation(raw: string) {
   const normalized = raw.replace(/\\n/g, "\n").trim();
   const firstLine = normalized

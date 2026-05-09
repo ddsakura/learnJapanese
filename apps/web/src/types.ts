@@ -12,6 +12,7 @@ export type Card = {
   te: string;
   potential?: string;
   causative?: string;
+  volitional?: string;
   group: Group;
   zh?: string;
 };
@@ -23,6 +24,7 @@ export type QuestionType =
   | "te"
   | "potential"
   | "causative"
+  | "volitional"
   | "mixed";
 
 export type VerbScope = "all" | VerbGroup;
