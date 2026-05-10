@@ -55,6 +55,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
         potential: `${base}できる`,
         causative: `${base}させる`,
         volitional: `${base}しよう`,
+        imperative: `${base}しろ`,
         group,
       };
     }
@@ -70,6 +71,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
         potential: `${base}こられる`,
         causative: `${base}こさせる`,
         volitional: `${base}こよう`,
+        imperative: `${base}こい`,
         group,
       };
     }
@@ -85,6 +87,21 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
         potential: `${base}られる`,
         causative: `${base}させる`,
         volitional: `${base}よう`,
+        imperative: `${base}い`,
+        group,
+      };
+    }
+    if (dict === "ある") {
+      return {
+        dict,
+        nai: "ない",
+        ta: "あった",
+        nakatta: "なかった",
+        te: "あって",
+        potential: "あり得る",
+        causative: "あらせる",
+        volitional: "あろう",
+        imperative: "あれ",
         group,
       };
     }
@@ -104,6 +121,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
       potential: `${stem}られる`,
       causative: `${stem}させる`,
       volitional: `${stem}よう`,
+      imperative: `${stem}ろ`,
       group,
     };
   }
@@ -116,6 +134,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
   let potential = "";
   let causative = "";
   let volitional = "";
+  let imperative = "";
 
   switch (last) {
     case "う":
@@ -125,6 +144,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
       potential = `${stem}える`;
       causative = `${stem}わせる`;
       volitional = `${stem}おう`;
+      imperative = `${stem}え`;
       break;
     case "つ":
       nai = `${stem}たない`;
@@ -133,6 +153,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
       potential = `${stem}てる`;
       causative = `${stem}たせる`;
       volitional = `${stem}とう`;
+      imperative = `${stem}て`;
       break;
     case "る":
       nai = `${stem}らない`;
@@ -141,6 +162,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
       potential = `${stem}れる`;
       causative = `${stem}らせる`;
       volitional = `${stem}ろう`;
+      imperative = `${stem}れ`;
       break;
     case "ぶ":
       nai = `${stem}ばない`;
@@ -149,6 +171,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
       potential = `${stem}べる`;
       causative = `${stem}ばせる`;
       volitional = `${stem}ぼう`;
+      imperative = `${stem}べ`;
       break;
     case "む":
       nai = `${stem}まない`;
@@ -157,6 +180,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
       potential = `${stem}める`;
       causative = `${stem}ませる`;
       volitional = `${stem}もう`;
+      imperative = `${stem}め`;
       break;
     case "ぬ":
       nai = `${stem}なない`;
@@ -165,6 +189,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
       potential = `${stem}ねる`;
       causative = `${stem}なせる`;
       volitional = `${stem}のう`;
+      imperative = `${stem}ね`;
       break;
     case "く":
       nai = `${stem}かない`;
@@ -178,6 +203,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
       potential = `${stem}ける`;
       causative = `${stem}かせる`;
       volitional = `${stem}こう`;
+      imperative = `${stem}け`;
       break;
     case "ぐ":
       nai = `${stem}がない`;
@@ -186,6 +212,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
       potential = `${stem}げる`;
       causative = `${stem}がせる`;
       volitional = `${stem}ごう`;
+      imperative = `${stem}げ`;
       break;
     case "す":
       nai = `${stem}さない`;
@@ -194,6 +221,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
       potential = `${stem}せる`;
       causative = `${stem}させる`;
       volitional = `${stem}そう`;
+      imperative = `${stem}せ`;
       break;
     default:
       return null;
@@ -208,6 +236,7 @@ export function conjugateVerb(dict: string, group: VerbGroup): Card | null {
     potential,
     causative,
     volitional,
+    imperative,
     group,
   };
 }
@@ -266,11 +295,13 @@ export function normalizeVerbBank(bank: Card[]) {
     const potential = card.potential?.trim();
     const causative = card.causative?.trim();
     const volitional = card.volitional?.trim();
+    const imperative = card.imperative?.trim();
     return {
       ...card,
       potential: potential || generated.potential,
       causative: causative || generated.causative,
       volitional: volitional || generated.volitional,
+      imperative: imperative || generated.imperative,
     };
   });
 }

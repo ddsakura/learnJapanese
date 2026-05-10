@@ -4,6 +4,7 @@ import {
   normalizeTranslation,
   parseChoiceResponse,
   parseExampleResponse,
+  sanitizeExampleEntry,
 } from "./parsers";
 
 describe("parsers", () => {
@@ -15,6 +16,34 @@ describe("parsers", () => {
       reading: "いった",
       zh: "去了",
       grammar: "た形",
+    });
+  });
+
+  it("strips markdown emphasis from example responses", () => {
+    const raw =
+      "JP: このラジオは音楽を**おとせる**。\nReading: このらじおはおんがくを**おとせる**。\nZH: 這台收音機能播放音樂。\nGrammar: 「**おとせる**」是「おとす」の可能形です。";
+    const parsed = parseExampleResponse(raw);
+    expect(parsed).toEqual({
+      jp: "このラジオは音楽をおとせる。",
+      reading: "このらじおはおんがくをおとせる。",
+      zh: "這台收音機能播放音樂。",
+      grammar: "「おとせる」是「おとす」の可能形です。",
+    });
+  });
+
+  it("sanitizes cached example entries", () => {
+    expect(
+      sanitizeExampleEntry({
+        jp: "音楽を**おとせる**。",
+        reading: "おんがくを**おとせる**。",
+        zh: "可以播放音樂。",
+        grammar: "`おとせる` は **可能形**。",
+      }),
+    ).toEqual({
+      jp: "音楽をおとせる。",
+      reading: "おんがくをおとせる。",
+      zh: "可以播放音樂。",
+      grammar: "おとせる は 可能形。",
     });
   });
 

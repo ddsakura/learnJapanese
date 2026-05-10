@@ -35,6 +35,7 @@ import {
   normalizeTranslation,
   parseChoiceResponse,
   parseExampleResponse,
+  sanitizeExampleEntry,
 } from "./lib/parsers";
 import {
   buildChoicePrompt,
@@ -100,7 +101,8 @@ function normalizeSettings(value: Settings | LegacySettings): Settings {
   if (
     normalized.adjective.type === "potential" ||
     normalized.adjective.type === "causative" ||
-    normalized.adjective.type === "volitional"
+    normalized.adjective.type === "volitional" ||
+    normalized.adjective.type === "imperative"
   ) {
     return {
       ...normalized,
@@ -387,7 +389,8 @@ function App() {
             (option) =>
               option.value !== "potential" &&
               option.value !== "causative" &&
-              option.value !== "volitional",
+              option.value !== "volitional" &&
+              option.value !== "imperative",
           ),
     [practice],
   );
@@ -399,17 +402,18 @@ function App() {
             (type) =>
               type !== "potential" &&
               type !== "causative" &&
-              type !== "volitional",
+              type !== "volitional" &&
+              type !== "imperative",
           ),
     [practice],
   );
   const summaryLine =
     practice === "verb"
-      ? "ない形／た形／なかった形／て形／可能形／使役形／意向形・快速刷題 + 簡易 SRS"
+      ? "ない形／た形／なかった形／て形／可能形／使役形／意向形／命令形・快速刷題 + 簡易 SRS"
       : "ない形／た形／なかった形／て形・快速刷題 + 簡易 SRS";
   const ruleSummary =
     practice === "verb"
-      ? "た形・て形・可能形・使役形・意向形 變形規則"
+      ? "た形・て形・可能形・使役形・意向形・命令形 變形規則"
       : "形容詞變化規則";
   const bankExample =
     practice === "verb"
@@ -550,7 +554,8 @@ function App() {
       practice === "adjective" &&
       (questionType === "potential" ||
         questionType === "causative" ||
-        questionType === "volitional")
+        questionType === "volitional" ||
+        questionType === "imperative")
         ? "mixed"
         : questionType;
     const actualType =
@@ -617,8 +622,12 @@ function App() {
     const cacheKey = `${practice}:${result.type}:${dict}:${term}`;
     const cache = loadExampleCache();
     const cached = cache[cacheKey];
-    if (cached && exampleMatchesQuestion(cached, dict, term)) {
-      setExample(cached);
+    const sanitizedCached = cached ? sanitizeExampleEntry(cached) : null;
+    if (
+      sanitizedCached &&
+      exampleMatchesQuestion(sanitizedCached, dict, term)
+    ) {
+      setExample(sanitizedCached);
       return;
     }
     if (cached) {
@@ -638,9 +647,10 @@ function App() {
           );
           return;
         }
-        setExample(entry);
+        const sanitizedEntry = sanitizeExampleEntry(entry);
+        setExample(sanitizedEntry);
         setExampleStatus("idle");
-        const next = { ...cache, [cacheKey]: entry };
+        const next = { ...cache, [cacheKey]: sanitizedEntry };
         saveExampleCache(next);
       })
       .catch(() => {
@@ -951,7 +961,9 @@ function App() {
 
   function handleExampleSpeak() {
     if (!example || !canSpeak) return;
-    const utterance = new SpeechSynthesisUtterance(example.jp);
+    const utterance = new SpeechSynthesisUtterance(
+      sanitizeExampleEntry(example).jp,
+    );
     utterance.lang = "ja-JP";
     utterance.onend = () => setIsExampleSpeaking(false);
     utterance.onerror = () => setIsExampleSpeaking(false);

@@ -13,6 +13,7 @@ export function getAnswer(card: Card, type: Exclude<QuestionType, "mixed">) {
   if (type === "potential") return card.potential ?? "";
   if (type === "causative") return card.causative ?? "";
   if (type === "volitional") return card.volitional ?? "";
+  if (type === "imperative") return card.imperative ?? "";
   return card[type];
 }
 
