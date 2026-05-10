@@ -14,6 +14,7 @@ Card {
   potential?: string    // 可能形（動詞用）
   causative?: string    // 使役形（動詞用）
   volitional?: string   // 意向形（動詞用）
+  imperative?: string   // 命令形（動詞用）
   group: string         // 動詞: godan | ichidan | irregular
                          // 形容詞: i | na
   zh?: string           // 可選中文翻譯（題庫儲存用）
@@ -22,7 +23,7 @@ Card {
 
 ## QuestionType
 
-- nai | ta | nakatta | te | potential | causative | volitional | mixed
+- nai | ta | nakatta | te | potential | causative | volitional | imperative | mixed
 
 ## Scope
 

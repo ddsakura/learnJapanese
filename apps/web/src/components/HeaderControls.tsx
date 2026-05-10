@@ -22,12 +22,18 @@ type HeaderControlsProps = {
   typeOptions: { value: QuestionType; label: string }[];
   scopeLabels: Record<Scope, string>;
   answerMode: AnswerMode;
+  canSpeak: boolean;
+  speechVoices: SpeechSynthesisVoice[];
+  speechVoiceURI: string;
+  speechRate: number;
   transitivityType: TransitivityQuestionType;
   onTopicModeChange: (value: TopicMode) => void;
   onPracticeChange: (value: PracticeKind) => void;
   onQuestionTypeChange: (value: QuestionType) => void;
   onScopeChange: (value: Scope) => void;
   onAnswerModeChange: (value: AnswerMode) => void;
+  onSpeechVoiceChange: (value: string) => void;
+  onSpeechRateChange: (value: number) => void;
   onTransitivityTypeChange: (value: TransitivityQuestionType) => void;
 };
 
@@ -40,12 +46,18 @@ export default function HeaderControls({
   typeOptions,
   scopeLabels,
   answerMode,
+  canSpeak,
+  speechVoices,
+  speechVoiceURI,
+  speechRate,
   transitivityType,
   onTopicModeChange,
   onPracticeChange,
   onQuestionTypeChange,
   onScopeChange,
   onAnswerModeChange,
+  onSpeechVoiceChange,
+  onSpeechRateChange,
   onTransitivityTypeChange,
 }: HeaderControlsProps) {
   const practiceLabel =
@@ -154,6 +166,35 @@ export default function HeaderControls({
             <option value="input">文字輸入</option>
             <option value="choice">四選一</option>
           </select>
+        </label>
+        <label>
+          日文語音
+          <select
+            value={speechVoiceURI}
+            onChange={(event) => onSpeechVoiceChange(event.target.value)}
+            disabled={!canSpeak}
+          >
+            <option value="">瀏覽器預設</option>
+            {speechVoices.map((voice) => (
+              <option key={voice.voiceURI} value={voice.voiceURI}>
+                {voice.name}（{voice.lang}）
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="rate-control">
+          語速 {speechRate.toFixed(2)}
+          <input
+            type="range"
+            min="0.7"
+            max="1.15"
+            step="0.05"
+            value={speechRate}
+            onChange={(event) =>
+              onSpeechRateChange(Number(event.target.value))
+            }
+            disabled={!canSpeak}
+          />
         </label>
       </div>
     </header>

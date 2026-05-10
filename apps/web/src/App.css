@@ -44,6 +44,14 @@
   color: #5b5648;
 }
 
+.controls .rate-control {
+  min-width: 140px;
+}
+
+.controls input[type="range"] {
+  padding: 0;
+}
+
 select,
 input,
 textarea,

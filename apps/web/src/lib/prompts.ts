@@ -23,6 +23,7 @@ export function buildExamplePrompt(
 4) 不要把「${term}」換成同義詞、其他動詞、辭書形、漢字/假名替代表記，或其他活用形。
 5) Grammar 欄位必須同時包含「${dict}」和「${term}」，並說明「${term}」是「${dict}」的「${typeLabel}」。${typeSpecificInstruction}
 輸出格式要求（嚴格執行）：
+不要使用 Markdown、星號、粗體、項目符號或任何裝飾標記。
 JP: [必須包含「${term}」的日文句子]
 Reading: [全平假名]
 ZH: [繁體中文翻譯]

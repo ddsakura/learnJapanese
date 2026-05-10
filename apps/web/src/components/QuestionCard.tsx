@@ -301,6 +301,8 @@ export default function QuestionCard({
                       <strong>{question.card.causative || "（未提供）"}</strong>
                       <span>意向形</span>
                       <strong>{question.card.volitional || "（未提供）"}</strong>
+                      <span>命令形</span>
+                      <strong>{question.card.imperative || "（未提供）"}</strong>
                     </>
                   )}
                 </div>

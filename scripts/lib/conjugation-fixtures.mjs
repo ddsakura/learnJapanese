@@ -60,6 +60,7 @@ function conjugateVerb(dict, group) {
         nakatta: `${base}しなかった`,
         te: `${base}して`,
         potential: `${base}できる`,
+        imperative: `${base}しろ`,
       };
     }
     if (dict.endsWith("くる") || dict.endsWith("来る")) {
@@ -70,6 +71,7 @@ function conjugateVerb(dict, group) {
         nakatta: `${base}こなかった`,
         te: `${base}きて`,
         potential: dict.endsWith("くる") ? `${base}こられる` : `${base}られる`,
+        imperative: `${base}こい`,
       };
     }
     throw new Error(`invalid irregular verb: ${dict}`);
@@ -85,6 +87,7 @@ function conjugateVerb(dict, group) {
       nakatta: `${stem}なかった`,
       te: `${stem}て`,
       potential: `${stem}られる`,
+      imperative: `${stem}ろ`,
     };
   }
 
@@ -94,6 +97,7 @@ function conjugateVerb(dict, group) {
   let ta = "";
   let te = "";
   let potential = "";
+  let imperative = "";
 
   switch (last) {
     case "う":
@@ -101,36 +105,42 @@ function conjugateVerb(dict, group) {
       ta = `${stem}った`;
       te = `${stem}って`;
       potential = `${stem}える`;
+      imperative = `${stem}え`;
       break;
     case "つ":
       nai = `${stem}たない`;
       ta = `${stem}った`;
       te = `${stem}って`;
       potential = `${stem}てる`;
+      imperative = `${stem}て`;
       break;
     case "る":
       nai = `${stem}らない`;
       ta = `${stem}った`;
       te = `${stem}って`;
       potential = `${stem}れる`;
+      imperative = `${stem}れ`;
       break;
     case "ぶ":
       nai = `${stem}ばない`;
       ta = `${stem}んだ`;
       te = `${stem}んで`;
       potential = `${stem}べる`;
+      imperative = `${stem}べ`;
       break;
     case "む":
       nai = `${stem}まない`;
       ta = `${stem}んだ`;
       te = `${stem}んで`;
       potential = `${stem}める`;
+      imperative = `${stem}め`;
       break;
     case "ぬ":
       nai = `${stem}なない`;
       ta = `${stem}んだ`;
       te = `${stem}んで`;
       potential = `${stem}ねる`;
+      imperative = `${stem}ね`;
       break;
     case "く":
       nai = `${stem}かない`;
@@ -142,24 +152,27 @@ function conjugateVerb(dict, group) {
         te = `${stem}いて`;
       }
       potential = `${stem}ける`;
+      imperative = `${stem}け`;
       break;
     case "ぐ":
       nai = `${stem}がない`;
       ta = `${stem}いだ`;
       te = `${stem}いで`;
       potential = `${stem}げる`;
+      imperative = `${stem}げ`;
       break;
     case "す":
       nai = `${stem}さない`;
       ta = `${stem}した`;
       te = `${stem}して`;
       potential = `${stem}せる`;
+      imperative = `${stem}せ`;
       break;
     default:
       throw new Error(`invalid godan verb: ${dict}`);
   }
 
-  return { nai, ta, nakatta: buildNakatta(nai), te, potential };
+  return { nai, ta, nakatta: buildNakatta(nai), te, potential, imperative };
 }
 
 function conjugateAdjective(dict, group) {

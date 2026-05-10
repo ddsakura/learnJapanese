@@ -23,6 +23,7 @@ describe("conjugation", () => {
     expect(card?.potential).toBe("書ける");
     expect(card?.causative).toBe("書かせる");
     expect(card?.volitional).toBe("書こう");
+    expect(card?.imperative).toBe("書け");
   });
 
   it("handles 行く exception", () => {
@@ -31,19 +32,26 @@ describe("conjugation", () => {
     expect(card?.te).toBe("行って");
     expect(card?.causative).toBe("行かせる");
     expect(card?.volitional).toBe("行こう");
+    expect(card?.imperative).toBe("行け");
   });
 
-  it("conjugates causative and volitional forms for ichidan and irregular verbs", () => {
+  it("conjugates causative, volitional, and imperative forms for ichidan and irregular verbs", () => {
     expect(conjugateVerb("食べる", "ichidan")?.causative).toBe("食べさせる");
     expect(conjugateVerb("食べる", "ichidan")?.volitional).toBe("食べよう");
+    expect(conjugateVerb("食べる", "ichidan")?.imperative).toBe("食べろ");
     expect(conjugateVerb("勉強する", "irregular")?.causative).toBe(
       "勉強させる",
     );
     expect(conjugateVerb("勉強する", "irregular")?.volitional).toBe(
       "勉強しよう",
     );
+    expect(conjugateVerb("勉強する", "irregular")?.imperative).toBe(
+      "勉強しろ",
+    );
     expect(conjugateVerb("くる", "irregular")?.causative).toBe("こさせる");
     expect(conjugateVerb("くる", "irregular")?.volitional).toBe("こよう");
+    expect(conjugateVerb("くる", "irregular")?.imperative).toBe("こい");
+    expect(conjugateVerb("ある", "irregular")?.imperative).toBe("あれ");
   });
 
   it("conjugates 来る with kanji forms", () => {
@@ -55,6 +63,7 @@ describe("conjugation", () => {
     expect(card?.potential).toBe("来られる");
     expect(card?.causative).toBe("来させる");
     expect(card?.volitional).toBe("来よう");
+    expect(card?.imperative).toBe("来い");
   });
 
   it("trims stored optional verb forms when normalizing", () => {
@@ -68,15 +77,17 @@ describe("conjugation", () => {
         potential: " 書ける ",
         causative: " 書かせる ",
         volitional: " 書こう ",
+        imperative: " 書け ",
         group: "godan",
       },
     ]);
     expect(card.potential).toBe("書ける");
     expect(card.causative).toBe("書かせる");
     expect(card.volitional).toBe("書こう");
+    expect(card.imperative).toBe("書け");
   });
 
-  it("fills missing stored volitional forms when normalizing", () => {
+  it("fills missing stored optional verb forms when normalizing", () => {
     const [card] = normalizeVerbBank([
       {
         dict: "書く",
@@ -90,6 +101,7 @@ describe("conjugation", () => {
       },
     ]);
     expect(card.volitional).toBe("書こう");
+    expect(card.imperative).toBe("書け");
   });
 
   it("conjugates i/na adjectives and いい exception", () => {

@@ -88,6 +88,7 @@ export function normalizeImport(
         "potential",
         "causative",
         "volitional",
+        "imperative",
         "zh",
       ]);
 

@@ -32,6 +32,8 @@ export const STORAGE_KEYS = {
   },
   examples: "jlpt-n4-example-cache",
   answerMode: "jlpt-n4-answer-mode",
+  speechVoiceURI: "jlpt-n4-speech-voice-uri",
+  speechRate: "jlpt-n4-speech-rate",
 };
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
@@ -51,6 +53,7 @@ export const QUESTION_LABELS: Record<Exclude<QuestionType, "mixed">, string> = {
   potential: "可能形",
   causative: "使役形",
   volitional: "意向形",
+  imperative: "命令形",
 };
 
 export const VERB_SCOPE_LABELS: Record<VerbScope, string> = {
@@ -75,6 +78,7 @@ export const TYPE_OPTIONS: { value: QuestionType; label: string }[] = [
   { value: "potential", label: "可能形" },
   { value: "causative", label: "使役形" },
   { value: "volitional", label: "意向形" },
+  { value: "imperative", label: "命令形" },
 ];
 
 export const TYPE_KEYS: Exclude<QuestionType, "mixed">[] = [
@@ -85,6 +89,7 @@ export const TYPE_KEYS: Exclude<QuestionType, "mixed">[] = [
   "potential",
   "causative",
   "volitional",
+  "imperative",
 ];
 
 export const DEFAULT_TRANSITIVITY_BANK: TransitivityCard[] =

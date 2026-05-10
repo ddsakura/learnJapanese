@@ -10,14 +10,33 @@ export function parseExampleResponse(text: string): ExampleEntry | null {
     const match = normalized.match(new RegExp(`${label}:\\s*([\\s\\S]+)`, "i"));
     return match ? match[1].trim() : "";
   };
-  const jp = getLineValue("JP");
-  const readingRaw = getLineValue("Reading");
-  const zh = getLineValue("ZH");
-  const grammar = getBlockValue("Grammar");
+  const jp = stripMarkdownEmphasis(getLineValue("JP"));
+  const readingRaw = stripMarkdownEmphasis(getLineValue("Reading"));
+  const zh = stripMarkdownEmphasis(getLineValue("ZH"));
+  const grammar = stripMarkdownEmphasis(getBlockValue("Grammar"));
 
   if (jp && readingRaw && zh && grammar)
     return { jp, reading: readingRaw, zh, grammar };
   return null;
+}
+
+export function sanitizeExampleEntry(entry: ExampleEntry): ExampleEntry {
+  return {
+    jp: stripMarkdownEmphasis(entry.jp),
+    reading: stripMarkdownEmphasis(entry.reading),
+    zh: stripMarkdownEmphasis(entry.zh),
+    grammar: stripMarkdownEmphasis(entry.grammar),
+  };
+}
+
+export function stripMarkdownEmphasis(value: string) {
+  return value
+    .replace(/\*\*([^*\n]+)\*\*/g, "$1")
+    .replace(/\*([^*\n]+)\*/g, "$1")
+    .replace(/__([^_\n]+)__/g, "$1")
+    .replace(/_([^_\n]+)_/g, "$1")
+    .replace(/[`*_]/g, "")
+    .trim();
 }
 
 export function exampleMatchesQuestion(
@@ -43,7 +62,7 @@ export function exampleMatchesQuestion(
 }
 
 function normalizeForTermCheck(value: string) {
-  return value.replace(/[\s\u3000「」『』"'`]/g, "").trim();
+  return stripMarkdownEmphasis(value).replace(/[\s\u3000「」『』"'`]/g, "").trim();
 }
 
 export function normalizeTranslation(raw: string) {

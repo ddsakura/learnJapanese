@@ -23,7 +23,13 @@ import {
 } from "./data/constants";
 import { normalizeVerbBank } from "./lib/conjugation";
 import { normalizeImport, mergeBank, pruneSrs } from "./lib/importing";
-import { getAnswer, getPool, pickRandom, shuffle } from "./lib/questions";
+import {
+  buildWrongChoiceCandidates,
+  getAnswer,
+  getPool,
+  pickRandom,
+  shuffle,
+} from "./lib/questions";
 import {
   defaultStats,
   defaultWrongToday,
@@ -35,6 +41,7 @@ import {
   normalizeTranslation,
   parseChoiceResponse,
   parseExampleResponse,
+  sanitizeExampleEntry,
 } from "./lib/parsers";
 import {
   buildChoicePrompt,
@@ -100,7 +107,8 @@ function normalizeSettings(value: Settings | LegacySettings): Settings {
   if (
     normalized.adjective.type === "potential" ||
     normalized.adjective.type === "causative" ||
-    normalized.adjective.type === "volitional"
+    normalized.adjective.type === "volitional" ||
+    normalized.adjective.type === "imperative"
   ) {
     return {
       ...normalized,
@@ -142,6 +150,12 @@ function saveToStorage<T>(key: string, value: T) {
     return;
   }
   window.localStorage.setItem(key, JSON.stringify(value));
+}
+
+function normalizeSpeechRate(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.min(1.15, Math.max(0.7, value))
+    : 0.9;
 }
 
 function loadExampleCache() {
@@ -363,11 +377,23 @@ function App() {
   const [answerMode, setAnswerMode] = useState<AnswerMode>(() => {
     return loadFromStorage<AnswerMode>(STORAGE_KEYS.answerMode, "input");
   });
+  const [speechVoices, setSpeechVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [speechVoiceURI, setSpeechVoiceURI] = useState(() =>
+    loadFromStorage(STORAGE_KEYS.speechVoiceURI, ""),
+  );
+  const [speechRate, setSpeechRate] = useState(() =>
+    normalizeSpeechRate(loadFromStorage(STORAGE_KEYS.speechRate, 0.9)),
+  );
   const [choiceOptions, setChoiceOptions] = useState<string[]>([]);
   const [choiceStatus, setChoiceStatus] = useState<ChoiceStatus>("idle");
   const [choiceMessage, setChoiceMessage] = useState("");
   const choiceRequestId = useRef(0);
   const canSpeak = typeof window !== "undefined" && "speechSynthesis" in window;
+  const selectedSpeechVoice = useMemo(
+    () =>
+      speechVoices.find((voice) => voice.voiceURI === speechVoiceURI) ?? null,
+    [speechVoiceURI, speechVoices],
+  );
   const scope: Scope = practice === "verb" ? verbScope : adjectiveScope;
   const questionType =
     practice === "verb" ? verbQuestionType : adjectiveQuestionType;
@@ -387,7 +413,8 @@ function App() {
             (option) =>
               option.value !== "potential" &&
               option.value !== "causative" &&
-              option.value !== "volitional",
+              option.value !== "volitional" &&
+              option.value !== "imperative",
           ),
     [practice],
   );
@@ -399,17 +426,18 @@ function App() {
             (type) =>
               type !== "potential" &&
               type !== "causative" &&
-              type !== "volitional",
+              type !== "volitional" &&
+              type !== "imperative",
           ),
     [practice],
   );
   const summaryLine =
     practice === "verb"
-      ? "ない形／た形／なかった形／て形／可能形／使役形／意向形・快速刷題 + 簡易 SRS"
+      ? "ない形／た形／なかった形／て形／可能形／使役形／意向形／命令形・快速刷題 + 簡易 SRS"
       : "ない形／た形／なかった形／て形・快速刷題 + 簡易 SRS";
   const ruleSummary =
     practice === "verb"
-      ? "た形・て形・可能形・使役形・意向形 變形規則"
+      ? "た形・て形・可能形・使役形・意向形・命令形 變形規則"
       : "形容詞變化規則";
   const bankExample =
     practice === "verb"
@@ -483,6 +511,30 @@ function App() {
   }, [answerMode]);
 
   useEffect(() => {
+    saveToStorage(STORAGE_KEYS.speechVoiceURI, speechVoiceURI);
+  }, [speechVoiceURI]);
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.speechRate, speechRate);
+  }, [speechRate]);
+
+  useEffect(() => {
+    if (!canSpeak) return;
+    const loadVoices = () => {
+      const voices = window.speechSynthesis
+        .getVoices()
+        .filter((voice) => voice.lang.toLowerCase().startsWith("ja"))
+        .sort((a, b) => a.name.localeCompare(b.name, "ja"));
+      setSpeechVoices(voices);
+    };
+    loadVoices();
+    window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
+    return () => {
+      window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
+    };
+  }, [canSpeak]);
+
+  useEffect(() => {
     const nextSettings: Settings = {
       topicMode,
       practice,
@@ -550,7 +602,8 @@ function App() {
       practice === "adjective" &&
       (questionType === "potential" ||
         questionType === "causative" ||
-        questionType === "volitional")
+        questionType === "volitional" ||
+        questionType === "imperative")
         ? "mixed"
         : questionType;
     const actualType =
@@ -617,8 +670,12 @@ function App() {
     const cacheKey = `${practice}:${result.type}:${dict}:${term}`;
     const cache = loadExampleCache();
     const cached = cache[cacheKey];
-    if (cached && exampleMatchesQuestion(cached, dict, term)) {
-      setExample(cached);
+    const sanitizedCached = cached ? sanitizeExampleEntry(cached) : null;
+    if (
+      sanitizedCached &&
+      exampleMatchesQuestion(sanitizedCached, dict, term)
+    ) {
+      setExample(sanitizedCached);
       return;
     }
     if (cached) {
@@ -638,9 +695,10 @@ function App() {
           );
           return;
         }
-        setExample(entry);
+        const sanitizedEntry = sanitizeExampleEntry(entry);
+        setExample(sanitizedEntry);
         setExampleStatus("idle");
-        const next = { ...cache, [cacheKey]: entry };
+        const next = { ...cache, [cacheKey]: sanitizedEntry };
         saveExampleCache(next);
       })
       .catch(() => {
@@ -695,20 +753,39 @@ function App() {
     buildWrongChoices(correctAnswer, question.card.dict, question.type)
       .then((wrong) => {
         if (choiceRequestId.current !== requestId) return;
-        if (!wrong || wrong.length < 3) {
+        const choices = buildWrongChoiceCandidates(
+          question.card,
+          question.type,
+          correctAnswer,
+          wrong ?? [],
+        );
+        if (choices.length < 3) {
           setChoiceStatus("error");
           setChoiceMessage("選項產生失敗，請確認 Ollama 已啟動且模型可用。");
           return;
         }
-        const options = shuffle([correctAnswer, ...wrong.slice(0, 3)]);
+        const options = shuffle([correctAnswer, ...choices]);
         choiceCache.set(cacheKey, options);
         setChoiceOptions(options);
         setChoiceStatus("idle");
       })
       .catch(() => {
         if (choiceRequestId.current !== requestId) return;
-        setChoiceStatus("error");
-        setChoiceMessage("選項產生失敗，請確認 Ollama 已啟動且模型可用。");
+        const choices = buildWrongChoiceCandidates(
+          question.card,
+          question.type,
+          correctAnswer,
+          [],
+        );
+        if (choices.length < 3) {
+          setChoiceStatus("error");
+          setChoiceMessage("選項產生失敗，請確認 Ollama 已啟動且模型可用。");
+          return;
+        }
+        const options = shuffle([correctAnswer, ...choices]);
+        choiceCache.set(cacheKey, options);
+        setChoiceOptions(options);
+        setChoiceStatus("idle");
       });
   }, [question, practice]);
 
@@ -942,6 +1019,9 @@ function App() {
     if (!question || !canSpeak) return;
     const utterance = new SpeechSynthesisUtterance(question.card.dict);
     utterance.lang = "ja-JP";
+    utterance.rate = speechRate;
+    utterance.pitch = 1;
+    if (selectedSpeechVoice) utterance.voice = selectedSpeechVoice;
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
     window.speechSynthesis.cancel();
@@ -951,8 +1031,13 @@ function App() {
 
   function handleExampleSpeak() {
     if (!example || !canSpeak) return;
-    const utterance = new SpeechSynthesisUtterance(example.jp);
+    const utterance = new SpeechSynthesisUtterance(
+      sanitizeExampleEntry(example).jp,
+    );
     utterance.lang = "ja-JP";
+    utterance.rate = speechRate;
+    utterance.pitch = 1;
+    if (selectedSpeechVoice) utterance.voice = selectedSpeechVoice;
     utterance.onend = () => setIsExampleSpeaking(false);
     utterance.onerror = () => setIsExampleSpeaking(false);
     window.speechSynthesis.cancel();
@@ -1221,6 +1306,10 @@ function App() {
         typeOptions={typeOptions}
         scopeLabels={scopeLabels}
         answerMode={answerMode}
+        canSpeak={canSpeak}
+        speechVoices={speechVoices}
+        speechVoiceURI={speechVoiceURI}
+        speechRate={speechRate}
         transitivityType={transitivityType}
         onTopicModeChange={(value) => {
           setTopicMode(value);
@@ -1237,6 +1326,8 @@ function App() {
             : setAdjectiveScope(value as AdjectiveScope)
         }
         onAnswerModeChange={setAnswerMode}
+        onSpeechVoiceChange={setSpeechVoiceURI}
+        onSpeechRateChange={(value) => setSpeechRate(normalizeSpeechRate(value))}
         onTransitivityTypeChange={setTransitivityType}
       />
 
