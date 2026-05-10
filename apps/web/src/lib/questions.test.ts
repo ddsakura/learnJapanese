@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getAnswer, getPool, shuffle } from "./questions";
+import {
+  buildWrongChoiceCandidates,
+  getAnswer,
+  getPool,
+  shuffle,
+} from "./questions";
 import type { Card } from "../types";
 
 describe("questions", () => {
@@ -44,6 +49,16 @@ describe("questions", () => {
 
   it("gets answer for imperative", () => {
     expect(getAnswer(cards[0], "imperative")).toBe("書け");
+  });
+
+  it("fills short or duplicate model choices from local card forms", () => {
+    expect(
+      buildWrongChoiceCandidates(cards[0], "causative", "書かせる", [
+        "書かれた",
+        "書かれた",
+        "書いて",
+      ]),
+    ).toEqual(["書かれた", "書いて", "書かない"]);
   });
 
   it("filters pool by scope", () => {

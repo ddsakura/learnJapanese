@@ -32,6 +32,8 @@ export const STORAGE_KEYS = {
   },
   examples: "jlpt-n4-example-cache",
   answerMode: "jlpt-n4-answer-mode",
+  speechVoiceURI: "jlpt-n4-speech-voice-uri",
+  speechRate: "jlpt-n4-speech-rate",
 };
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
