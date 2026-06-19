@@ -42,8 +42,13 @@ class ConjugationTest {
     fun inferGroup_basics() {
         assertEquals(Conjugation.VerbGroup.IRREGULAR, Conjugation.inferVerbGroup("する"))
         assertEquals(Conjugation.VerbGroup.ICHIDAN, Conjugation.inferVerbGroup("食べる"))
+        assertEquals(Conjugation.VerbGroup.GODAN, Conjugation.inferVerbGroup("まいる"))
+        assertEquals(Conjugation.VerbGroup.GODAN, Conjugation.inferVerbGroup("すべる"))
         assertEquals(Conjugation.AdjectiveGroup.I, Conjugation.inferAdjectiveGroup("高い"))
         assertEquals(Conjugation.AdjectiveGroup.NA, Conjugation.inferAdjectiveGroup("静か"))
+        assertEquals(Conjugation.AdjectiveGroup.NA, Conjugation.inferAdjectiveGroup("はんたい"))
+        assertEquals(Conjugation.AdjectiveGroup.NA, Conjugation.inferAdjectiveGroup("いっしょうけんめい"))
+        assertEquals(Conjugation.AdjectiveGroup.NA, Conjugation.inferAdjectiveGroup("ていねい"))
         assertTrue(Conjugation.normalizeAdjectiveDict("元気だ") == "元気")
     }
 }

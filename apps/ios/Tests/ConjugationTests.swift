@@ -2,6 +2,14 @@ import XCTest
 @testable import LearnJapanese
 
 final class ConjugationTests: XCTestCase {
+    func testKanaGroupExceptions() {
+        XCTAssertEqual(Conjugation.inferVerbGroup("まいる"), .godan)
+        XCTAssertEqual(Conjugation.inferVerbGroup("すべる"), .godan)
+        XCTAssertEqual(Conjugation.inferAdjectiveGroup("はんたい"), .na)
+        XCTAssertEqual(Conjugation.inferAdjectiveGroup("いっしょうけんめい"), .na)
+        XCTAssertEqual(Conjugation.inferAdjectiveGroup("ていねい"), .na)
+    }
+
     func testVerbConjugationFixtures() throws {
         let fixtures = try FixtureLoader.load("conjugation", as: ConjugationFixtures.self)
         for item in fixtures.verbs {

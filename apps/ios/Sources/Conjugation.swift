@@ -26,6 +26,8 @@ enum Conjugation {
         "要る",
         "喋る",
         "滑る",
+        "すべる",
+        "まいる",
         "減る",
         "焦る",
         "限る"
@@ -34,7 +36,10 @@ enum Conjugation {
     static let naAdjectiveIExceptions: Set<String> = [
         "きれい",
         "嫌い",
-        "きらい"
+        "きらい",
+        "はんたい",
+        "いっしょうけんめい",
+        "ていねい"
     ]
 
     static func isKana(_ char: Character) -> Bool {
