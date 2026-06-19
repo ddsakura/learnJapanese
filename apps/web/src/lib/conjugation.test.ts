@@ -3,6 +3,7 @@ import {
   buildNakatta,
   conjugateAdjective,
   conjugateVerb,
+  inferAdjectiveGroup,
   inferVerbGroup,
   normalizeVerbBank,
 } from "./conjugation";
@@ -13,6 +14,11 @@ describe("conjugation", () => {
     expect(inferVerbGroup("泳ぐ")).toBe("godan");
     expect(inferVerbGroup("する")).toBe("irregular");
     expect(inferVerbGroup("来る")).toBe("irregular");
+    expect(inferVerbGroup("まいる")).toBe("godan");
+    expect(inferVerbGroup("すべる")).toBe("godan");
+    expect(inferAdjectiveGroup("はんたい")).toBe("na");
+    expect(inferAdjectiveGroup("いっしょうけんめい")).toBe("na");
+    expect(inferAdjectiveGroup("ていねい")).toBe("na");
   });
 
   it("conjugates godan verbs", () => {

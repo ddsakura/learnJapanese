@@ -17,6 +17,8 @@ function isIchidan(dict) {
     "要る",
     "喋る",
     "滑る",
+    "すべる",
+    "まいる",
     "減る",
     "焦る",
     "限る",
@@ -40,7 +42,14 @@ function normalizeAdjectiveDict(dict) {
 
 function inferAdjectiveGroup(dict) {
   const normalized = normalizeAdjectiveDict(dict);
-  const naAdjectiveIExceptions = new Set(["きれい", "嫌い", "きらい"]);
+  const naAdjectiveIExceptions = new Set([
+    "きれい",
+    "嫌い",
+    "きらい",
+    "はんたい",
+    "いっしょうけんめい",
+    "ていねい",
+  ]);
   if (normalized.endsWith("い") && !naAdjectiveIExceptions.has(normalized)) return "i";
   return "na";
 }

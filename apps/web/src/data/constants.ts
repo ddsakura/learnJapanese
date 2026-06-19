@@ -112,9 +112,18 @@ export const GODAN_RU_EXCEPTIONS = new Set([
   "要る",
   "喋る",
   "滑る",
+  "すべる",
+  "まいる",
   "減る",
   "焦る",
   "限る",
 ]);
 
-export const NA_ADJECTIVE_I_EXCEPTIONS = new Set(["きれい", "嫌い", "きらい"]);
+export const NA_ADJECTIVE_I_EXCEPTIONS = new Set([
+  "きれい",
+  "嫌い",
+  "きらい",
+  "はんたい",
+  "いっしょうけんめい",
+  "ていねい",
+]);

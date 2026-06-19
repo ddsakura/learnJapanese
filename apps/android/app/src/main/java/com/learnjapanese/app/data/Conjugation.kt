@@ -19,12 +19,22 @@ object Conjugation {
             "要る",
             "喋る",
             "滑る",
+            "すべる",
+            "まいる",
             "減る",
             "焦る",
             "限る",
         )
 
-    private val naAdjectiveIExceptions = setOf("きれい", "嫌い", "きらい")
+    private val naAdjectiveIExceptions =
+        setOf(
+            "きれい",
+            "嫌い",
+            "きらい",
+            "はんたい",
+            "いっしょうけんめい",
+            "ていねい",
+        )
 
     private fun isKana(char: Char): Boolean {
         val code = char.code

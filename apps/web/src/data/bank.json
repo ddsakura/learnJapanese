@@ -1430,6 +1430,1239 @@
       "te": "きて",
       "potential": "こられる",
       "group": "irregular"
+    },
+    {
+      "dict": "あつまる",
+      "nai": "あつまらない",
+      "ta": "あつまった",
+      "nakatta": "あつまらなかった",
+      "te": "あつまって",
+      "potential": "あつまれる",
+      "group": "godan"
+    },
+    {
+      "dict": "あやまる",
+      "nai": "あやまらない",
+      "ta": "あやまった",
+      "nakatta": "あやまらなかった",
+      "te": "あやまって",
+      "potential": "あやまれる",
+      "group": "godan"
+    },
+    {
+      "dict": "えらぶ",
+      "nai": "えらばない",
+      "ta": "えらんだ",
+      "nakatta": "えらばなかった",
+      "te": "えらんで",
+      "potential": "えらべる",
+      "group": "godan"
+    },
+    {
+      "dict": "ふえる",
+      "nai": "ふえない",
+      "ta": "ふえた",
+      "nakatta": "ふえなかった",
+      "te": "ふえて",
+      "potential": "ふえられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "ふむ",
+      "nai": "ふまない",
+      "ta": "ふんだ",
+      "nakatta": "ふまなかった",
+      "te": "ふんで",
+      "potential": "ふめる",
+      "group": "godan"
+    },
+    {
+      "dict": "ふりだす",
+      "nai": "ふりださない",
+      "ta": "ふりだした",
+      "nakatta": "ふりださなかった",
+      "te": "ふりだして",
+      "potential": "ふりだせる",
+      "group": "godan"
+    },
+    {
+      "dict": "ふとる",
+      "nai": "ふとらない",
+      "ta": "ふとった",
+      "nakatta": "ふとらなかった",
+      "te": "ふとって",
+      "potential": "ふとれる",
+      "group": "godan"
+    },
+    {
+      "dict": "はこぶ",
+      "nai": "はこばない",
+      "ta": "はこんだ",
+      "nakatta": "はこばなかった",
+      "te": "はこんで",
+      "potential": "はこべる",
+      "group": "godan"
+    },
+    {
+      "dict": "はらう",
+      "nai": "はらわない",
+      "ta": "はらった",
+      "nakatta": "はらわなかった",
+      "te": "はらって",
+      "potential": "はらえる",
+      "group": "godan"
+    },
+    {
+      "dict": "ひえる",
+      "nai": "ひえない",
+      "ta": "ひえた",
+      "nakatta": "ひえなかった",
+      "te": "ひえて",
+      "potential": "ひえられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "ひかる",
+      "nai": "ひからない",
+      "ta": "ひかった",
+      "nakatta": "ひからなかった",
+      "te": "ひかって",
+      "potential": "ひかれる",
+      "group": "godan"
+    },
+    {
+      "dict": "ひきだす",
+      "nai": "ひきださない",
+      "ta": "ひきだした",
+      "nakatta": "ひきださなかった",
+      "te": "ひきだして",
+      "potential": "ひきだせる",
+      "group": "godan"
+    },
+    {
+      "dict": "ひっこす",
+      "nai": "ひっこさない",
+      "ta": "ひっこした",
+      "nakatta": "ひっこさなかった",
+      "te": "ひっこして",
+      "potential": "ひっこせる",
+      "group": "godan"
+    },
+    {
+      "dict": "ほめる",
+      "nai": "ほめない",
+      "ta": "ほめた",
+      "nakatta": "ほめなかった",
+      "te": "ほめて",
+      "potential": "ほめられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "いきる",
+      "nai": "いきない",
+      "ta": "いきた",
+      "nakatta": "いきなかった",
+      "te": "いきて",
+      "potential": "いきられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "いのる",
+      "nai": "いのらない",
+      "ta": "いのった",
+      "nakatta": "いのらなかった",
+      "te": "いのって",
+      "potential": "いのれる",
+      "group": "godan"
+    },
+    {
+      "dict": "いそぐ",
+      "nai": "いそがない",
+      "ta": "いそいだ",
+      "nakatta": "いそがなかった",
+      "te": "いそいで",
+      "potential": "いそげる",
+      "group": "godan"
+    },
+    {
+      "dict": "いただく",
+      "nai": "いただかない",
+      "ta": "いただいた",
+      "nakatta": "いただかなかった",
+      "te": "いただいて",
+      "potential": "いただける",
+      "group": "godan"
+    },
+    {
+      "dict": "いたす",
+      "nai": "いたさない",
+      "ta": "いたした",
+      "nakatta": "いたさなかった",
+      "te": "いたして",
+      "potential": "いたせる",
+      "group": "godan"
+    },
+    {
+      "dict": "かまう",
+      "nai": "かまわない",
+      "ta": "かまった",
+      "nakatta": "かまわなかった",
+      "te": "かまって",
+      "potential": "かまえる",
+      "group": "godan"
+    },
+    {
+      "dict": "かむ",
+      "nai": "かまない",
+      "ta": "かんだ",
+      "nakatta": "かまなかった",
+      "te": "かんで",
+      "potential": "かめる",
+      "group": "godan"
+    },
+    {
+      "dict": "かつ",
+      "nai": "かたない",
+      "ta": "かった",
+      "nakatta": "かたなかった",
+      "te": "かって",
+      "potential": "かてる",
+      "group": "godan"
+    },
+    {
+      "dict": "かわく",
+      "nai": "かわかない",
+      "ta": "かわいた",
+      "nakatta": "かわかなかった",
+      "te": "かわいて",
+      "potential": "かわける",
+      "group": "godan"
+    },
+    {
+      "dict": "かわる",
+      "nai": "かわらない",
+      "ta": "かわった",
+      "nakatta": "かわらなかった",
+      "te": "かわって",
+      "potential": "かわれる",
+      "group": "godan"
+    },
+    {
+      "dict": "かよう",
+      "nai": "かよわない",
+      "ta": "かよった",
+      "nakatta": "かよわなかった",
+      "te": "かよって",
+      "potential": "かよえる",
+      "group": "godan"
+    },
+    {
+      "dict": "かざる",
+      "nai": "かざらない",
+      "ta": "かざった",
+      "nakatta": "かざらなかった",
+      "te": "かざって",
+      "potential": "かざれる",
+      "group": "godan"
+    },
+    {
+      "dict": "きこえる",
+      "nai": "きこえない",
+      "ta": "きこえた",
+      "nakatta": "きこえなかった",
+      "te": "きこえて",
+      "potential": "きこえられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "こむ",
+      "nai": "こまない",
+      "ta": "こんだ",
+      "nakatta": "こまなかった",
+      "te": "こんで",
+      "potential": "こめる",
+      "group": "godan"
+    },
+    {
+      "dict": "くださる",
+      "nai": "くださらない",
+      "ta": "くださった",
+      "nakatta": "くださらなかった",
+      "te": "くださって",
+      "potential": "くだされる",
+      "group": "godan"
+    },
+    {
+      "dict": "くらべる",
+      "nai": "くらべない",
+      "ta": "くらべた",
+      "nakatta": "くらべなかった",
+      "te": "くらべて",
+      "potential": "くらべられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "まちがえる",
+      "nai": "まちがえない",
+      "ta": "まちがえた",
+      "nakatta": "まちがえなかった",
+      "te": "まちがえて",
+      "potential": "まちがえられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "まいる",
+      "nai": "まいらない",
+      "ta": "まいった",
+      "nakatta": "まいらなかった",
+      "te": "まいって",
+      "potential": "まいれる",
+      "group": "godan"
+    },
+    {
+      "dict": "まける",
+      "nai": "まけない",
+      "ta": "まけた",
+      "nakatta": "まけなかった",
+      "te": "まけて",
+      "potential": "まけられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "まにあう",
+      "nai": "まにあわない",
+      "ta": "まにあった",
+      "nakatta": "まにあわなかった",
+      "te": "まにあって",
+      "potential": "まにあえる",
+      "group": "godan"
+    },
+    {
+      "dict": "まわる",
+      "nai": "まわらない",
+      "ta": "まわった",
+      "nakatta": "まわらなかった",
+      "te": "まわって",
+      "potential": "まわれる",
+      "group": "godan"
+    },
+    {
+      "dict": "めしあがる",
+      "nai": "めしあがらない",
+      "ta": "めしあがった",
+      "nakatta": "めしあがらなかった",
+      "te": "めしあがって",
+      "potential": "めしあがれる",
+      "group": "godan"
+    },
+    {
+      "dict": "みえる",
+      "nai": "みえない",
+      "ta": "みえた",
+      "nakatta": "みえなかった",
+      "te": "みえて",
+      "potential": "みえられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "もどる",
+      "nai": "もどらない",
+      "ta": "もどった",
+      "nakatta": "もどらなかった",
+      "te": "もどって",
+      "potential": "もどれる",
+      "group": "godan"
+    },
+    {
+      "dict": "もうしあげる",
+      "nai": "もうしあげない",
+      "ta": "もうしあげた",
+      "nakatta": "もうしあげなかった",
+      "te": "もうしあげて",
+      "potential": "もうしあげられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "もうす",
+      "nai": "もうさない",
+      "ta": "もうした",
+      "nakatta": "もうさなかった",
+      "te": "もうして",
+      "potential": "もうせる",
+      "group": "godan"
+    },
+    {
+      "dict": "むかえる",
+      "nai": "むかえない",
+      "ta": "むかえた",
+      "nakatta": "むかえなかった",
+      "te": "むかえて",
+      "potential": "むかえられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "むかう",
+      "nai": "むかわない",
+      "ta": "むかった",
+      "nakatta": "むかわなかった",
+      "te": "むかって",
+      "potential": "むかえる",
+      "group": "godan"
+    },
+    {
+      "dict": "なげる",
+      "nai": "なげない",
+      "ta": "なげた",
+      "nakatta": "なげなかった",
+      "te": "なげて",
+      "potential": "なげられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "なく",
+      "nai": "なかない",
+      "ta": "ないた",
+      "nakatta": "なかなかった",
+      "te": "ないて",
+      "potential": "なける",
+      "group": "godan"
+    },
+    {
+      "dict": "なれる",
+      "nai": "なれない",
+      "ta": "なれた",
+      "nakatta": "なれなかった",
+      "te": "なれて",
+      "potential": "なれられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "なる",
+      "nai": "ならない",
+      "ta": "なった",
+      "nakatta": "ならなかった",
+      "te": "なって",
+      "potential": "なれる",
+      "group": "godan"
+    },
+    {
+      "dict": "ねむる",
+      "nai": "ねむらない",
+      "ta": "ねむった",
+      "nakatta": "ねむらなかった",
+      "te": "ねむって",
+      "potential": "ねむれる",
+      "group": "godan"
+    },
+    {
+      "dict": "にげる",
+      "nai": "にげない",
+      "ta": "にげた",
+      "nakatta": "にげなかった",
+      "te": "にげて",
+      "potential": "にげられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "のこる",
+      "nai": "のこらない",
+      "ta": "のこった",
+      "nakatta": "のこらなかった",
+      "te": "のこって",
+      "potential": "のこれる",
+      "group": "godan"
+    },
+    {
+      "dict": "のりかえる",
+      "nai": "のりかえない",
+      "ta": "のりかえた",
+      "nakatta": "のりかえなかった",
+      "te": "のりかえて",
+      "potential": "のりかえられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "ぬれる",
+      "nai": "ぬれない",
+      "ta": "ぬれた",
+      "nakatta": "ぬれなかった",
+      "te": "ぬれて",
+      "potential": "ぬれられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "ぬる",
+      "nai": "ぬらない",
+      "ta": "ぬった",
+      "nakatta": "ぬらなかった",
+      "te": "ぬって",
+      "potential": "ぬれる",
+      "group": "godan"
+    },
+    {
+      "dict": "ぬすむ",
+      "nai": "ぬすまない",
+      "ta": "ぬすんだ",
+      "nakatta": "ぬすまなかった",
+      "te": "ぬすんで",
+      "potential": "ぬすめる",
+      "group": "godan"
+    },
+    {
+      "dict": "おどろく",
+      "nai": "おどろかない",
+      "ta": "おどろいた",
+      "nakatta": "おどろかなかった",
+      "te": "おどろいて",
+      "potential": "おどろける",
+      "group": "godan"
+    },
+    {
+      "dict": "おいでになる",
+      "nai": "おいでにならない",
+      "ta": "おいでになった",
+      "nakatta": "おいでにならなかった",
+      "te": "おいでになって",
+      "potential": "おいでになれる",
+      "group": "godan"
+    },
+    {
+      "dict": "おこなう",
+      "nai": "おこなわない",
+      "ta": "おこなった",
+      "nakatta": "おこなわなかった",
+      "te": "おこなって",
+      "potential": "おこなえる",
+      "group": "godan"
+    },
+    {
+      "dict": "おこる",
+      "nai": "おこらない",
+      "ta": "おこった",
+      "nakatta": "おこらなかった",
+      "te": "おこって",
+      "potential": "おこれる",
+      "group": "godan"
+    },
+    {
+      "dict": "おこす",
+      "nai": "おこさない",
+      "ta": "おこした",
+      "nakatta": "おこさなかった",
+      "te": "おこして",
+      "potential": "おこせる",
+      "group": "godan"
+    },
+    {
+      "dict": "おくれる",
+      "nai": "おくれない",
+      "ta": "おくれた",
+      "nakatta": "おくれなかった",
+      "te": "おくれて",
+      "potential": "おくれられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "おもいだす",
+      "nai": "おもいださない",
+      "ta": "おもいだした",
+      "nakatta": "おもいださなかった",
+      "te": "おもいだして",
+      "potential": "おもいだせる",
+      "group": "godan"
+    },
+    {
+      "dict": "おれる",
+      "nai": "おれない",
+      "ta": "おれた",
+      "nakatta": "おれなかった",
+      "te": "おれて",
+      "potential": "おれられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "おる",
+      "nai": "おらない",
+      "ta": "おった",
+      "nakatta": "おらなかった",
+      "te": "おって",
+      "potential": "おれる",
+      "group": "godan"
+    },
+    {
+      "dict": "おっしゃる",
+      "nai": "おっしゃらない",
+      "ta": "おっしゃった",
+      "nakatta": "おっしゃらなかった",
+      "te": "おっしゃって",
+      "potential": "おっしゃれる",
+      "group": "godan"
+    },
+    {
+      "dict": "さわぐ",
+      "nai": "さわがない",
+      "ta": "さわいだ",
+      "nakatta": "さわがなかった",
+      "te": "さわいで",
+      "potential": "さわげる",
+      "group": "godan"
+    },
+    {
+      "dict": "さわる",
+      "nai": "さわらない",
+      "ta": "さわった",
+      "nakatta": "さわらなかった",
+      "te": "さわって",
+      "potential": "さわれる",
+      "group": "godan"
+    },
+    {
+      "dict": "しかる",
+      "nai": "しからない",
+      "ta": "しかった",
+      "nakatta": "しからなかった",
+      "te": "しかって",
+      "potential": "しかれる",
+      "group": "godan"
+    },
+    {
+      "dict": "しらべる",
+      "nai": "しらべない",
+      "ta": "しらべた",
+      "nakatta": "しらべなかった",
+      "te": "しらべて",
+      "potential": "しらべられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "しらせる",
+      "nai": "しらせない",
+      "ta": "しらせた",
+      "nakatta": "しらせなかった",
+      "te": "しらせて",
+      "potential": "しらせられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "しょうじる",
+      "nai": "しょうじない",
+      "ta": "しょうじた",
+      "nakatta": "しょうじなかった",
+      "te": "しょうじて",
+      "potential": "しょうじられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "そだてる",
+      "nai": "そだてない",
+      "ta": "そだてた",
+      "nakatta": "そだてなかった",
+      "te": "そだてて",
+      "potential": "そだてられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "すべる",
+      "nai": "すべらない",
+      "ta": "すべった",
+      "nakatta": "すべらなかった",
+      "te": "すべって",
+      "potential": "すべれる",
+      "group": "godan"
+    },
+    {
+      "dict": "すく",
+      "nai": "すかない",
+      "ta": "すいた",
+      "nakatta": "すかなかった",
+      "te": "すいて",
+      "potential": "すける",
+      "group": "godan"
+    },
+    {
+      "dict": "すすむ",
+      "nai": "すすまない",
+      "ta": "すすんだ",
+      "nakatta": "すすまなかった",
+      "te": "すすんで",
+      "potential": "すすめる",
+      "group": "godan"
+    },
+    {
+      "dict": "すてる",
+      "nai": "すてない",
+      "ta": "すてた",
+      "nakatta": "すてなかった",
+      "te": "すてて",
+      "potential": "すてられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "たおれる",
+      "nai": "たおれない",
+      "ta": "たおれた",
+      "nakatta": "たおれなかった",
+      "te": "たおれて",
+      "potential": "たおれられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "たりる",
+      "nai": "たりない",
+      "ta": "たりた",
+      "nakatta": "たりなかった",
+      "te": "たりて",
+      "potential": "たりられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "たす",
+      "nai": "たさない",
+      "ta": "たした",
+      "nakatta": "たさなかった",
+      "te": "たして",
+      "potential": "たせる",
+      "group": "godan"
+    },
+    {
+      "dict": "たてる",
+      "nai": "たてない",
+      "ta": "たてた",
+      "nakatta": "たてなかった",
+      "te": "たてて",
+      "potential": "たてられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "たずねる",
+      "nai": "たずねない",
+      "ta": "たずねた",
+      "nakatta": "たずねなかった",
+      "te": "たずねて",
+      "potential": "たずねられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "とどける",
+      "nai": "とどけない",
+      "ta": "とどけた",
+      "nakatta": "とどけなかった",
+      "te": "とどけて",
+      "potential": "とどけられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "とりかえる",
+      "nai": "とりかえない",
+      "ta": "とりかえた",
+      "nakatta": "とりかえなかった",
+      "te": "とりかえて",
+      "potential": "とりかえられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "つかまえる",
+      "nai": "つかまえない",
+      "ta": "つかまえた",
+      "nakatta": "つかまえなかった",
+      "te": "つかまえて",
+      "potential": "つかまえられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "つく",
+      "nai": "つかない",
+      "ta": "ついた",
+      "nakatta": "つかなかった",
+      "te": "ついて",
+      "potential": "つける",
+      "group": "godan"
+    },
+    {
+      "dict": "つれる",
+      "nai": "つれない",
+      "ta": "つれた",
+      "nakatta": "つれなかった",
+      "te": "つれて",
+      "potential": "つれられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "つたえる",
+      "nai": "つたえない",
+      "ta": "つたえた",
+      "nakatta": "つたえなかった",
+      "te": "つたえて",
+      "potential": "つたえられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "つつむ",
+      "nai": "つつまない",
+      "ta": "つつんだ",
+      "nakatta": "つつまなかった",
+      "te": "つつんで",
+      "potential": "つつめる",
+      "group": "godan"
+    },
+    {
+      "dict": "うえる",
+      "nai": "うえない",
+      "ta": "うえた",
+      "nakatta": "うえなかった",
+      "te": "うえて",
+      "potential": "うえられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "うごく",
+      "nai": "うごかない",
+      "ta": "うごいた",
+      "nakatta": "うごかなかった",
+      "te": "うごいて",
+      "potential": "うごける",
+      "group": "godan"
+    },
+    {
+      "dict": "うかがう",
+      "nai": "うかがわない",
+      "ta": "うかがった",
+      "nakatta": "うかがわなかった",
+      "te": "うかがって",
+      "potential": "うかがえる",
+      "group": "godan"
+    },
+    {
+      "dict": "うける",
+      "nai": "うけない",
+      "ta": "うけた",
+      "nakatta": "うけなかった",
+      "te": "うけて",
+      "potential": "うけられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "うつ",
+      "nai": "うたない",
+      "ta": "うった",
+      "nakatta": "うたなかった",
+      "te": "うって",
+      "potential": "うてる",
+      "group": "godan"
+    },
+    {
+      "dict": "うつる",
+      "nai": "うつらない",
+      "ta": "うつった",
+      "nakatta": "うつらなかった",
+      "te": "うつって",
+      "potential": "うつれる",
+      "group": "godan"
+    },
+    {
+      "dict": "うつす",
+      "nai": "うつさない",
+      "ta": "うつした",
+      "nakatta": "うつさなかった",
+      "te": "うつして",
+      "potential": "うつせる",
+      "group": "godan"
+    },
+    {
+      "dict": "わかれる",
+      "nai": "わかれない",
+      "ta": "わかれた",
+      "nakatta": "わかれなかった",
+      "te": "わかれて",
+      "potential": "わかれられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "わかす",
+      "nai": "わかさない",
+      "ta": "わかした",
+      "nakatta": "わかさなかった",
+      "te": "わかして",
+      "potential": "わかせる",
+      "group": "godan"
+    },
+    {
+      "dict": "わく",
+      "nai": "わかない",
+      "ta": "わいた",
+      "nakatta": "わかなかった",
+      "te": "わいて",
+      "potential": "わける",
+      "group": "godan"
+    },
+    {
+      "dict": "われる",
+      "nai": "われない",
+      "ta": "われた",
+      "nakatta": "われなかった",
+      "te": "われて",
+      "potential": "われられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "やける",
+      "nai": "やけない",
+      "ta": "やけた",
+      "nakatta": "やけなかった",
+      "te": "やけて",
+      "potential": "やけられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "やく",
+      "nai": "やかない",
+      "ta": "やいた",
+      "nakatta": "やかなかった",
+      "te": "やいて",
+      "potential": "やける",
+      "group": "godan"
+    },
+    {
+      "dict": "やくにたつ",
+      "nai": "やくにたたない",
+      "ta": "やくにたった",
+      "nakatta": "やくにたたなかった",
+      "te": "やくにたって",
+      "potential": "やくにたてる",
+      "group": "godan"
+    },
+    {
+      "dict": "やむ",
+      "nai": "やまない",
+      "ta": "やんだ",
+      "nakatta": "やまなかった",
+      "te": "やんで",
+      "potential": "やめる",
+      "group": "godan"
+    },
+    {
+      "dict": "やせる",
+      "nai": "やせない",
+      "ta": "やせた",
+      "nakatta": "やせなかった",
+      "te": "やせて",
+      "potential": "やせられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "よろこぶ",
+      "nai": "よろこばない",
+      "ta": "よろこんだ",
+      "nakatta": "よろこばなかった",
+      "te": "よろこんで",
+      "potential": "よろこべる",
+      "group": "godan"
+    },
+    {
+      "dict": "よる",
+      "nai": "よらない",
+      "ta": "よった",
+      "nakatta": "よらなかった",
+      "te": "よって",
+      "potential": "よれる",
+      "group": "godan"
+    },
+    {
+      "dict": "ゆれる",
+      "nai": "ゆれない",
+      "ta": "ゆれた",
+      "nakatta": "ゆれなかった",
+      "te": "ゆれて",
+      "potential": "ゆれられる",
+      "group": "ichidan"
+    },
+    {
+      "dict": "あいさつする",
+      "nai": "あいさつしない",
+      "ta": "あいさつした",
+      "nakatta": "あいさつしなかった",
+      "te": "あいさつして",
+      "potential": "あいさつできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "ぼうえきする",
+      "nai": "ぼうえきしない",
+      "ta": "ぼうえきした",
+      "nakatta": "ぼうえきしなかった",
+      "te": "ぼうえきして",
+      "potential": "ぼうえきできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "ちゅういする",
+      "nai": "ちゅういしない",
+      "ta": "ちゅういした",
+      "nakatta": "ちゅういしなかった",
+      "te": "ちゅういして",
+      "potential": "ちゅういできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "ちゅうしゃする",
+      "nai": "ちゅうしゃしない",
+      "ta": "ちゅうしゃした",
+      "nakatta": "ちゅうしゃしなかった",
+      "te": "ちゅうしゃして",
+      "potential": "ちゅうしゃできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "だんぼうする",
+      "nai": "だんぼうしない",
+      "ta": "だんぼうした",
+      "nakatta": "だんぼうしなかった",
+      "te": "だんぼうして",
+      "potential": "だんぼうできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "えんりょする",
+      "nai": "えんりょしない",
+      "ta": "えんりょした",
+      "nakatta": "えんりょしなかった",
+      "te": "えんりょして",
+      "potential": "えんりょできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "ふくしゅうする",
+      "nai": "ふくしゅうしない",
+      "ta": "ふくしゅうした",
+      "nakatta": "ふくしゅうしなかった",
+      "te": "ふくしゅうして",
+      "potential": "ふくしゅうできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "はんたいする",
+      "nai": "はんたいしない",
+      "ta": "はんたいした",
+      "nakatta": "はんたいしなかった",
+      "te": "はんたいして",
+      "potential": "はんたいできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "はつおんする",
+      "nai": "はつおんしない",
+      "ta": "はつおんした",
+      "nakatta": "はつおんしなかった",
+      "te": "はつおんして",
+      "potential": "はつおんできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "へんじする",
+      "nai": "へんじしない",
+      "ta": "へんじした",
+      "nakatta": "へんじしなかった",
+      "te": "へんじして",
+      "potential": "へんじできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "ほんやくする",
+      "nai": "ほんやくしない",
+      "ta": "ほんやくした",
+      "nakatta": "ほんやくしなかった",
+      "te": "ほんやくして",
+      "potential": "ほんやくできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "ほうそうする",
+      "nai": "ほうそうしない",
+      "ta": "ほうそうした",
+      "nakatta": "ほうそうしなかった",
+      "te": "ほうそうして",
+      "potential": "ほうそうできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "じゅんびする",
+      "nai": "じゅんびしない",
+      "ta": "じゅんびした",
+      "nakatta": "じゅんびしなかった",
+      "te": "じゅんびして",
+      "potential": "じゅんびできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "けいかくする",
+      "nai": "けいかくしない",
+      "ta": "けいかくした",
+      "nakatta": "けいかくしなかった",
+      "te": "けいかくして",
+      "potential": "けいかくできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "けいけんする",
+      "nai": "けいけんしない",
+      "ta": "けいけんした",
+      "nakatta": "けいけんしなかった",
+      "te": "けいけんして",
+      "potential": "けいけんできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "けんぶつする",
+      "nai": "けんぶつしない",
+      "ta": "けんぶつした",
+      "nakatta": "けんぶつしなかった",
+      "te": "けんぶつして",
+      "potential": "けんぶつできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "けんかする",
+      "nai": "けんかしない",
+      "ta": "けんかした",
+      "nakatta": "けんかしなかった",
+      "te": "けんかして",
+      "potential": "けんかできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "けんきゅうする",
+      "nai": "けんきゅうしない",
+      "ta": "けんきゅうした",
+      "nakatta": "けんきゅうしなかった",
+      "te": "けんきゅうして",
+      "potential": "けんきゅうできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "きょういくする",
+      "nai": "きょういくしない",
+      "ta": "きょういくした",
+      "nakatta": "きょういくしなかった",
+      "te": "きょういくして",
+      "potential": "きょういくできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "きょうそうする",
+      "nai": "きょうそうしない",
+      "ta": "きょうそうした",
+      "nakatta": "きょうそうしなかった",
+      "te": "きょうそうして",
+      "potential": "きょうそうできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "にゅうがくする",
+      "nai": "にゅうがくしない",
+      "ta": "にゅうがくした",
+      "nakatta": "にゅうがくしなかった",
+      "te": "にゅうがくして",
+      "potential": "にゅうがくできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "にゅういんする",
+      "nai": "にゅういんしない",
+      "ta": "にゅういんした",
+      "nakatta": "にゅういんしなかった",
+      "te": "にゅういんして",
+      "potential": "にゅういんできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "りようする",
+      "nai": "りようしない",
+      "ta": "りようした",
+      "nakatta": "りようしなかった",
+      "te": "りようして",
+      "potential": "りようできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "せいかつする",
+      "nai": "せいかつしない",
+      "ta": "せいかつした",
+      "nakatta": "せいかつしなかった",
+      "te": "せいかつして",
+      "potential": "せいかつできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "せいさんする",
+      "nai": "せいさんしない",
+      "ta": "せいさんした",
+      "nakatta": "せいさんしなかった",
+      "te": "せいさんして",
+      "potential": "せいさんできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "しっぱいする",
+      "nai": "しっぱいしない",
+      "ta": "しっぱいした",
+      "nakatta": "しっぱいしなかった",
+      "te": "しっぱいして",
+      "potential": "しっぱいできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "そつぎょうする",
+      "nai": "そつぎょうしない",
+      "ta": "そつぎょうした",
+      "nakatta": "そつぎょうしなかった",
+      "te": "そつぎょうして",
+      "potential": "そつぎょうできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "すいえいする",
+      "nai": "すいえいしない",
+      "ta": "すいえいした",
+      "nakatta": "すいえいしなかった",
+      "te": "すいえいして",
+      "potential": "すいえいできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "たいいんする",
+      "nai": "たいいんしない",
+      "ta": "たいいんした",
+      "nakatta": "たいいんしなかった",
+      "te": "たいいんして",
+      "potential": "たいいんできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "よしゅうする",
+      "nai": "よしゅうしない",
+      "ta": "よしゅうした",
+      "nakatta": "よしゅうしなかった",
+      "te": "よしゅうして",
+      "potential": "よしゅうできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "よういする",
+      "nai": "よういしない",
+      "ta": "よういした",
+      "nakatta": "よういしなかった",
+      "te": "よういして",
+      "potential": "よういできる",
+      "group": "irregular"
+    },
+    {
+      "dict": "よやくする",
+      "nai": "よやくしない",
+      "ta": "よやくした",
+      "nakatta": "よやくしなかった",
+      "te": "よやくして",
+      "potential": "よやくできる",
+      "group": "irregular"
     }
   ],
   "adjective": [
@@ -2160,6 +3393,238 @@
       "nakatta": "安くなかった",
       "te": "安くて",
       "group": "i"
+    },
+    {
+      "dict": "あんしん",
+      "nai": "あんしんじゃない",
+      "ta": "あんしんだった",
+      "nakatta": "あんしんじゃなかった",
+      "te": "あんしんで",
+      "group": "na"
+    },
+    {
+      "dict": "ふかい",
+      "nai": "ふかくない",
+      "ta": "ふかかった",
+      "nakatta": "ふかくなかった",
+      "te": "ふかくて",
+      "group": "i"
+    },
+    {
+      "dict": "ふくざつ",
+      "nai": "ふくざつじゃない",
+      "ta": "ふくざつだった",
+      "nakatta": "ふくざつじゃなかった",
+      "te": "ふくざつで",
+      "group": "na"
+    },
+    {
+      "dict": "はんたい",
+      "nai": "はんたいじゃない",
+      "ta": "はんたいだった",
+      "nakatta": "はんたいじゃなかった",
+      "te": "はんたいで",
+      "group": "na"
+    },
+    {
+      "dict": "はずかしい",
+      "nai": "はずかしくない",
+      "ta": "はずかしかった",
+      "nakatta": "はずかしくなかった",
+      "te": "はずかしくて",
+      "group": "i"
+    },
+    {
+      "dict": "へん",
+      "nai": "へんじゃない",
+      "ta": "へんだった",
+      "nakatta": "へんじゃなかった",
+      "te": "へんで",
+      "group": "na"
+    },
+    {
+      "dict": "ひどい",
+      "nai": "ひどくない",
+      "ta": "ひどかった",
+      "nakatta": "ひどくなかった",
+      "te": "ひどくて",
+      "group": "i"
+    },
+    {
+      "dict": "ひさしぶり",
+      "nai": "ひさしぶりじゃない",
+      "ta": "ひさしぶりだった",
+      "nakatta": "ひさしぶりじゃなかった",
+      "te": "ひさしぶりで",
+      "group": "na"
+    },
+    {
+      "dict": "いっしょうけんめい",
+      "nai": "いっしょうけんめいじゃない",
+      "ta": "いっしょうけんめいだった",
+      "nakatta": "いっしょうけんめいじゃなかった",
+      "te": "いっしょうけんめいで",
+      "group": "na"
+    },
+    {
+      "dict": "じゆう",
+      "nai": "じゆうじゃない",
+      "ta": "じゆうだった",
+      "nakatta": "じゆうじゃなかった",
+      "te": "じゆうで",
+      "group": "na"
+    },
+    {
+      "dict": "じゅうぶん",
+      "nai": "じゅうぶんじゃない",
+      "ta": "じゅうぶんだった",
+      "nakatta": "じゅうぶんじゃなかった",
+      "te": "じゅうぶんで",
+      "group": "na"
+    },
+    {
+      "dict": "かんたん",
+      "nai": "かんたんじゃない",
+      "ta": "かんたんだった",
+      "nakatta": "かんたんじゃなかった",
+      "te": "かんたんで",
+      "group": "na"
+    },
+    {
+      "dict": "かたい",
+      "nai": "かたくない",
+      "ta": "かたかった",
+      "nakatta": "かたくなかった",
+      "te": "かたくて",
+      "group": "i"
+    },
+    {
+      "dict": "きびしい",
+      "nai": "きびしくない",
+      "ta": "きびしかった",
+      "nakatta": "きびしくなかった",
+      "te": "きびしくて",
+      "group": "i"
+    },
+    {
+      "dict": "こまかい",
+      "nai": "こまかくない",
+      "ta": "こまかかった",
+      "nakatta": "こまかくなかった",
+      "te": "こまかくて",
+      "group": "i"
+    },
+    {
+      "dict": "きゅう",
+      "nai": "きゅうじゃない",
+      "ta": "きゅうだった",
+      "nakatta": "きゅうじゃなかった",
+      "te": "きゅうで",
+      "group": "na"
+    },
+    {
+      "dict": "むり",
+      "nai": "むりじゃない",
+      "ta": "むりだった",
+      "nakatta": "むりじゃなかった",
+      "te": "むりで",
+      "group": "na"
+    },
+    {
+      "dict": "にがい",
+      "nai": "にがくない",
+      "ta": "にがかった",
+      "nakatta": "にがくなかった",
+      "te": "にがくて",
+      "group": "i"
+    },
+    {
+      "dict": "おかしい",
+      "nai": "おかしくない",
+      "ta": "おかしかった",
+      "nakatta": "おかしくなかった",
+      "te": "おかしくて",
+      "group": "i"
+    },
+    {
+      "dict": "さかん",
+      "nai": "さかんじゃない",
+      "ta": "さかんだった",
+      "nakatta": "さかんじゃなかった",
+      "te": "さかんで",
+      "group": "na"
+    },
+    {
+      "dict": "すばらしい",
+      "nai": "すばらしくない",
+      "ta": "すばらしかった",
+      "nakatta": "すばらしくなかった",
+      "te": "すばらしくて",
+      "group": "i"
+    },
+    {
+      "dict": "ただしい",
+      "nai": "ただしくない",
+      "ta": "ただしかった",
+      "nakatta": "ただしくなかった",
+      "te": "ただしくて",
+      "group": "i"
+    },
+    {
+      "dict": "たのしみ",
+      "nai": "たのしみじゃない",
+      "ta": "たのしみだった",
+      "nakatta": "たのしみじゃなかった",
+      "te": "たのしみで",
+      "group": "na"
+    },
+    {
+      "dict": "ていねい",
+      "nai": "ていねいじゃない",
+      "ta": "ていねいだった",
+      "nakatta": "ていねいじゃなかった",
+      "te": "ていねいで",
+      "group": "na"
+    },
+    {
+      "dict": "てきとう",
+      "nai": "てきとうじゃない",
+      "ta": "てきとうだった",
+      "nakatta": "てきとうじゃなかった",
+      "te": "てきとうで",
+      "group": "na"
+    },
+    {
+      "dict": "とくべつ",
+      "nai": "とくべつじゃない",
+      "ta": "とくべつだった",
+      "nakatta": "とくべつじゃなかった",
+      "te": "とくべつで",
+      "group": "na"
+    },
+    {
+      "dict": "うつくしい",
+      "nai": "うつくしくない",
+      "ta": "うつくしかった",
+      "nakatta": "うつくしくなかった",
+      "te": "うつくしくて",
+      "group": "i"
+    },
+    {
+      "dict": "やわらかい",
+      "nai": "やわらかくない",
+      "ta": "やわらかかった",
+      "nakatta": "やわらかくなかった",
+      "te": "やわらかくて",
+      "group": "i"
+    },
+    {
+      "dict": "ざんねん",
+      "nai": "ざんねんじゃない",
+      "ta": "ざんねんだった",
+      "nakatta": "ざんねんじゃなかった",
+      "te": "ざんねんで",
+      "group": "na"
     }
   ],
   "transitivity": [
